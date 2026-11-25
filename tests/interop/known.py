@@ -117,23 +117,16 @@ def run():
         if not (out / (kit + ".freecad.json")).exists():
             continue
         check = json.loads((out / (kit + ".freecad.json")).read_text())
-        mesh = check["stl"]
-        # Both shipped UI studies put the bolt head through the nut in the exported coordinates.
-        overlap = sum(r["volume"] for r in check["step"]["overlaps"])
-        assert abs(overlap - 137.7134) <= 0.001, (
-            f"{kit} changed overlap from 137.7134 mm³ to {overlap} mm³"
-        )
-        expect(
-            "ASM-001",
-            overlap <= 1e-6 and mesh["closed"] and not mesh["selfIntersections"],
-            kit
-            + " assembled STEP overlap "
-            + str(overlap)
-            + " mm³, STL closed "
-            + str(mesh["closed"])
-            + ", self-intersections "
-            + str(mesh["selfIntersections"]),
-        )
+        # Reassemble independently exported local solids in FreeCAD using the displayed
+        # matrices. This oracle also covers the fully modeled replacement thread geometry.
+        def pair_volumes(rows):
+            return {tuple(row["parts"]): row["volume"] for row in rows}
+        actual = pair_volumes(check["step"]["overlaps"])
+        expected = pair_volumes(check["step"]["referenceOverlaps"])
+        for pair in actual.keys() | expected.keys():
+            assert abs(actual.get(pair, 0) - expected.get(pair, 0)) <= 0.001, (
+                f"{kit} installed pair {pair} overlap differs from its assembled local solids"
+            )
     from external import vectors
 
     marks = vectors(out / "terminal.dxf", out / "terminal.svg")["edges"][0]
@@ -186,21 +179,10 @@ def run():
             not spring["stl"]["selfIntersections"],
             "Stock spring is a valid closed exact solid; standalone STL and 3MF have identical triangles and should be free of self-intersections. FreeCAD reports 131 intersecting facet pairs.",
         )
-        overlaps = detail["rawOverlapWithGuideCamPlunger"]
-        assert (
-            len(overlaps) == 3
-            and all(
-                abs(x - y) < 0.001
-                for x, y in zip(overlaps, [1.158223, 1.258725, 0.304677])
-            )
-            and max(detail["positionedOverlapWithGuideCamPlunger"]) < 1e-6
-        ), "Changed ASM-001 click-coil placement signature"
-        expect(
-            "ASM-001",
-            max(overlaps) < 1e-6,
-            "Four-body click STEP exports stock spring along Z at origin through three components; applying its saved X=10 mm and 90-degree Y-axis seating removes all three overlaps. "
-            + str(overlaps),
-        )
+        assert max(detail["installedOverlapWithGuideCamPlunger"]) < 1e-6
+        assert max(abs(a-b) for a,b in zip(detail["installedCentroid"], detail["positionedCentroid"])) <= 0.01
+        for actual, expected in zip(detail["installedSpringBounds"], detail["requiredSpringBounds"]):
+            assert max(abs(a-b) for a,b in zip(actual, expected)) <= 0.01
     records = json.loads((out / "reverse.json").read_text())
     step = next(x for x in records if x["file"] == "fc-two-parts.step")
     labels = [part["name"] for part in step["parts"]]

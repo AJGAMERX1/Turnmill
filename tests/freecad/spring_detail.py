@@ -22,7 +22,8 @@ def vertices(bb):
 
 
 source = Part.read(str(out / (slug + ".step")))
-coil = source.Solids[-1]
+coil = Part.read(str(out / (slug + "-4.step"))).Solids[0]
+installed = source.Solids[-1]
 placed = coil.copy()
 placed.Placement = App.Placement(pose).multiply(placed.Placement)
 
@@ -40,6 +41,9 @@ for name in [slug, slug + "-4"]:
         "examplePairs": [str(x) for x in list(pairs)[:5]],
     }
 results = {
+    "installedSpringBounds": vertices(installed.optimalBoundingBox(False, False)),
+    "installedOverlapWithGuideCamPlunger": intersections(installed, source.Solids[:3]),
+    "installedCentroid": list(installed.CenterOfMass),
     "rawSpringBounds": vertices(coil.optimalBoundingBox(False, False)),
     "requiredSpringBounds": vertices(placed.optimalBoundingBox(False, False)),
     "sourceCentroid": list(coil.CenterOfMass),

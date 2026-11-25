@@ -123,6 +123,12 @@ def inspect_case(f):
             x["faces"] == y["faces"] and x["edges"] == y["edges"],
             name + " part " + str(i + 1) + " STEP topology",
         )
+    if "installedPose" in n:
+        pose = n["installedPose"]
+        assert len(physical) == len(pose["matrices"]) == len(pose["localCenters"])
+        for i, (center, matrix, exported) in enumerate(zip(pose["localCenters"], pose["matrices"], physical, strict=True)):
+            target = [sum(matrix[4*c+r] * v for c, v in enumerate([*center, 1])) for r in range(3)]
+            check(delta(target, exported["center"]) <= 0.01, f"{name} component {i+1} installed centroid")
     if expected:
         check(
             delta(arrays(s["bbox"]), arrays(expected["bbox"])) <= 0.01

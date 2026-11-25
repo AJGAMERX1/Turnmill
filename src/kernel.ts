@@ -3,6 +3,7 @@ import initOC from "replicad-opencascadejs";
 import wasmUrl from "replicad-opencascadejs/wasm?url";
 import { setOC } from "replicad";
 import { exportBodies, type RenderBody } from "./geometry";
+import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
 
@@ -22,6 +23,7 @@ type Request =
   | {
       type: "export";
       bodyIndex?: number;
+      assembly?: import("./assemblyExport").AssemblyExport;
       revision: number;
       id: number;
       format: "step" | "stl" | "3mf";
@@ -76,7 +78,9 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       data.bodyIndex === undefined
         ? bodies
         : bodies.slice(data.bodyIndex, data.bodyIndex + 1);
-    const blob = exportBodies(selected, data.format);
+    const blob = data.assembly
+      ? exportAssemblyBodies(selected, data.format, data.assembly)
+      : exportBodies(selected, data.format);
     if (!blob.size)
       throw new Error(
         "The export produced an empty file. Check the model and try again.",

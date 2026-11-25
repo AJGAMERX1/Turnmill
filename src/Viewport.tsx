@@ -15,6 +15,7 @@ export type KernelStatus = {
   center?: [number, number, number];
 };
 export type ExportRequest = {
+  assembly?: import("./assemblyExport").AssemblyExport;
   bodyIndex?: number;
   id: number;
   format: "step" | "stl" | "3mf";

@@ -228,8 +228,6 @@ async function boltMate(s) {
   assert.equal(one.joints.current, 360);
   assert.equal(one.joints.lead, 0.8);
   await native(s, "bolt-nut");
-  await button(p, "Part").click();
-  await ready(p);
   await stepExport(s, "bolt-nut");
 }
 export async function boltLibrary(s) {

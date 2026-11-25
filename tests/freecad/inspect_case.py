@@ -69,6 +69,20 @@ def step(path):
                     intersect = a.common(b)
                     v = sum(s.Volume for s in intersect.Solids)
                     measured["overlaps"].append({"parts": [j + 1, i + 1], "volume": v})
+        metadata = json.loads((out / (case + ".native.json")).read_text())
+        if "installedPose" in metadata:
+            parts = []
+            for i, matrix in enumerate(metadata["installedPose"]["matrices"]):
+                part = Part.read(str(out / (case + "-" + str(i + 1) + ".step")))
+                ordered = [matrix[4*c+r] for r in range(4) for c in range(4)]
+                part.Placement = App.Placement(App.Matrix(*ordered)).multiply(part.Placement)
+                parts.append(part)
+            measured["referenceOverlaps"] = []
+            for i, a in enumerate(parts):
+                for j, b in enumerate(parts[:i]):
+                    if a.BoundBox.intersect(b.BoundBox):
+                        overlap = sum(s.Volume for s in a.common(b).Solids)
+                        measured["referenceOverlaps"].append({"parts": [j+1, i+1], "volume": overlap})
         # Export the imported object tree to exercise FreeCAD's writer, preserving its root structure.
         Import.export(d.RootObjects, str(out / (case + ".return.step")))
         return measured

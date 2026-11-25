@@ -161,6 +161,16 @@ export const native = (s, file) =>
     join(s.dir, file + ".turnmill"),
   );
 export async function stepExport(s, file) {
+  const view = await snap(s.page);
+  if (view.mode === "Assembly") {
+    assert(view.joints?.matrices.length === view.bodies.length && !view.joints.problem);
+    await writeFile(join(s.dir, file + ".pose.json"), JSON.stringify({
+      ids: view.joints.ids,
+      matrices: view.joints.matrices,
+      drivers: view.joints.poses,
+      localCenters: view.bodies.map((body) => body.center),
+    }, null, 2));
+  }
   await button(s.page, "Export").click();
   await download(
     s.page,

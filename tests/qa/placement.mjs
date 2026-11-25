@@ -1,53 +1,66 @@
 import { openBrowser, appUrl, measure } from "./browser.mjs";
-import { resolve } from "node:path";
-import { writeFile } from "node:fs/promises";
+import { resolve, join } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
-const dir = resolve("test-evidence/ASM-001"),
-  browser = await openBrowser();
+
+const fixture = resolve("test-evidence/ASM-001/two-blocks.turnmill");
+const dir = resolve(process.env.QA_PLACEMENT_OUT || "test-evidence/ASM-001");
+await mkdir(dir, { recursive: true });
+const browser = await openBrowser();
 try {
-  const p = await browser.newPage({
-    viewport: { width: 1400, height: 930 },
-    acceptDownloads: true,
-  });
+  const p = await browser.newPage({ viewport: { width: 1400, height: 930 }, acceptDownloads: true });
   p.setDefaultTimeout(80000);
+  const button = (name) => p.getByRole("button", { name, exact: true });
+  async function open(file) {
+    await p.getByLabel("Open Turnmill project file").setInputFiles(file);
+    await p.waitForFunction(() => document.querySelector(".status-bar")?.innerText.includes("2 bodies"));
+    await button("Assembly").click();
+    await button("3D assembly").click();
+    await p.getByLabel("Component", { exact: true }).selectOption("upper");
+    await p.locator(".joint-stage .joint-message").waitFor({ state: "hidden" });
+  }
+  async function exportFiles(stem, scope) {
+    for (const [format, name] of [["step", /STEP solid/], ["stl", /STL mesh/], ["3mf", /3MF model/]]) {
+      await button("Export").click();
+      await p.getByLabel("Export geometry").selectOption(scope);
+      const next = p.waitForEvent("download");
+      await p.getByRole("button", { name }).click();
+      const file = await next;
+      if (scope === "selected") assert.equal(file.suggestedFilename(), "Upper block." + format);
+      await file.saveAs(join(dir, stem + "." + format));
+    }
+  }
   await p.goto(appUrl);
   await measure(p);
-  await p
-    .getByLabel("Open Turnmill project file")
-    .setInputFiles(dir + "/two-blocks.turnmill");
-  await p.waitForFunction(() =>
-    document.querySelector(".status-bar")?.innerText.includes("2 bodies"),
-  );
-  await p.getByRole("button", { name: "Assembly", exact: true }).click();
-  await p.getByRole("button", { name: "3D assembly", exact: true }).click();
-  await p.getByLabel("Component", { exact: true }).selectOption("upper");
-  await p.waitForFunction(async () => {
-    const s = await window.__cadTest.snapshot();
-    return s.joints?.selected === "upper" && s.joints.matrices[1]?.[14] === 20;
-  });
-  const info = await measure(p);
-  assert.equal(info.joints.matrices[1][14], 20);
-  await p.screenshot({ path: dir + "/seated-assembly.png" });
-  await p.getByRole("button", { name: "Export", exact: true }).click();
-  const next = p.waitForEvent("download");
-  await p.getByRole("button", { name: /STEP solid/ }).click();
-  await (await next).saveAs(dir + "/two-blocks.step");
-  await writeFile(
-    dir + "/native.json",
-    JSON.stringify(
-      {
-        matrices: info.joints.matrices,
-        workpiece: info.bodies,
-        expectedBBox: [
-          [0, 0, 0],
-          [20, 10, 25],
-        ],
-        expectedOverlap: 0,
-      },
-      null,
-      2,
-    ),
-  );
+  await open(fixture);
+  const seated = await measure(p);
+  assert.equal(seated.joints.matrices[1][14], 20);
+  await p.screenshot({ path: join(dir, "seated-assembly.png") });
+  await exportFiles("two-blocks", "all");
+
+  const driven = JSON.parse(await readFile(fixture));
+  driven.id += "-live";
+  driven.features[1].amount = "3 mm";
+  driven.workspaces.joints.b = { ...driven.workspaces.joints.upper, parent: "", offset: ["3", "4", "0"] };
+  Object.assign(driven.workspaces.joints.upper, { kind: "revolute", max: "180 deg" });
+  await open({ name: "live.turnmill", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(driven)) });
+  const drive = p.getByLabel("Drive value", { exact: true });
+  await drive.fill("90 deg");
+  await drive.press("Enter");
+  await p.waitForFunction(async () => (await window.__cadTest.snapshot()).joints?.current === 90);
+  const live = await measure(p);
+  assert.equal(live.project.workspaces.jointPose?.upper?.[0] ?? 0, 0);
+  await exportFiles("unsaved-quarter-turn", "all");
+  await exportFiles("upper-part", "selected");
+  await button("Part").click();
+  await exportFiles("local-parts", "all");
+  await writeFile(join(dir, "native.json"), JSON.stringify({
+    seated: seated.joints.matrices,
+    live: live.joints.matrices,
+    workpiece: live.bodies,
+    savedAngle: 0,
+    visibleAngle: 90,
+  }, null, 2));
 } finally {
   await browser.close();
 }

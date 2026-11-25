@@ -117,12 +117,20 @@ def mf(path):
     ns = {"m": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
     with ZipFile(path) as z:
         doc = ET.fromstring(z.read("3D/3dmodel.model"))
-        meshes = doc.findall("m:resources/m:object/m:mesh", ns)
+        objects = {o.get("id"): o for o in doc.findall("m:resources/m:object", ns)}
+        items = doc.findall("m:build/m:item", ns)
         result = []
-        for m in meshes:
+        for item in items:
+            m = objects[item.get("objectid")].find("m:mesh", ns)
+            assert m is not None, "Expected a printable mesh in each build item"
             v = [
                 tuple(float(p.get(a)) for a in "xyz") for p in m.find("m:vertices", ns)
             ]
+            if item.get("transform"):
+                mat = [float(x) for x in item.get("transform").split()]
+                assert len(mat) == 12, "Invalid 3MF build transformation"
+                v = [tuple(sum(mat[3*i+j] * a for i, a in enumerate((*p, 1)))
+                           for j in range(3)) for p in v]
             tris = [
                 tuple(int(f.get(k)) for k in ["v1", "v2", "v3"])
                 for f in m.find("m:triangles", ns)
@@ -158,8 +166,8 @@ def mf(path):
         data = {
             "unit": doc.get("unit"),
             "meshes": result,
-            "buildItems": len(doc.findall("m:build/m:item", ns)),
-            "names": [o.get("name") for o in doc.findall("m:resources/m:object", ns)],
+            "buildItems": len(items),
+            "names": [objects[item.get("objectid")].get("name") for item in items],
         }
         binary = command(
             "PRUSASLICER", "prusa-slicer", "PrusaSlicer.app/Contents/MacOS/PrusaSlicer"

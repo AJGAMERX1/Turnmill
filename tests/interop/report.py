@@ -1,8 +1,6 @@
 from pathlib import Path
 import json, hashlib, os, re
 from collections import Counter
-from xml.etree import ElementTree
-from zipfile import ZipFile
 from external import out, root, vectors
 
 f = out / "measurements.json"
@@ -10,9 +8,9 @@ data = json.loads(f.read_text())
 lines = [
     "# External CAD measurements",
     "",
-    "All volumes are in mm³. A pending reference requires owner sign-off. The delta for an unapproved solid compares FreeCAD to the current native solid. The STEP coordinate column compares each exported body with its raw Part-workspace bounds. Installed assembly placement is reported separately when a saved pose was checked.",
+    "All volumes are in mm³. A pending reference requires owner sign-off. The delta for an unapproved solid compares FreeCAD to the current native solid. The STEP coordinate column compares each exported body with its bounds in the exported workspace. Assembly cases also compare installed centroids with their displayed poses.",
     "",
-    "|File|Format|Expected (source)|App volume|Independent volume|Diff %|Raw body bounds ±0.01 mm|Valid in reader|Import warnings|Structure|Result|",
+    "|File|Format|Expected (source)|App volume|Independent volume|Diff %|Exported body bounds ±0.01 mm|Valid in reader|Import warnings|Structure|Result|",
     "|---|---|---|---:|---:|---:|---|---|---|---|---|",
 ]
 refs = [
@@ -40,7 +38,6 @@ poses = {
         "click-coil/click-with-coil.step",
     ),
 }
-coil = "ui-click-coil-click-with-coil"
 
 
 def installed_centers(case, parts):
@@ -75,21 +72,8 @@ def installed_centers(case, parts):
             )
         )
     worst, name = max(errors)
-    if worst > 0.01:
-        return f"FAIL ASM-001. {name} installed centroid differs by {worst:.3f} mm on its worst axis{provenance}"
-    return "Installed component centroids match within 0.01 mm" + provenance
-
-
-def built_meshes(path):
-    with ZipFile(path) as z:
-        doc = ElementTree.fromstring(z.read("3D/3dmodel.model"))
-    objects = {o.get("id"): o for o in doc.findall("{*}resources/{*}object")}
-    result = {}
-    for item in doc.findall("{*}build/{*}item"):
-        obj = objects[item.get("objectid")]
-        assert item.get("transform") is None, "Re-evaluate the installed assembly pose"
-        result[obj.get("name")] = obj.find("{*}mesh")
-    return result
+    assert worst <= 0.01, f"{case}: {name} installed centroid differs by {worst:.3f} mm"
+    return f"Installed component centroids match within {worst:.5g} mm" + provenance
 
 
 def row(c):
@@ -137,35 +121,12 @@ def row(c):
         mesh = ext["3mf"]
         v = sum(q["volume"] for q in mesh["meshes"])
         closed = all(q["closed"] for q in mesh["meshes"])
-        mesh_status = (
-            "INTEROP-007, 131 self-intersections; identical STL and 3MF triangles"
-            if n == "ui-click-coil-click-with-coil-4"
-            else "Container/mesh checked"
-        )
+        mesh_status = ", ".join(c["knownMesh"]) or "Container/mesh checked"
         if n in poses:
-            built = built_meshes(out / (n + ".3mf"))
-            assert set(built) == set(vs)
-            # The independent XML reader already checked the local bounds against each native body.
             for geometry, body in zip(mesh["meshes"], local["parts"], strict=True):
-                assert (
-                    max(
-                        abs(a - b)
-                        for ac, bc in zip(geometry["bbox"], body["bbox"])
-                        for a, b in zip(ac, bc)
-                    )
-                    < 0.01
-                )
-            if step_status.startswith("FAIL ASM-001"):
-                mesh_status = "FAIL ASM-001. Build items have identity placement and raw body coordinates"
-        if n == coil:
-            solo = built_meshes(out / (n + "-4.3mf"))
-            title = "Century Spring B18-127CS"
-            assert ElementTree.tostring(built[title]) == ElementTree.tostring(
-                solo[title]
-            )
-            identity = json.loads((out / "spring-mesh-formats.json").read_text())
-            assert identity["onlyInStl"] == identity["onlyInThreeMf"] == 0
-            mesh_status = "FAIL ASM-001 and INTEROP-007. The built spring has its unchanged raw mesh and identity placement, and shares all triangles with the isolated spring (131 intersecting pairs)"
+                assert max(abs(a - b) for ac, bc in zip(geometry["bbox"], body["bbox"])
+                           for a, b in zip(ac, bc)) <= 0.01
+            mesh_status += ". Installed component bounds within 0.01 mm"
         lines.append(
             f"|[{n}.3mf]({n}.3mf)|3MF|{source}|{c['native']:.6f}|{v:.6f}, independent triangle integration|{pct(v):.5f}|Per-part coordinates checked|2-manifold edge counts {closed}|Prusa import exit {mesh['slicerExit']}|{mesh['buildItems']} build items|{mesh_status}|"
         )

@@ -42,6 +42,8 @@ setOC(
 );
 const load = (name) => server.ssrLoadModule("/src/" + name);
 const { buildBodies, exportBodies, releaseBodies } = await load("geometry.ts");
+const { exportAssemblyBodies } = await load("assemblyExport.ts");
+const { positioned } = await load("motionGeometry.ts");
 const { evaluateModel } = await load("buildModel.ts");
 const { blankProject } = await load("projects.ts");
 const { insertHardware } = await load("hardware.ts");
@@ -99,23 +101,33 @@ const rect = (x, y, l, w) => [
   [x + l, y + w],
   [x, y + w],
 ];
-async function save(name, p, expected = null) {
+async function save(name, p, expected = null, pose = null) {
   await json(name + ".turnmill", p);
   const model = await evaluateModel(p);
   const bodies = buildBodies(model.features);
-  const write = async (id, selected, ref) => {
-    const records = selected.map(metrics);
+  const write = async (id, selected, ref, view = null) => {
+    const records = selected.map((body, i) => {
+      if (!view) return metrics(body);
+      const shape = positioned(body.shape, view.matrices[i]);
+      try { return metrics({ ...body, shape }); }
+      finally { shape.delete(); }
+    });
     const row = {
       model: name,
       expected: ref,
       parts: records,
+      ...(view ? { installedPose: view } : {}),
       stl: { linearMm: 0.005, angularRadians: 0.08 },
     };
-    for (const format of ["step", "stl", "3mf"])
+    for (const format of ["step", "stl", "3mf"]) {
+      const blob = view ? exportAssemblyBodies(selected, format, {
+        ids: view.ids, joints: p.workspaces?.joints ?? {}, drivers: view.drivers, parameters: p.parameters,
+      }) : exportBodies(selected, format);
       await writeFile(
         join(out, id + "." + format),
-        Buffer.from(await exportBodies(selected, format).arrayBuffer()),
+        Buffer.from(await blob.arrayBuffer()),
       );
+    }
     await json(id + ".native.json", row);
     console.log(
       "export",
@@ -124,7 +136,7 @@ async function save(name, p, expected = null) {
     );
   };
   try {
-    await write(name, bodies, expected);
+    await write(name, bodies, expected, pose);
     if (bodies.length > 1) {
       const starts = p.features
         .map((f, i) => (f.operation === "new" && !f.suppressed ? i : -1))
@@ -342,7 +354,9 @@ async function projects() {
         !name.startsWith(process.env.QA_ONLY_CASE)
       )
         continue;
-      await save(name, project);
+      const assembly = ["bolt-library/bolt-nut", "bolt-scratch/bolt-nut", "click-coil/click-with-coil"].includes(dir + "/" + stem);
+      const pose = assembly ? JSON.parse(await readFile(join(folder, stem + ".pose.json"))) : null;
+      await save(name, project, null, pose);
       // Benchmark the actual UI-emitted assembly STEP; per-body and STL/3MF exports use the same kernel entry point.
       await writeFile(
         join(out, name + ".step"),

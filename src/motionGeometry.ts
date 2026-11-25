@@ -33,7 +33,12 @@ export function positioned(shape: Shape3D, m: number[]) {
     );
     const loc = new oc.TopLoc_Location(t);
     try {
-      return cast(shape.wrapped.Moved(loc)).asShape3D();
+      const moved = shape.wrapped.Moved(loc);
+      try {
+        return cast(moved).asShape3D();
+      } finally {
+        moved.delete();
+      }
     } finally {
       loc.delete();
     }

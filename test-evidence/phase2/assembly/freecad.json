@@ -1,0 +1,100 @@
+{
+  "result": "PASS ASM-001",
+  "cases": {
+    "two-blocks": {
+      "boxesMm": [
+        [
+          0,
+          0,
+          0,
+          20,
+          10,
+          5
+        ],
+        [
+          0,
+          0,
+          20,
+          20,
+          10,
+          25
+        ]
+      ],
+      "stepOverlapMm3": 0,
+      "stlTriangles": 24,
+      "threeMfParts": [
+        "Lower block",
+        "Upper block"
+      ]
+    },
+    "unsaved-quarter-turn": {
+      "boxesMm": [
+        [
+          3,
+          4,
+          0,
+          23,
+          14,
+          5
+        ],
+        [
+          -7,
+          4,
+          20,
+          3,
+          24,
+          23
+        ]
+      ],
+      "stepOverlapMm3": 0,
+      "stlTriangles": 24,
+      "threeMfParts": [
+        "Lower block",
+        "Upper block"
+      ]
+    },
+    "upper-part": {
+      "boxesMm": [
+        [
+          0,
+          0,
+          0,
+          20,
+          10,
+          3
+        ]
+      ],
+      "stepOverlapMm3": 0,
+      "stlTriangles": 12,
+      "threeMfParts": [
+        "Upper block"
+      ]
+    },
+    "local-parts": {
+      "boxesMm": [
+        [
+          0,
+          0,
+          0,
+          20,
+          10,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          20,
+          10,
+          3
+        ]
+      ],
+      "stepOverlapMm3": 599.9999999999999,
+      "stlTriangles": 24,
+      "threeMfParts": [
+        "Lower block",
+        "Upper block"
+      ]
+    }
+  }
+}
