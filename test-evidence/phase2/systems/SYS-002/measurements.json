@@ -1,0 +1,32 @@
+{
+  "rejectedRotationDegrees": 90,
+  "supportedRotationDegrees": 15,
+  "expectedRemoved": 2.4,
+  "actualRemoved": 2.4000000000000057,
+  "shape": {
+    "name": "plate",
+    "valid": true,
+    "volume": 77.6,
+    "area": 139.20000000000002,
+    "center": [
+      5.030927835051545,
+      2.000000000000001,
+      0.9721649484536082
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        10,
+        4,
+        2
+      ]
+    ],
+    "faces": 11,
+    "edges": 24,
+    "solids": 1
+  }
+}

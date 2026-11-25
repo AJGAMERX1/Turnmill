@@ -123,6 +123,12 @@ try {
       99,
       "Observer failed to count the 99 unions in the initial build",
     );
+    assert.equal(replay.unchangedFuses, 0);
+    assert.deepEqual(
+      replay.editedFuses,
+      [1, 1, 1],
+      "Tail edits need only the changed union",
+    );
     await save("SYS-003/boolean-work.json", replay);
     console.log(
       "Native diagnostic:",

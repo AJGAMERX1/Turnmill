@@ -4,11 +4,6 @@ import {
   finalHistoryEdit,
 } from "./interactive-budget.mjs";
 import { save } from "./runtime.mjs";
-const repeated = {
-  coldFuses: 99,
-  unchangedFuses: 0,
-  editedFuses: [99, 99, 99],
-};
 const controls = [
   {
     name: "below despite full history replay",
@@ -16,47 +11,38 @@ const controls = [
     expected: "PASS",
   },
   { name: "at threshold", input: [500, 530, 490], expected: "PASS" },
-  {
-    name: "over with measured known cause",
-    input: [430, 505, 520],
-    expected: "XFAIL",
-  },
 ];
 for (const c of controls)
   assert.equal(
-    evaluateInteractiveBudget(finalHistoryEdit, c.input, repeated).outcome,
+    evaluateInteractiveBudget(finalHistoryEdit, c.input).outcome,
     c.expected,
   );
 assert.throws(
-  () => evaluateInteractiveBudget("refill edit", [700, 620, 530], repeated),
+  () => evaluateInteractiveBudget("refill edit", [700, 620, 530]),
   /exceeded 500 ms/,
 );
 assert.throws(
-  () =>
-    evaluateInteractiveBudget(finalHistoryEdit, [700, 620, 530], {
-      ...repeated,
-      editedFuses: [1, 1, 1],
-    }),
+  () => evaluateInteractiveBudget(finalHistoryEdit, [700, 620, 530]),
   /exceeded 500 ms/,
 );
 assert.throws(
-  () => evaluateInteractiveBudget(finalHistoryEdit, [0, 0, 0], repeated),
+  () => evaluateInteractiveBudget(finalHistoryEdit, [0, 0, 0]),
   /Invalid Apply/,
 );
 assert.throws(
-  () => evaluateInteractiveBudget(finalHistoryEdit, [100, 200], repeated),
+  () => evaluateInteractiveBudget(finalHistoryEdit, [100, 200]),
   /three completed/,
 );
 await save("SYS-003/oracle-controls.json", {
   controls,
   unexpectedCases: [
     "slow unrelated path",
-    "slow without full replay",
+    "slow final-feature edit",
     "invalid readings",
     "incomplete readings",
   ],
   outcome: "PASS",
 });
 console.log(
-  "PASS 500 ms browser budget controls, exact boundary, scoped known failure, unrelated regression and malformed timings.",
+  "PASS 500 ms browser budget controls, exact boundary, over-budget final edit, unrelated regression and malformed timings.",
 );

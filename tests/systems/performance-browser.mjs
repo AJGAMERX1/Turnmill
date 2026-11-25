@@ -1,5 +1,4 @@
 import { resolve } from "node:path";
-import { readFile } from "node:fs/promises";
 import {
   finalHistoryEdit,
   evaluateInteractiveBudget,
@@ -66,10 +65,7 @@ try {
     durations.push(ms);
   }
   await page.screenshot({ path: resolve(evidence, "SYS-003/history.png") });
-  const replay = JSON.parse(
-    await readFile(resolve(evidence, "SYS-003/boolean-work.json"), "utf8"),
-  );
-  const result = evaluateInteractiveBudget(finalHistoryEdit, durations, replay);
+  const result = evaluateInteractiveBudget(finalHistoryEdit, durations);
   await save("SYS-003/result.json", {
     ...result,
     issue: "SYS-003",

@@ -1,0 +1,14 @@
+{
+  "physical": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n0.66 g\nBalance along X\n5.03 mm\nCenter of mass",
+  "preview": "Preview ready · 2.4 mm³ removed",
+  "volume": 77.6,
+  "removed": 2.4000000000000057,
+  "valid": true,
+  "warnings": [
+    "[.WebGL-0x10c00837800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x10c00837800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x10c00837800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x10c00837800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "errors": []
+}

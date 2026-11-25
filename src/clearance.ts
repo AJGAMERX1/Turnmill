@@ -1,6 +1,7 @@
 import { getOC, measureVolume, type Shape3D } from "replicad";
 import { Matrix4 } from "three";
-import { evaluate } from "./expressions";
+import { evaluate, resolveParameters } from "./expressions";
+import type { Parameter } from "./types";
 import {
   buildPoses,
   type JointConfig,
@@ -26,6 +27,7 @@ export type Probe = {
   config: JointConfig;
   drivers: Record<string, number[]>;
   values: Record<string, number>;
+  parameters?: Parameter[];
   range: boolean;
 };
 export type ClearanceResult = {
@@ -102,6 +104,9 @@ export async function checkPair(
   onProgress: (message: string) => void = () => {},
   cancelled: () => boolean = () => false,
 ): Promise<ClearanceResult> {
+  // Structured cloning retains the numeric values but drops their dimensional metadata.
+  if (request.parameters)
+    request = { ...request, values: resolveParameters(request.parameters) };
   const { id, pair, coordinate, config, drivers, values } = request;
   const ai = ids.indexOf(id),
     bi = ids.indexOf(pair);

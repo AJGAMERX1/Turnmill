@@ -8,7 +8,8 @@ import {
 } from "./secondaryProjection";
 import { projectAssemblyDrawing } from "./assemblyDrawingProjection";
 import { positioned } from "./motionGeometry";
-import type { EvaluatedFeature } from "./types";
+import type { EvaluatedFeature, Parameter } from "./types";
+import { resolveParameters } from "./expressions";
 import { bodyIds, buildPoses, type JointConfig } from "./kinematics";
 import { resolveThreadMates } from "./threadMates";
 
@@ -16,6 +17,7 @@ export type DrawingSource = {
   features: EvaluatedFeature[];
   joints?: JointConfig;
   values: Record<string, number>;
+  parameters?: Parameter[];
   modeled: boolean;
 };
 export type DrawingBase =
@@ -34,9 +36,11 @@ export type PreparedDrawing = {
 export function prepareDrawing({
   features,
   joints,
-  values,
+  values: numericValues,
+  parameters,
   modeled,
 }: DrawingSource): PreparedDrawing {
+  const values = parameters ? resolveParameters(parameters) : numericValues;
   const simplified =
     !modeled &&
     features.some((f) =>

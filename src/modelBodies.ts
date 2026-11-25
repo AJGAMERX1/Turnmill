@@ -1,5 +1,6 @@
 import {
   buildBodies,
+  cloneBody,
   displayBodies,
   releaseBodies,
   type Body,
@@ -12,6 +13,7 @@ interface CachedBody {
   signature: string;
   key: number;
   body: Body;
+  prefix?: { signature: string; body: Body };
   properties: BodyProps;
   area: number;
 }
@@ -35,6 +37,8 @@ export class ModelBodies {
 
   clear() {
     releaseBodies(this.bodies);
+    for (const entry of this.entries.values())
+      entry.prefix?.body.shape.delete();
     this.entries.clear();
   }
 
@@ -64,9 +68,10 @@ export class ModelBodies {
           );
         // Feature names label STEP products and rebuild errors. Every evaluated
         // geometry input, including embedded B-reps and feature order, remains in the key.
-        const signature = JSON.stringify(
-          history.map(({ name: _name, ...input }) => input),
+        const signatures = history.map(({ name: _name, ...input }) =>
+          JSON.stringify(input),
         );
+        const signature = signatures.join(",");
         const previous = this.entries.get(id);
         if (previous && previous.signature === signature) {
           const body =
@@ -83,13 +88,33 @@ export class ModelBodies {
             });
           continue;
         }
-        const [body] = buildBodies(history);
+        // Keep one immutable state immediately before the final feature. Repeated
+        // edits to that feature can start there without replaying earlier booleans.
+        let prefix: CachedBody["prefix"];
+        if (history.length > 1) {
+          const prefixSignature = signatures.slice(0, -1).join(",");
+          if (previous?.prefix?.signature === prefixSignature) {
+            prefix = previous.prefix;
+          } else {
+            const prefixBody =
+              previous?.signature === prefixSignature
+                ? cloneBody(previous.body)
+                : buildBodies(history.slice(0, -1))[0];
+            prefix = { signature: prefixSignature, body: prefixBody };
+            created.push(prefixBody);
+          }
+        }
+        const [body] = prefix
+          ? buildBodies(history.slice(-1), { id, body: prefix.body })
+          : buildBodies(history);
+        body.name = name;
         created.push(body);
         const { meshes, bodyProperties, area } = displayBodies([body]);
         const key = ++this.serial;
         next.set(id, {
           key,
           signature,
+          prefix,
           body,
           properties: bodyProperties[0],
           area,
@@ -102,7 +127,10 @@ export class ModelBodies {
     }
 
     for (const [id, old] of this.entries) {
-      if (next.get(id)?.key !== old.key) old.body.shape.delete();
+      const replacement = next.get(id);
+      if (replacement?.key !== old.key) old.body.shape.delete();
+      if (old.prefix && replacement?.prefix !== old.prefix)
+        old.prefix.body.shape.delete();
     }
     this.entries = next;
 

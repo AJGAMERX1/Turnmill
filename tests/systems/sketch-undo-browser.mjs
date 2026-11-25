@@ -8,7 +8,6 @@ import {
   boxSketch,
   project,
   near,
-  xfail,
 } from "./runtime.mjs";
 const browser = await openBrowser();
 const edits = [];
@@ -74,22 +73,14 @@ try {
     available,
     coordinateAfterUndo: final,
   });
-  if (available !== 80 && available !== 82)
-    throw Error("Unexpected number of undo operations " + available);
-  if (available === 80)
-    near(final, 10.02, 0.0001, "earliest surviving coordinate");
-  await xfail(
-    "SYS-004",
-    "Sketch editor discards its earliest undo actions after 80 edits",
-    async () => {
-      assert.equal(
-        available,
-        82,
-        "Expected to undo 82 edits, ran out after " + available,
-      );
-      near(final, 10, 0.0001, "restored initial point");
-    },
-  );
+  assert.equal(available, 82, "All 82 sketch edits remain undoable");
+  near(final, 10, 0.0001, "restored initial point");
+  const redo = page.getByRole("button", {
+    name: "Redo sketch edit",
+    exact: true,
+  });
+  for (let i = 0; i < edits.length; i++) await redo.click();
+  near(Number(await x.inputValue()), 10.82, 0.0001, "restored latest point");
 } finally {
   await browser.close();
 }

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { appUrl, measure, openBrowser } from "../qa/browser.mjs";
-import { save, xfail, near, evidence } from "./runtime.mjs";
+import { save, near, evidence } from "./runtime.mjs";
 const browser = await openBrowser(),
   errors = [],
   warnings = [];
@@ -47,24 +47,18 @@ try {
   );
   await page.screenshot({ path: resolve(evidence, "SYS-001/clearance.png") });
   const clearance = await report.innerText();
-  if (
-    !clearance.includes("Expected a angle value.") &&
-    !clearance.includes("6.00000 mm")
-  )
-    throw Error("Different clearance response: " + clearance);
-  await xfail("SYS-001", "Browser named-angle clearance", async () =>
-    assert.match(
-      clearance,
-      /6\.00000 mm minimum nominal gap/,
-      "Expected 6 mm, displayed " + clearance.split("\n").at(-1),
-    ),
-  );
+  assert.match(clearance, /6\.00000 mm minimum nominal gap/);
   await button("Drawing").click();
   await page.getByLabel("Drawing source").selectOption("assembly");
   await page.waitForFunction(
     () =>
       document.body.innerText.includes("Expected a angle value.") ||
       document.body.innerText.includes("Exploded assembly"),
+  );
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll("button")].some(
+      (b) => b.textContent.includes("Download PDF") && !b.disabled,
+    ),
   );
   await page.screenshot({ path: resolve(evidence, "SYS-001/drawing.png") });
   await save("SYS-001/ui.json", {
@@ -113,22 +107,18 @@ try {
     mode: "Extruded stock, flat surface mark",
     offsetDirection: "X",
   });
-  if (endOptions.some((t) => /minimum Z|maximum Z/i.test(t))) {
-    await xfail(
-      "SYS-005",
-      "Flat engraving labels the longitudinal start/end offset as the Z axis",
-      async () =>
-        assert.ok(
-          !endOptions.some((t) => /minimum Z|maximum Z/i.test(t)),
-          "Actual options: " +
-            endOptions.join(" / ") +
-            "; offset moves along X.",
-        ),
-    );
-  } else
-    throw Error(
-      "XPASS SYS-005 flat mark end labels no longer specify Z. Review this case.",
-    );
+  assert.deepEqual(endOptions, ["Start · minimum X", "End · maximum X"]);
+  await button("Preview").click();
+  const alert = page.locator(".finish-footer [role=alert]");
+  await alert
+    .filter({ hasText: /artwork extends outside the flat face/i })
+    .waitFor();
+  await button("Apply finishes").click();
+  await alert
+    .filter({ hasText: /artwork extends outside the flat face/i })
+    .waitFor();
+  assert.ok(await page.getByRole("dialog").isVisible());
+  await page.getByLabel("Angle on top face", { exact: true }).fill("15 deg");
   await button("Preview").click();
   await page.locator('.finish-form[data-preview="ready"]').waitFor();
   const preview = await page.locator(".finish-preview-status").innerText();
@@ -143,16 +133,11 @@ try {
       !document.querySelector(".build-pill"),
   );
   const cut = await measure(page);
-  assert.equal(cut.project.features[0].finishes[0].rotation, "90 deg");
+  assert.equal(cut.project.features[0].finishes[0].rotation, "15 deg");
   await page.screenshot({ path: resolve(evidence, "SYS-002/engraving.png") });
   const physical = await page.locator(".ins-section.properties").innerText();
-  const volume = cut.bodies[0].volume,
-    delta = Math.abs(volume - 78.4);
-  if (delta > 0.002 && Math.abs(volume - 77.6) > 0.002)
-    throw Error("Unexpected engraving volume " + volume);
-  await xfail("SYS-002", "Browser engraving volume", async () =>
-    near(volume, 77.6, 0.0024, "Volume for complete graphic"),
-  );
+  const volume = cut.bodies[0].volume;
+  near(volume, 77.6, 0.0024, "Volume for complete supported graphic");
   await save("SYS-002/ui.json", {
     physical,
     preview,

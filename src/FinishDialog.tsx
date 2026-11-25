@@ -331,10 +331,10 @@ export default function FinishDialog({
                     onChange={(e) => update({ end: e.target.value })}
                   >
                     <option value="start">
-                      Start · minimum {turning ? "X" : "Z"}
+                      Start · minimum {turning || active.kind === "mark" ? "X" : "Z"}
                     </option>
                     <option value="end">
-                      End · maximum {turning ? "X" : "Z"}
+                      End · maximum {turning || active.kind === "mark" ? "X" : "Z"}
                     </option>
                   </select>
                 </label>

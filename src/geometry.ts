@@ -43,6 +43,15 @@ export type RenderBody = {
   faces: { start: number; count: number; faceId: number }[];
 };
 
+export function cloneBody(body: Body): Body {
+  return {
+    ...body,
+    shape: body.shape.clone(),
+    guides: body.guides?.slice(),
+    threadFrames: body.threadFrames?.slice(),
+  };
+}
+
 export function releaseBodies(bodies: Body[]) {
   bodies.forEach(({ shape }) => shape.delete());
 }
@@ -173,9 +182,12 @@ function checkSolid(shape: Shape3D) {
 }
 
 /** New starts a body. An Add or Cut acts on the most recently started body. */
-export function buildBodies(features: EvaluatedFeature[]): Body[] {
-  const bodies: Body[] = [];
-  let bodyId = "";
+export function buildBodies(
+  features: EvaluatedFeature[],
+  prefix?: { id: string; body: Body },
+): Body[] {
+  const bodies: Body[] = prefix ? [cloneBody(prefix.body)] : [];
+  let bodyId = prefix?.id ?? "";
   try {
     for (const feature of features) {
       let tool: Shape3D | undefined, result: Shape3D | undefined;

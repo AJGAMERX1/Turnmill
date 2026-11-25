@@ -263,7 +263,7 @@ export default function SketchEditor({
     return snap ? { x: Math.round(p.x), y: Math.round(p.y) } : p;
   }
   const change = (next: Sketch) => {
-    setUndo((stack) => [...stack.slice(-79), draft]);
+    setUndo((stack) => [...stack, draft]);
     setRedo([]);
     setDraft(next);
     setStatus("");

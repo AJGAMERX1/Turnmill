@@ -5,7 +5,6 @@ import {
   runtime,
   near,
   save,
-  xfail,
   feature,
   boxSketch,
   project,
@@ -59,56 +58,29 @@ try {
     const direct = await checkPair(bodies, ids, request);
     assert.equal(direct.status, "clear");
     near(direct.sampledGap, 6, 0.01, "separation");
-    await xfail(
-      "SYS-001",
-      "Named angular limit breaks clearance worker and assembled drawing",
-      async () => {
-        let result, diagnostic, drawError;
-        const copy = structuredClone(request);
-        try {
-          result = await checkPair(bodies, ids, copy);
-        } catch (e) {
-          diagnostic = e.message;
-        }
-        try {
-          const draw = prepareDrawing(
-            structuredClone({
-              features: model.features,
-              values: model.values,
-              joints: cfg,
-              modeled: false,
-            }),
-          );
-          draw.dispose();
-        } catch (e) {
-          drawError = e.message;
-        }
-        await save("SYS-001/measurements.json", {
-          hingePose: buildPoses(ids, cfg, { moving: [45] }, model.values),
-          reference: direct,
-          workerResult: result,
-          workerError: diagnostic,
-          drawingError: drawError,
-        });
-        for (const e of [diagnostic, drawError])
-          if (e && e !== "Expected a angle value.")
-            throw Error("Unexpected worker diagnostic: " + e);
-        if (!diagnostic && result?.status !== "clear")
-          throw Error("Unexpected clearance result " + JSON.stringify(result));
-        assert.equal(
-          drawError,
-          undefined,
-          "Assembled drawing worker should project both parts; got " +
-            drawError,
-        );
-        assert.equal(
-          result?.status,
-          "clear",
-          "A 45° pose separated by 6.00 mm should pass in the worker; got " +
-            (diagnostic || result?.status),
-        );
-      },
+    const cloned = await checkPair(bodies, ids, structuredClone(request));
+    assert.equal(cloned.status, "clear");
+    near(cloned.sampledGap, 6, 0.01, "worker separation at 45 degrees");
+    const drawing = prepareDrawing(
+      structuredClone({
+        features: model.features,
+        values: model.values,
+        parameters,
+        joints: cfg,
+        modeled: false,
+      }),
     );
+    try {
+      assert.ok(drawing.base.assembly, "Expected a projected assembly sheet");
+      await save("SYS-001/measurements.json", {
+        hingePose: buildPoses(ids, cfg, { moving: [45] }, model.values),
+        reference: direct,
+        workerResult: cloned,
+        assemblyProjected: true,
+      });
+    } finally {
+      drawing.dispose();
+    }
   } finally {
     releaseBodies(bodies);
   }
@@ -144,40 +116,27 @@ try {
     [{ ...plate, finishes: [mark] }],
   );
   await save("SYS-002/rotated-graphic.turnmill", engraved);
-  await xfail(
-    "SYS-002",
-    "Rotated flat engraving silently clips the requested artwork",
-    async () => {
-      let m;
-      try {
-        [m] = await measureProject(api, engraved);
-      } catch (e) {
-        if (!/fit|footprint|outside|stock/i.test(e.message)) throw e;
-        return;
-      }
-      const removed = 80 - m.volume;
-      await save("SYS-002/measurements.json", {
-        stockVolume: 80,
-        designArea: 12,
-        requestedDepth: 0.2,
-        expectedRemoved: 2.4,
-        actualRemoved: removed,
-        shape: m,
-      });
-      if (Math.abs(removed - 2.4) > 0.0024 && Math.abs(removed - 1.6) > 0.0016)
-        throw Error("Different engraving discrepancy: " + removed);
-      near(
-        removed,
-        2.4,
-        0.0024,
-        "Complete 6 × 2 mm graphic cut (or reject placement)",
-      );
-    },
+  await assert.rejects(
+    () => measureProject(api, engraved),
+    /artwork extends outside the flat face/i,
   );
+  const supported = structuredClone(engraved);
+  supported.features[0].finishes[0].rotation = "15 deg";
+  const [supportedCut] = await measureProject(api, supported);
+  near(80 - supportedCut.volume, 2.4, 0.0024, "Complete rotated graphic");
+  await save("SYS-002/supported-graphic.turnmill", supported);
+  await save("SYS-002/measurements.json", {
+    rejectedRotationDegrees: 90,
+    supportedRotationDegrees: 15,
+    expectedRemoved: 2.4,
+    actualRemoved: 80 - supportedCut.volume,
+    shape: supportedCut,
+  });
   if (process.env.QA_EXPORT_SYS002) {
     const dir = process.env.QA_EXPORT_SYS002;
     await mkdir(dir, { recursive: true });
-    const { features } = await evaluateModel(engraved);
+    const { features } = await evaluateModel(supported);
+    await writeFile(join(dir, "SYS-002.turnmill"), JSON.stringify(supported));
     const bodies = buildBodies(features);
     try {
       for (const format of ["step", "stl"])

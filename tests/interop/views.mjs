@@ -37,7 +37,7 @@ try {
     if (name === "SYS-002") {
       project = JSON.parse(
         await readFile(
-          "test-evidence/systems/SYS-002/rotated-graphic.turnmill",
+          join(out, "SYS-002.turnmill"),
           "utf8",
         ),
       );
