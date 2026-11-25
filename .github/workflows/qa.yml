@@ -7,6 +7,10 @@ on:
   workflow_call:
   schedule:
     - cron: "23 7 * * *"
+# Every pushed revision runs. A newer revision may supersede only its duplicate PR preview.
+concurrency:
+  group: turnmill-qa-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:

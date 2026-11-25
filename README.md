@@ -20,6 +20,8 @@ Open [Turnmill on this computer](http://127.0.0.1:4179/). Using the same browser
 
 ## Try the pen
 
+[Example M10 pen project and drawings](test-evidence/phase2/m10-acceptance/README.md)
+
 - Choose **Pen walkthrough → Start a new guided pen**, or **New project → Guided twist pen**. The guide starts with an editable barrel profile. Set the barrel length, revolve it, choose a thread pitch, and add the cap, refill and clip. The last three steps use the assembly and drawing tools to turn the cap, check the clearance through its travel and export the dimensioned barrel. Pause at any step and choose **Pen walkthrough** to resume. Opening the guide from an existing design creates a separate project in the undo history.
 - For the completed example, choose the project name, **New project**, then **Twist pen assembly**. The same design is included in [the native sample](examples/twist-pen.turnmill).
 - In **Assembly → 3D assembly**, select **Threaded cap**. Turn through 360° and read 0.750 mm axial travel. At 720° the cap advances 1.500 mm. **Check pose** measures the spacing of two actual solids. **Full travel** checks continuous separation throughout one joint coordinate. It can use a helical separating surface for mating threads or subdivide the range for other shapes. A result labeled **unresolved** still requires investigation. The check reports nominal model geometry.

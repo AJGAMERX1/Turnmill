@@ -1,0 +1,1994 @@
+{
+  "cases": [
+    {
+      "case": "SYS-002",
+      "expected": null,
+      "native": 77.6,
+      "freecad": 77.60000000000046,
+      "prusaStl": 77.600006,
+      "freecadStl": 77.5999984741211,
+      "pctDifference": 6.043275845382296e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "plate"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "plate"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "block",
+      "expected": {
+        "formula": "20 × 10 × 5",
+        "volume": 1000,
+        "bbox": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            20,
+            10,
+            5
+          ]
+        ],
+        "center": [
+          10,
+          5,
+          2.5
+        ]
+      },
+      "native": 999.9999999999998,
+      "freecad": 999.9999999999998,
+      "prusaStl": 1000.000061,
+      "freecadStl": 1000.0,
+      "pctDifference": 2.2737367544323207e-14,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Analytic block"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Analytic block"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "cylinder",
+      "expected": {
+        "formula": "π × 5² × 100",
+        "volume": 7853.981633974483,
+        "bbox": [
+          [
+            0,
+            -5,
+            -5
+          ],
+          [
+            100,
+            5,
+            5
+          ]
+        ],
+        "center": [
+          50,
+          0,
+          0
+        ]
+      },
+      "native": 7853.981633974484,
+      "freecad": 7853.981633974483,
+      "prusaStl": 7851.950195,
+      "freecadStl": 7851.88134765625,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Analytic cylinder"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Analytic cylinder"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge-1",
+      "expected": null,
+      "native": 205.05565779356672,
+      "freecad": 205.05565779355302,
+      "prusaStl": 205.018356,
+      "freecadStl": 205.0179901123047,
+      "pctDifference": 6.680753944007744e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge leaf A"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge leaf A"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge-2",
+      "expected": null,
+      "native": 205.05565779356672,
+      "freecad": 205.05565779359267,
+      "prusaStl": 205.01741,
+      "freecadStl": 205.0178680419922,
+      "pctDifference": 1.265462313460388e-11,
+      "maxBoundError": 4.440892098500626e-16,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge leaf B"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge leaf B"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge-3",
+      "expected": null,
+      "native": 203.08040310967817,
+      "freecad": 203.08040310967812,
+      "prusaStl": 203.027222,
+      "freecadStl": 203.0255889892578,
+      "pctDifference": 2.799059780776013e-14,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge",
+      "expected": null,
+      "native": 613.1917186968117,
+      "freecad": 613.1917186968113,
+      "prusaStl": 613.066528,
+      "freecadStl": 613.070068359375,
+      "pctDifference": 5.5620534779838254e-14,
+      "maxBoundError": 4.440892098500626e-16,
+      "valid": true,
+      "solidCount": 3,
+      "names": [
+        "Hinge leaf A",
+        "Hinge leaf B",
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Hinge leaf A",
+        "Hinge leaf B",
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "m5-cosmetic",
+      "expected": null,
+      "native": 429.609139466949,
+      "freecad": 429.6091394669419,
+      "prusaStl": 429.545715,
+      "freecadStl": 429.5436096191406,
+      "pctDifference": 1.653928351342172e-12,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex screw · 12 mm"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex screw · 12 mm"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "m5-nut",
+      "expected": null,
+      "native": 157.38674658812351,
+      "freecad": 157.386746597095,
+      "prusaStl": 157.399307,
+      "freecadStl": 157.39895629882812,
+      "pctDifference": 5.700278648901559e-09,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex nut"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ruler-blank",
+      "expected": {
+        "formula": "155.4 × 20 × 2",
+        "volume": 6216,
+        "bbox": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            155.4,
+            20,
+            2
+          ]
+        ],
+        "center": [
+          77.7,
+          10,
+          1
+        ]
+      },
+      "native": 6216,
+      "freecad": 6216.0,
+      "prusaStl": 6216.0,
+      "freecadStl": 6216.0,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Aluminum ruler stock"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Aluminum ruler stock"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ruler",
+      "expected": null,
+      "native": 6200.977448029486,
+      "freecad": 6200.977448029446,
+      "prusaStl": 6200.446289,
+      "freecadStl": 6200.484375,
+      "pctDifference": 6.453461121798706e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Aluminum blank"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Aluminum blank"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "threaded-rod",
+      "expected": {
+        "formula": "4πR² + 4π[R²/8 + r²/4 + 5(R²+Rr+r²)/24], R=2.5, r=R−5√3·0.8/16",
+        "volume": 142.85562301843493,
+        "bbox": [
+          [
+            0,
+            -2.5,
+            -2.5
+          ],
+          [
+            8,
+            2.5,
+            2.5
+          ]
+        ],
+        "center": [
+          3.800861746139049,
+          0,
+          0
+        ]
+      },
+      "native": 142.84992021322637,
+      "freecad": 142.85556438489473,
+      "prusaStl": 142.825363,
+      "freecadStl": 142.82542419433594,
+      "pctDifference": 4.104391479529682e-05,
+      "maxBoundError": 1.270095140171179e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Plain threaded rod"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Plain threaded rod"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-1",
+      "expected": null,
+      "native": 6431.618930961377,
+      "freecad": 6431.618508023707,
+      "prusaStl": 6429.822754,
+      "freecadStl": 6429.56103515625,
+      "pctDifference": 6.575913071801669e-06,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Barrel"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Barrel"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-2",
+      "expected": null,
+      "native": 1187.948614539604,
+      "freecad": 1187.9486321842296,
+      "prusaStl": 1187.540771,
+      "freecadStl": 1187.5511474609375,
+      "pctDifference": 1.4853020888649813e-06,
+      "maxBoundError": 1.4210854715202004e-14,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Threaded cap"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Threaded cap"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-3",
+      "expected": null,
+      "native": 2415.2721400431005,
+      "freecad": 2415.2721400429505,
+      "prusaStl": 2414.618652,
+      "freecadStl": 2414.621337890625,
+      "pctDifference": 6.213238802558092e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Refill"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Refill"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-4",
+      "expected": null,
+      "native": 53.475000000000016,
+      "freecad": 53.474999999975005,
+      "prusaStl": 53.475006,
+      "freecadStl": 53.475067138671875,
+      "pctDifference": 4.677158354138479e-11,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Pocket clip"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen",
+      "expected": null,
+      "native": 10088.314685544083,
+      "freecad": 10088.314868411457,
+      "prusaStl": 10085.439453,
+      "freecadStl": 10083.95703125,
+      "pctDifference": 1.8126652434132498e-06,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 4,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "knownMesh": [
+        "threaded cap touching pocket clip"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            4
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            4
+          ],
+          "volume": 0.15048545638725214
+        }
+      ],
+      "roots": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-M5-modeled-screw",
+      "expected": null,
+      "native": 386.9376904932548,
+      "freecad": 386.9376905216917,
+      "prusaStl": 386.873566,
+      "freecadStl": 386.8688659667969,
+      "pctDifference": 7.34921599056155e-09,
+      "maxBoundError": 7.425171588693047e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex screw · 12 mm"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex screw · 12 mm"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-bolt-nut-1",
+      "expected": null,
+      "native": 386.9376904932548,
+      "freecad": 386.9376905216917,
+      "prusaStl": 386.873566,
+      "freecadStl": 386.8688659667969,
+      "pctDifference": 7.34921599056155e-09,
+      "maxBoundError": 7.425171588693047e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex screw · 12 mm"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex screw · 12 mm"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-bolt-nut-2",
+      "expected": null,
+      "native": 157.38674658812351,
+      "freecad": 157.386746597095,
+      "prusaStl": 157.399307,
+      "freecadStl": 157.39895629882812,
+      "pctDifference": 5.700278648901559e-09,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex nut"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-bolt-nut",
+      "expected": null,
+      "native": 544.3244370813784,
+      "freecad": 544.3236643108161,
+      "prusaStl": 544.276367,
+      "freecadStl": 544.306884765625,
+      "pctDifference": 0.0001419687432121525,
+      "maxBoundError": 7.425171588693047e-12,
+      "valid": true,
+      "solidCount": 2,
+      "names": [
+        "M5 hex screw · 12 mm",
+        "M5 hex nut"
+      ],
+      "knownMesh": [
+        "mating library M5 screw/nut"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0.29382887649318157
+        }
+      ],
+      "roots": [
+        "M5 hex screw · 12 mm",
+        "M5 hex nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-scratch-bolt-nut-1",
+      "expected": null,
+      "native": 322.6624125110825,
+      "freecad": 322.6624125515373,
+      "prusaStl": 322.595154,
+      "freecadStl": 322.5895690917969,
+      "pctDifference": 1.2537803448308759e-08,
+      "maxBoundError": 1.6351364706679306e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hand-built shank"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hand-built shank"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-scratch-bolt-nut-2",
+      "expected": null,
+      "native": 157.38674657930716,
+      "freecad": 157.38674658825894,
+      "prusaStl": 157.399307,
+      "freecadStl": 157.3989715576172,
+      "pctDifference": 5.6877640982416095e-09,
+      "maxBoundError": 1.6351364706679306e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hand-built nut"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hand-built nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-scratch-bolt-nut",
+      "expected": null,
+      "native": 480.0491590903897,
+      "freecad": 480.0221535863907,
+      "prusaStl": 479.993347,
+      "freecadStl": 480.001708984375,
+      "pctDifference": 0.00562557052494205,
+      "maxBoundError": 1.6351364706679306e-12,
+      "valid": true,
+      "solidCount": 2,
+      "names": [
+        "Hand-built shank",
+        "Hand-built nut"
+      ],
+      "knownMesh": [
+        "mating hand-built M5 screw/nut"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Hand-built shank",
+        "Hand-built nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-coil-click-with-coil-1",
+      "expected": null,
+      "native": 1281.7698026646353,
+      "freecad": 1281.7698026646403,
+      "prusaStl": 1281.424805,
+      "freecadStl": 1281.4334716796875,
+      "pctDifference": 3.9025890993469565e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Guide tube"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Guide tube"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-coil-click-with-coil-2",
+      "expected": null,
+      "native": 145.80131505310231,
+      "freecad": 145.8013150531032,
+      "prusaStl": 145.762619,
+      "freecadStl": 145.7626495361328,
+      "pctDifference": 6.042970133853927e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Cam ring"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Cam ring"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-coil-click-with-coil-3",
+      "expected": null,
+      "native": 183.7831702350029,
+      "freecad": 183.7831702350029,
+      "prusaStl": 183.733688,
+      "freecadStl": 183.73443603515625,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Plunger"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Plunger"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-coil-click-with-coil-4",
+      "expected": null,
+      "native": 12.179100635642689,
+      "freecad": 12.17910063564312,
+      "prusaStl": 12.171119,
+      "freecadStl": 12.171019554138184,
+      "pctDifference": 3.544224856070274e-12,
+      "maxBoundError": 8.024692021990631e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Century Spring B18-127CS"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Century Spring B18-127CS"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-coil-click-with-coil",
+      "expected": null,
+      "native": 1623.5333885883833,
+      "freecad": 1623.5334055177755,
+      "prusaStl": 1623.064453,
+      "freecadStl": 1623.0059814453125,
+      "pctDifference": 1.0427498597016523e-06,
+      "maxBoundError": 8.024692021990631e-13,
+      "valid": true,
+      "solidCount": 4,
+      "names": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger",
+        "Century Spring B18-127CS"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            4
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            3,
+            4
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger",
+        "Century Spring B18-127CS"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study-1",
+      "expected": null,
+      "native": 1281.7698026646353,
+      "freecad": 1281.7698026646403,
+      "prusaStl": 1281.424805,
+      "freecadStl": 1281.4334716796875,
+      "pctDifference": 3.9025890993469565e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Guide tube"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Guide tube"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study-2",
+      "expected": null,
+      "native": 145.80131505310231,
+      "freecad": 145.8013150531032,
+      "prusaStl": 145.762619,
+      "freecadStl": 145.7626495361328,
+      "pctDifference": 6.042970133853927e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Cam ring"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Cam ring"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study-3",
+      "expected": null,
+      "native": 183.7831702350029,
+      "freecad": 183.7831702350029,
+      "prusaStl": 183.733688,
+      "freecadStl": 183.73443603515625,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Plunger"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Plunger"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study",
+      "expected": null,
+      "native": 1611.3542879527406,
+      "freecad": 1611.3542879527818,
+      "prusaStl": 1610.913086,
+      "freecadStl": 1610.9473876953125,
+      "pctDifference": 2.5540401364812717e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 3,
+      "names": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge-1",
+      "expected": null,
+      "native": 160.99293798689453,
+      "freecad": 160.99293798690974,
+      "prusaStl": 160.972992,
+      "freecadStl": 160.97341918945312,
+      "pctDifference": 9.444895369574498e-12,
+      "maxBoundError": 8.881784197001252e-16,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Fixed leaf"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Fixed leaf"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge-2",
+      "expected": null,
+      "native": 160.9929379868948,
+      "freecad": 160.99293798686625,
+      "prusaStl": 160.973068,
+      "freecadStl": 160.9733428955078,
+      "pctDifference": 1.7724626076734168e-11,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Moving leaf"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Moving leaf"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge-3",
+      "expected": null,
+      "native": 120.16591899980958,
+      "freecad": 120.16591899980959,
+      "prusaStl": 120.134422,
+      "freecadStl": 120.13451385498047,
+      "pctDifference": 1.1826027573778654e-14,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge",
+      "expected": null,
+      "native": 442.1517949735989,
+      "freecad": 442.15179497361993,
+      "prusaStl": 442.0802,
+      "freecadStl": 442.0805969238281,
+      "pctDifference": 4.756752142045426e-12,
+      "maxBoundError": 8.881784197001252e-16,
+      "valid": true,
+      "solidCount": 3,
+      "names": [
+        "Fixed leaf",
+        "Moving leaf",
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Fixed leaf",
+        "Moving leaf",
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-M10-pen-1",
+      "expected": null,
+      "native": 6946.262782906766,
+      "freecad": 6946.262354417708,
+      "prusaStl": 6944.365723,
+      "freecadStl": 6944.67529296875,
+      "pctDifference": 6.168627241926042e-06,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Barrel"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Barrel"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-M10-pen-2",
+      "expected": null,
+      "native": 1224.1010143135331,
+      "freecad": 1224.1009998871596,
+      "prusaStl": 1223.681152,
+      "freecadStl": 1223.65771484375,
+      "pctDifference": 1.1785280310420443e-06,
+      "maxBoundError": 8.881784197001252e-16,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Threaded cap"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Threaded cap"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-M10-pen-3",
+      "expected": null,
+      "native": 2415.2721400431005,
+      "freecad": 2415.2721400429505,
+      "prusaStl": 2414.618652,
+      "freecadStl": 2414.621337890625,
+      "pctDifference": 6.213238802558092e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Refill"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Refill"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-M10-pen-4",
+      "expected": null,
+      "native": 53.47500000000001,
+      "freecad": 53.47499999997501,
+      "prusaStl": 53.474995,
+      "freecadStl": 53.475032806396484,
+      "pctDifference": 4.6745008778009017e-11,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Pocket clip"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-M10-pen",
+      "expected": null,
+      "native": 10639.1109372634,
+      "freecad": 10639.111739029448,
+      "prusaStl": 10636.160156,
+      "freecadStl": 10635.4130859375,
+      "pctDifference": 7.536024882567585e-06,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 4,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "knownMesh": [
+        "M10 threaded cap touching pocket clip"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            4
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            4
+          ],
+          "volume": 0.15230367599683245
+        }
+      ],
+      "roots": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-1",
+      "expected": null,
+      "native": 6430.324147784153,
+      "freecad": 6430.318472036463,
+      "prusaStl": 6428.518066,
+      "freecadStl": 6428.15185546875,
+      "pctDifference": 8.826534338119321e-05,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Barrel"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Barrel"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-2",
+      "expected": null,
+      "native": 1187.948614539604,
+      "freecad": 1187.9486321842296,
+      "prusaStl": 1187.540771,
+      "freecadStl": 1187.5511474609375,
+      "pctDifference": 1.4853020888649813e-06,
+      "maxBoundError": 1.4210854715202004e-14,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Threaded cap"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Threaded cap"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-3",
+      "expected": null,
+      "native": 2415.2721400431005,
+      "freecad": 2415.2721400429505,
+      "prusaStl": 2414.618652,
+      "freecadStl": 2414.621337890625,
+      "pctDifference": 6.213238802558092e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Refill"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Refill"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-4",
+      "expected": null,
+      "native": 53.475000000000016,
+      "freecad": 53.474999999975005,
+      "prusaStl": 53.475006,
+      "freecadStl": 53.475067138671875,
+      "pctDifference": 4.677158354138479e-11,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Pocket clip"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen",
+      "expected": null,
+      "native": 10087.019902366857,
+      "freecad": 10087.016415208285,
+      "prusaStl": 10084.134766,
+      "freecadStl": 10082.546875,
+      "pctDifference": 3.457075138071316e-05,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 4,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "knownMesh": [
+        "threaded cap touching pocket clip"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            4
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            4
+          ],
+          "volume": 0.15048545638725214
+        }
+      ],
+      "roots": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-ruler-graduated-ruler",
+      "expected": null,
+      "native": 6794.453373627474,
+      "freecad": 6794.453373627462,
+      "prusaStl": 6793.779785,
+      "freecadStl": 6793.865234375,
+      "pctDifference": 1.874017691289718e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Engraved ruler"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Engraved ruler"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    }
+  ],
+  "reverse": [
+    {
+      "file": "SYS-002.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "plate"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "block.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Analytic block"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "cylinder.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Analytic cylinder"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-filleted-block.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2173730120013965e-14,
+      "names": [
+        "Filleted block"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-straight-knurl.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.1139512783979635e-12,
+      "names": [
+        "Straight knurl"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-threaded-rod.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.1124112011308461e-05,
+      "names": [
+        "Helical grooved rod"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-two-parts.step",
+      "solids": 2,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Spacer",
+        "Stop block"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 6.583730546480667e-12,
+      "names": [
+        "Hinge leaf A"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.0977504405921254e-11,
+      "names": [
+        "Hinge leaf B"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.799059780776013e-14,
+      "names": [
+        "Hinge pin"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge.return.step",
+      "solids": 3,
+      "maxVolumeErrorPct": 1.0977504405921254e-11,
+      "names": [
+        "Hinge leaf A",
+        "Hinge leaf B",
+        "Hinge pin"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "m5-cosmetic.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.0641025824750223e-12,
+      "names": [
+        "M5 hex screw · 12 mm"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "m5-nut.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2715108286099138e-06,
+      "names": [
+        "M5 hex nut"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ruler-blank.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Aluminum ruler stock"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ruler.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.4666957094997155e-14,
+      "names": [
+        "Aluminum blank"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "threaded-rod.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.771267691155731e-05,
+      "names": [
+        "Plain threaded rod"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 8.894620551168727e-07,
+      "names": [
+        "Barrel"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.353821440610942e-05,
+      "names": [
+        "Threaded cap"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4852955210233298e-12,
+      "names": [
+        "Refill"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-4.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.986214506369888e-14,
+      "names": [
+        "Pocket clip"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen.return.step",
+      "solids": 4,
+      "maxVolumeErrorPct": 1.353821440610942e-05,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-M5-modeled-screw.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 7.703186041912266e-07,
+      "names": [
+        "M5 hex screw · 12 mm"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-bolt-nut-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 7.703186041912266e-07,
+      "names": [
+        "M5 hex screw · 12 mm"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-bolt-nut-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2715108286099138e-06,
+      "names": [
+        "M5 hex nut"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-bolt-nut.return.step",
+      "solids": 2,
+      "maxVolumeErrorPct": 1.271376581605441e-06,
+      "names": [
+        "M5 hex screw · 12 mm",
+        "M5 hex nut"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-scratch-bolt-nut-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.0321939368636738e-07,
+      "names": [
+        "Hand-built shank"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-scratch-bolt-nut-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2715108286812992e-06,
+      "names": [
+        "Hand-built nut"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-scratch-bolt-nut.return.step",
+      "solids": 2,
+      "maxVolumeErrorPct": 1.2713853761735582e-06,
+      "names": [
+        "Hand-built shank",
+        "Hand-built nut"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-coil-click-with-coil-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.9025890993469565e-13,
+      "names": [
+        "Guide tube"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-coil-click-with-coil-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 6.042970133853927e-13,
+      "names": [
+        "Cam ring"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-coil-click-with-coil-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Plunger"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-coil-click-with-coil-4.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 8.459466734652957e-13,
+      "names": [
+        "Century Spring B18-127CS"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-coil-click-with-coil.return.step",
+      "solids": 4,
+      "maxVolumeErrorPct": 1.8085756467189159e-12,
+      "names": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger",
+        "Century Spring B18-127CS"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.9025890993469565e-13,
+      "names": [
+        "Guide tube"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 6.042970133853927e-13,
+      "names": [
+        "Cam ring"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Plunger"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study.return.step",
+      "solids": 3,
+      "maxVolumeErrorPct": 6.042970133853927e-13,
+      "names": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 9.74501354019652e-12,
+      "names": [
+        "Fixed leaf"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.7671664046624416e-11,
+      "names": [
+        "Moving leaf"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.1826027573778654e-14,
+      "names": [
+        "Hinge pin"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge.return.step",
+      "solids": 3,
+      "maxVolumeErrorPct": 1.7671664046624416e-11,
+      "names": [
+        "Fixed leaf",
+        "Moving leaf",
+        "Hinge pin"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-M10-pen-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.727877415012893e-06,
+      "names": [
+        "Barrel"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-M10-pen-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 4.5366556931372594e-05,
+      "names": [
+        "Threaded cap"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-M10-pen-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4852955210233298e-12,
+      "names": [
+        "Refill"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-M10-pen-4.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "Pocket clip"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-M10-pen.return.step",
+      "solids": 4,
+      "maxVolumeErrorPct": 4.5366556931372594e-05,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.3773742530031124e-05,
+      "names": [
+        "Barrel"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.353821440610942e-05,
+      "names": [
+        "Threaded cap"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4852955210233298e-12,
+      "names": [
+        "Refill"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-4.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.986214506369888e-14,
+      "names": [
+        "Pocket clip"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen.return.step",
+      "solids": 4,
+      "maxVolumeErrorPct": 1.3773742530031124e-05,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-ruler-graduated-ruler.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.3385840652069437e-14,
+      "names": [
+        "Engraved ruler"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    }
+  ],
+  "unexpected": []
+}

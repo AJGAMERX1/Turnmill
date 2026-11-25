@@ -391,7 +391,9 @@ def report():
         )
         lengths = [3.7, 2.5, 1.4] if name == "ruler" else [5, 3.5, 2]
         offset = 0.5 if name == "ruler" else 2
-        stock_length = 155.4 if name == "ruler" else 155.0
+        # The analytic Pocket ruler fixture reserves a 1 mm margin at both
+        # ends. The UI fixture engraves the full length of the 155 mm blank.
+        layout_length = 155.4 - 2 * 1.0 if name == "ruler" else 155.0
         check(
             v["svgLabelGroups"] == 23,
             name + " sixteen metric / seven inch numeral groups",
@@ -400,11 +402,15 @@ def report():
             spacing = [1, 25.4 / 16][i]
             period = [10, 16][i]
             check(
-                len(edge) == int((stock_length - offset) / spacing + 1e-9) + 1
+                len(edge) == int((layout_length - offset) / spacing + 1e-9) + 1
                 and abs(edge[0][0] - offset) <= 0.01,
                 name + " tick count/start offset",
             )
             for idx, (at, length) in enumerate(edge):
+                check(
+                    abs(at - (offset + idx * spacing)) <= 0.01,
+                    f"{name} scale edge {i + 1} absolute center at mark {idx}",
+                )
                 target = lengths[
                     0 if idx % period == 0 else 1 if idx % (period // 2) == 0 else 2
                 ]
