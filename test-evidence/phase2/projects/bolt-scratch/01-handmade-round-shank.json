@@ -1,0 +1,84 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:42:46.301Z",
+  "stage": "01-handmade-round-shank",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Hand-built shank",
+      "id": "61f6151f-a551-420d-bc6d-3b36288df4ae",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 1.3351768777756625,
+  "centerOfMass": [
+    -1.3570366640911e-16,
+    -1.5808148666099678e-16,
+    -4
+  ],
+  "volume": 157.0796326794897,
+  "area": 164.93361431346415,
+  "bodies": [
+    {
+      "name": "Hand-built shank",
+      "volume": 157.0796326794897,
+      "center": [
+        -1.3570366640911e-16,
+        -1.5808148666099678e-16,
+        -4
+      ],
+      "area": 164.93361431346415,
+      "bbox": [
+        [
+          -2.5,
+          -2.5,
+          -8
+        ],
+        [
+          2.5,
+          2.5,
+          0
+        ]
+      ],
+      "faces": 6,
+      "edges": 12,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n1.34 g\nBalance along X\n-0 mm\nCenter of mass",
+  "console": [
+    {
+      "time": "2026-11-25T18:42:37.261Z",
+      "type": "error",
+      "value": "The script has an unsupported MIME type ('text/html')."
+    },
+    {
+      "time": "2026-11-25T18:42:39.535Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c0083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:42:39.535Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c0083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:42:39.535Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c0083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:42:39.535Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c0083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

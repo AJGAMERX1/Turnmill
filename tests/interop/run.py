@@ -287,6 +287,7 @@ def setup_and_check():
             "terminal",
         )
         node("projects")
+    run("machined_threads.py", "machined-threads")
     run("create_references.py", "references")
     with concurrent.futures.ThreadPoolExecutor(2) as pool:
         list(pool.map(check_one, sorted(out.glob("*.native.json"))))

@@ -7,6 +7,7 @@
 | Issue | Repair | Verified result |
 |---|---|---|
 | ASM-001 | [cfdb620](https://github.com/AJGAMERX1/Turnmill/commit/cfdb620898b5a2448079343452f8c389cf6edcf7) | Mounted blocks retained the 15 mm gap with zero overlap. Unsaved rotation, selected component and Part exports passed across STEP, STL and 3MF. [FreeCAD and 3MF results](test-evidence/phase2/assembly/freecad.json) |
+| INTEROP-005 | [08df462](https://github.com/AJGAMERX1/Turnmill/commit/08df462f4bc457decf48f9e76c4240d81b388326) | DXF and SVG both center the last tick at 155.000 mm, 1.000 mm after its neighbor. FreeCAD measured the 0.200 mm cut and the in-stock half of the edge tick. [Measurements](test-evidence/phase2/projects/ruler/boundary-measurements.json) |
 
 ## Original Phase 1 findings
 

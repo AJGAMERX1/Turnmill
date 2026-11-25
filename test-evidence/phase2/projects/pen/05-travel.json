@@ -1,0 +1,410 @@
+{
+  "jointUi": {
+    "value": 360,
+    "measure": "Rotation\nDrive value\n°\nAxial travel 0.750 mm",
+    "readings": []
+  },
+  "time": "2026-11-25T18:44:17.683Z",
+  "stage": "05-travel",
+  "mode": "Assembly",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n4 bodies\nSaved locally\nmm",
+  "projectName": "Twist pen assembly",
+  "parameters": {
+    "barrel_length": 92,
+    "outer_diameter": 12,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75,
+    "thread_major": 9.7,
+    "cap_length": 24,
+    "cap_start": 84.375,
+    "refill_diameter": 6
+  },
+  "features": [
+    {
+      "name": "Barrel",
+      "id": "barrel-revolve",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "8ea27c18-c9c3-495b-8a10-daff579d554f",
+          "name": "Barrel thread",
+          "kind": "thread",
+          "end": "end",
+          "side": "external",
+          "mode": "modeled",
+          "diameter": "thread_major",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        },
+        {
+          "id": "c163f1c0-7739-4568-8fcb-5ccab8a1b134",
+          "name": "Knurl",
+          "end": "start",
+          "kind": "knurl",
+          "style": "straight",
+          "diameter": "outer_diameter",
+          "length": "8 mm",
+          "depth": "0.12 mm",
+          "offset": "16 mm",
+          "count": "8",
+          "angle": "30 deg"
+        },
+        {
+          "id": "c13b09c0-36e3-4a72-95f9-636d8a1cf0da",
+          "name": "Surface mark",
+          "end": "start",
+          "kind": "mark",
+          "content": "text",
+          "text": "ANA",
+          "method": "engrave",
+          "height": "1.8 mm",
+          "depth": "0.12 mm",
+          "offset": "34 mm",
+          "rotation": "0 deg"
+        }
+      ]
+    },
+    {
+      "name": "Threaded cap",
+      "id": "pen-cap",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "d8ea0fbe-5f55-4502-be8e-5dd8f4b6f8fc",
+          "name": "Cap thread",
+          "kind": "thread",
+          "end": "start",
+          "side": "internal",
+          "mode": "modeled",
+          "diameter": "thread_major + 0.20 mm",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Refill",
+      "id": "pen-refill",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Pocket clip",
+      "id": "pen-clip",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 61.690528982883,
+  "centerOfMass": [
+    46.81115526002262,
+    0.05050495465729043,
+    0.0047111632211055
+  ],
+  "volume": 10087.019902366857,
+  "area": 9577.417541555593,
+  "bodies": [
+    {
+      "name": "Barrel",
+      "volume": 6430.324147784153,
+      "center": [
+        43.526853416004606,
+        0.0003067028100281377,
+        -0.0005199230924593564
+      ],
+      "area": 5711.389398940191,
+      "bbox": [
+        [
+          0,
+          -6,
+          -6
+        ],
+        [
+          92.0000001,
+          6,
+          6
+        ]
+      ],
+      "faces": 103,
+      "edges": 260,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Threaded cap",
+      "volume": 1187.948614539604,
+      "center": [
+        97.00762953520513,
+        0.0022787280491002844,
+        0.0013150331472283306
+      ],
+      "area": 2010.6952924398206,
+      "bbox": [
+        [
+          84.37499989601046,
+          -6.2,
+          -6.2
+        ],
+        [
+          108.375,
+          6.2,
+          6.2
+        ]
+      ],
+      "faces": 23,
+      "edges": 55,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Refill",
+      "volume": 2415.2721400431005,
+      "center": [
+        47.278966220302934,
+        -3.294899364992928e-16,
+        -7.853705317606294e-17
+      ],
+      "area": 1669.3962916561586,
+      "bbox": [
+        [
+          -1.5,
+          -3,
+          -3
+        ],
+        [
+          90,
+          3,
+          3
+        ]
+      ],
+      "faces": 5,
+      "edges": 9,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Pocket clip",
+      "volume": 53.475000000000016,
+      "center": [
+        87.10898784478725,
+        7.364843384759233,
+        0.7500000000000001
+      ],
+      "area": 185.93655851942225,
+      "bbox": [
+        [
+          68.375,
+          6.1,
+          0
+        ],
+        [
+          105.375,
+          8.1,
+          1.5
+        ]
+      ],
+      "faces": 10,
+      "edges": 24,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": {
+    "ids": [
+      "barrel-revolve",
+      "pen-cap",
+      "pen-refill",
+      "pen-clip"
+    ],
+    "selected": "pen-cap",
+    "poses": {
+      "pen-cap": [
+        360
+      ]
+    },
+    "matrices": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -2.4492935982947064e-16,
+        0,
+        0,
+        2.4492935982947064e-16,
+        1,
+        0,
+        0.75,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -2.4492935982947064e-16,
+        0,
+        0,
+        2.4492935982947064e-16,
+        1,
+        0,
+        0.75,
+        0,
+        0,
+        1
+      ]
+    ],
+    "config": {
+      "pen-cap": {
+        "kind": "screw",
+        "parent": "barrel-revolve",
+        "axis": "X",
+        "origin": [
+          "84.375",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0",
+        "max": "720 deg",
+        "pitch": "0.75",
+        "starts": "1",
+        "hand": 1,
+        "threadMate": {
+          "moving": {
+            "featureId": "pen-cap",
+            "finishId": "d8ea0fbe-5f55-4502-be8e-5dd8f4b6f8fc"
+          },
+          "mating": {
+            "featureId": "barrel-revolve",
+            "finishId": "8ea27c18-c9c3-495b-8a10-daff579d554f"
+          },
+          "placement": "modeled",
+          "engagement": "0 mm",
+          "phase": "0 deg"
+        },
+        "mount": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "pen-refill": {
+        "kind": "slider",
+        "parent": "barrel-revolve",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0",
+        "max": "4 mm",
+        "pitch": "thread_pitch",
+        "starts": "1",
+        "hand": 1
+      },
+      "pen-clip": {
+        "kind": "fixed",
+        "parent": "pen-cap",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0",
+        "max": "360 deg",
+        "pitch": "thread_pitch",
+        "starts": "1",
+        "hand": 1
+      }
+    },
+    "min": 0,
+    "max": 720,
+    "current": 360,
+    "lead": 0.75,
+    "readings": [],
+    "problem": ""
+  },
+  "inspector": null,
+  "console": []
+}

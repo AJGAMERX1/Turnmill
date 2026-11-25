@@ -85,25 +85,14 @@ export async function pen(s) {
   const d = p.getByRole("dialog");
   await input(d, "Expression for outer_diameter", "12.3 mm", false);
   await button(d, "Apply parameters").click();
-  await p.waitForFunction(
-    () =>
-      /Rebuild failed|^Ready/.test(
-        document.querySelector(".status-bar")?.innerText || "",
-      ),
-    null,
-    { timeout: 180000 },
-  );
-  const error = await p.locator(".stage-error").allTextContents();
-  if (!error.length)
-    throw Error(
-      "XPASS UI-001: verify the M10 pen now builds and retire this mark.",
-    );
-  assert.match(error.join(" "), /Barrel.*Barrel thread.*invalid edge or face/);
-  await sample(s, "UI-001-M10-barrel", { check: false });
-  await native(s, "UI-001-M10-pen");
-  console.log(
-    "XFAIL UI-001: 12.3 mm OD should build the 10 mm major thread but the barrel is invalid.",
-  );
+  await ready(p);
+  const m10 = await sample(s, "M10-barrel");
+  assert.equal(m10.bodies.length, 4);
+  assert.equal(m10.values.thread_major, 10);
+  assert.equal(m10.values.thread_pitch, 0.75);
+  assert(m10.bodies.every((b) => b.valid && b.solids === 1));
+  await native(s, "M10-pen");
+  await stepExport(s, "M10-pen");
   await button(p, "Undo").click();
   await ready(p);
   await p

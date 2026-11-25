@@ -1,0 +1,242 @@
+{
+  "id": "89d34b9f-9d0f-4423-a4c7-cb9b1526ac91",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "0217daff-f42b-47c6-b8da-37b96ff3cfbf",
+      "name": "Sketch 1",
+      "points": [
+        {
+          "x": "2.5",
+          "y": "0"
+        },
+        {
+          "x": "0",
+          "y": "2.5"
+        },
+        {
+          "x": "-2.5",
+          "y": "0"
+        },
+        {
+          "x": "0",
+          "y": "-2.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "e464701b-4a5b-4e1c-85b5-49ff9eb4a5d5",
+          "type": "arc",
+          "indices": [
+            0
+          ],
+          "value": "-2.5"
+        },
+        {
+          "id": "ea434327-0139-4352-a92b-d34db7212435",
+          "type": "arc",
+          "indices": [
+            1
+          ],
+          "value": "-2.5"
+        },
+        {
+          "id": "1920a82c-82c8-48ba-8908-452222550c57",
+          "type": "arc",
+          "indices": [
+            2
+          ],
+          "value": "-2.5"
+        },
+        {
+          "id": "623d49d1-f178-4469-9084-78a61a47a33c",
+          "type": "arc",
+          "indices": [
+            3
+          ],
+          "value": "-2.5"
+        }
+      ]
+    },
+    {
+      "id": "b95efd8d-d99d-4ca6-b2e5-120593efff84",
+      "name": "Sketch 2",
+      "points": [
+        {
+          "x": "4.61880215",
+          "y": "0"
+        },
+        {
+          "x": "2.30940108",
+          "y": "4"
+        },
+        {
+          "x": "-2.30940108",
+          "y": "4"
+        },
+        {
+          "x": "-4.61880215",
+          "y": "0"
+        },
+        {
+          "x": "-2.30940108",
+          "y": "-4"
+        },
+        {
+          "x": "2.30940108",
+          "y": "-4"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "cb8120fb-a857-41f2-a852-9458d1ab49cf",
+      "name": "Sketch 3",
+      "points": [
+        {
+          "x": "4.61880215",
+          "y": "0"
+        },
+        {
+          "x": "2.30940108",
+          "y": "4"
+        },
+        {
+          "x": "-2.30940108",
+          "y": "4"
+        },
+        {
+          "x": "-4.61880215",
+          "y": "0"
+        },
+        {
+          "x": "-2.30940108",
+          "y": "-4"
+        },
+        {
+          "x": "2.30940108",
+          "y": "-4"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "61f6151f-a551-420d-bc6d-3b36288df4ae",
+      "name": "Hand-built shank",
+      "kind": "extrude",
+      "sketchId": "0217daff-f42b-47c6-b8da-37b96ff3cfbf",
+      "amount": "-8 mm",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "id": "072100a9-ad98-405e-aab6-a9eedfb9d628",
+          "name": "Thread",
+          "end": "start",
+          "kind": "thread",
+          "side": "external",
+          "hand": "right",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "pitch": "0.8 mm",
+          "length": "8 mm",
+          "diameter": "5 mm"
+        }
+      ]
+    },
+    {
+      "id": "3fb3128c-fff7-45cf-a82a-e6e1c7704977",
+      "name": "Hex head",
+      "kind": "extrude",
+      "sketchId": "b95efd8d-d99d-4ca6-b2e5-120593efff84",
+      "amount": "3.5 mm",
+      "operation": "add",
+      "suppressed": false,
+      "bodyId": "61f6151f-a551-420d-bc6d-3b36288df4ae"
+    },
+    {
+      "id": "11b8984d-ce35-440f-b58e-1ffe9c7e5176",
+      "name": "Hand-built nut",
+      "kind": "extrude",
+      "sketchId": "cb8120fb-a857-41f2-a852-9458d1ab49cf",
+      "amount": "4 mm",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "id": "c5d4e945-e633-45ec-831d-61cca4a4df66",
+          "name": "Axial hole",
+          "end": "start",
+          "kind": "hole",
+          "diameter": "5 mm - 0.8 mm * 1.08253175473",
+          "length": "4 mm",
+          "profile": "straight",
+          "termination": "through"
+        },
+        {
+          "id": "0be25904-e3a8-4022-bc4a-ec0168519485",
+          "name": "Thread",
+          "end": "start",
+          "kind": "thread",
+          "side": "internal",
+          "hand": "right",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "pitch": "0.8 mm",
+          "length": "4 mm",
+          "diameter": "5 mm"
+        }
+      ]
+    }
+  ],
+  "workspaces": {
+    "assemblyItems": {
+      "61f6151f-a551-420d-bc6d-3b36288df4ae": 1,
+      "11b8984d-ce35-440f-b58e-1ffe9c7e5176": 2
+    },
+    "joints": {
+      "11b8984d-ce35-440f-b58e-1ffe9c7e5176": {
+        "kind": "screw",
+        "parent": "61f6151f-a551-420d-bc6d-3b36288df4ae",
+        "axis": "Z",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "360 deg",
+        "pitch": "0.8",
+        "starts": "1",
+        "hand": 1,
+        "threadMate": {
+          "moving": {
+            "featureId": "11b8984d-ce35-440f-b58e-1ffe9c7e5176",
+            "finishId": "0be25904-e3a8-4022-bc4a-ec0168519485"
+          },
+          "mating": {
+            "featureId": "61f6151f-a551-420d-bc6d-3b36288df4ae",
+            "finishId": "072100a9-ad98-405e-aab6-a9eedfb9d628"
+          },
+          "placement": "entrances",
+          "engagement": "1 mm",
+          "phase": "0 deg"
+        }
+      }
+    },
+    "jointPose": {
+      "11b8984d-ce35-440f-b58e-1ffe9c7e5176": [
+        360
+      ]
+    }
+  }
+}

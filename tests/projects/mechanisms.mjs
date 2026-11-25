@@ -245,42 +245,18 @@ export async function boltLibrary(s) {
     await button(d, "Insert component").click();
     await d.waitFor({ state: "hidden" });
     await button(p, "Part").click();
-    if (k === "screw") {
-      await p.waitForFunction(
-        () =>
-          document.querySelector(".stage-error") ||
-          document
-            .querySelector(".status-bar")
-            ?.innerText.startsWith("Ready\n1 body"),
-        null,
-        { timeout: 120000 },
-      );
-      const err = await p.locator(".stage-error").allTextContents();
-      if (!err.length)
-        throw Error(
-          "XPASS INTEROP-001: the modeled M5 × 12 mm screw rebuilt; review its previous XFAIL.",
-        );
-      assert.match(err.join(" "), /one connected body/);
-      await sample(s, "INTEROP-001-modeled-screw", { check: false });
-      await native(s, "INTEROP-001");
-      await button(p, "Undo").click();
-      await ready(p);
-      await button(p, "Assembly").click();
-      await button(p, "Hardware").first().click();
-      const fix = p.getByRole("dialog", { name: "Hardware library" });
-      await field(fix, "Component").selectOption("screw");
-      await field(fix, "Nominal size").selectOption({ label: "M5" });
-      await field(fix, "Length").fill("12 mm");
-      await field(fix, "Thread detail").selectOption("cosmetic");
-      await button(fix, "Insert component").click();
-      await fix.waitFor({ state: "hidden" });
-      await button(p, "Part").click();
-      console.log("XFAIL INTEROP-001 modeled M5 × 12 mm library screw");
-    }
     const x = await sample(
       s,
       k === "screw" ? "01-library-bolt" : "02-library-nut",
     );
+    if (k === "screw") {
+      assert.equal(x.bodies.length, 1);
+      assert.equal(x.bodies[0].solids, 1);
+      assert.equal(x.bodies[0].valid, true);
+      assert(Math.abs(x.volume - 386.9371104837846) < 0.02);
+      await native(s, "M5-modeled-screw");
+      await stepExport(s, "M5-modeled-screw");
+    }
     const sizes = Object.entries(x.values);
     assert(
       sizes.some(
@@ -318,29 +294,14 @@ export async function boltScratch(s) {
   await feature(p, "Extrude", "Hand-built shank", "-8 mm");
   let round = await sample(s, "01-handmade-round-shank");
   assert(Math.abs(round.volume - Math.PI * 2.5 ** 2 * 8) < 0.001);
-  let fullLengthError = "";
-  try {
-    await operation(p, "thread", {
-      "Thread size": "M5 × 0.8",
-      "Threaded length": "8 mm",
-      End: "start",
-    });
-  } catch (e) {
-    fullLengthError = String(e);
-  }
-  if (!fullLengthError)
-    throw Error(
-      "XPASS INTEROP-001: full-length hand-sketched M5 thread succeeded.",
-    );
-  assert.match(fullLengthError, /one connected body/);
-  await sample(s, "INTEROP-001-full-length-handmade", { check: false });
-  await button(p.getByRole("dialog"), "Cancel").click();
-  console.log("XFAIL INTEROP-001 full-length hand-sketched M5 shank");
   await operation(p, "thread", {
     "Thread size": "M5 × 0.8",
-    "Threaded length": "4 mm",
+    "Threaded length": "8 mm",
     End: "start",
   });
+  const threaded = await sample(s, "full-length-handmade");
+  assert.equal(threaded.bodies[0].solids, 1);
+  assert(threaded.bodies[0].valid && threaded.volume < round.volume);
   const hex = Array.from({ length: 6 }, (_, i) =>
     [
       (8 / Math.sqrt(3)) * Math.cos((Math.PI * i) / 3),

@@ -1,0 +1,435 @@
+{
+  "id": "559735d7-506c-4de3-b469-05e526dd5277",
+  "version": 1,
+  "name": "Twist pen assembly",
+  "parameters": [
+    {
+      "name": "barrel_length",
+      "label": "Barrel length",
+      "expression": "92 mm"
+    },
+    {
+      "name": "outer_diameter",
+      "label": "Outside diameter",
+      "expression": "12.3 mm"
+    },
+    {
+      "name": "bore_diameter",
+      "label": "Bore diameter",
+      "expression": "7 mm"
+    },
+    {
+      "name": "shoulder_length",
+      "label": "Shoulder length",
+      "expression": "8 mm"
+    },
+    {
+      "name": "thread_pitch",
+      "label": "Thread pitch",
+      "expression": "0.75 mm"
+    },
+    {
+      "name": "thread_major",
+      "label": "Thread diameter",
+      "expression": "outer_diameter - 2.3 mm"
+    },
+    {
+      "name": "cap_length",
+      "label": "Cap length",
+      "expression": "24 mm"
+    },
+    {
+      "name": "cap_start",
+      "label": "Cap position",
+      "expression": "barrel_length - shoulder_length + thread_pitch/2"
+    },
+    {
+      "name": "refill_diameter",
+      "label": "Refill diameter",
+      "expression": "bore_diameter - 1 mm"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "barrel-profile",
+      "name": "Barrel profile",
+      "points": [
+        {
+          "x": "0",
+          "y": "bore_diameter/2"
+        },
+        {
+          "x": "0",
+          "y": "outer_diameter/2 - 1.1"
+        },
+        {
+          "x": "1.1",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 10",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 9",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 8.7",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 8.3",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 8",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 7",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 6.7",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 6.3",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 6",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 5",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 4.7",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 4.3",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 4",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 1",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length",
+          "y": "outer_diameter/2 - 0.65"
+        },
+        {
+          "x": "barrel_length - shoulder_length",
+          "y": "outer_diameter/2 - 1.15"
+        },
+        {
+          "x": "barrel_length - 0.5",
+          "y": "outer_diameter/2 - 1.15"
+        },
+        {
+          "x": "barrel_length",
+          "y": "outer_diameter/2 - 1.65"
+        },
+        {
+          "x": "barrel_length",
+          "y": "bore_diameter/2"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "pen-cap-profile",
+      "name": "Threaded cap profile",
+      "points": [
+        {
+          "x": "cap_start",
+          "y": "thread_major/2 - thread_pitch*0.55"
+        },
+        {
+          "x": "cap_start",
+          "y": "outer_diameter/2 - 0.25"
+        },
+        {
+          "x": "cap_start + 0.45",
+          "y": "outer_diameter/2 + 0.2"
+        },
+        {
+          "x": "cap_start + cap_length - 0.6",
+          "y": "outer_diameter/2 + 0.2"
+        },
+        {
+          "x": "cap_start + cap_length",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "cap_start + cap_length",
+          "y": "0"
+        },
+        {
+          "x": "cap_start + cap_length - 1.5",
+          "y": "0"
+        },
+        {
+          "x": "cap_start + cap_length - 1.5",
+          "y": "thread_major/2 + 0.15"
+        },
+        {
+          "x": "cap_start + shoulder_length",
+          "y": "thread_major/2 + 0.15"
+        },
+        {
+          "x": "cap_start + shoulder_length",
+          "y": "thread_major/2 - thread_pitch*0.55"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "pen-refill-profile",
+      "name": "Refill profile",
+      "points": [
+        {
+          "x": "-1.5",
+          "y": "0"
+        },
+        {
+          "x": "0",
+          "y": "0.5"
+        },
+        {
+          "x": "3",
+          "y": "0.7"
+        },
+        {
+          "x": "6",
+          "y": "refill_diameter/2"
+        },
+        {
+          "x": "barrel_length - 2",
+          "y": "refill_diameter/2"
+        },
+        {
+          "x": "barrel_length - 2",
+          "y": "0"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "pen-clip-profile",
+      "name": "Pocket clip profile",
+      "points": [
+        {
+          "x": "cap_start + cap_length - 3",
+          "y": "outer_diameter/2 + 0.1"
+        },
+        {
+          "x": "cap_start + cap_length - 3",
+          "y": "outer_diameter/2 + 1.5"
+        },
+        {
+          "x": "cap_start + cap_length - 5",
+          "y": "outer_diameter/2 + 2.1"
+        },
+        {
+          "x": "cap_start - 15",
+          "y": "outer_diameter/2 + 1.7"
+        },
+        {
+          "x": "cap_start - 16",
+          "y": "outer_diameter/2 + 0.9"
+        },
+        {
+          "x": "cap_start - 15",
+          "y": "outer_diameter/2 + 0.6"
+        },
+        {
+          "x": "cap_start + cap_length - 6",
+          "y": "outer_diameter/2 + 1.35"
+        },
+        {
+          "x": "cap_start + cap_length - 5",
+          "y": "outer_diameter/2 + 0.1"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "barrel-revolve",
+      "kind": "revolve",
+      "name": "Barrel",
+      "sketchId": "barrel-profile",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "id": "8ea27c18-c9c3-495b-8a10-daff579d554f",
+          "name": "Barrel thread",
+          "kind": "thread",
+          "end": "end",
+          "side": "external",
+          "mode": "modeled",
+          "diameter": "thread_major",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "pen-cap",
+      "name": "Threaded cap",
+      "kind": "revolve",
+      "amount": "360 deg",
+      "operation": "new",
+      "sketchId": "pen-cap-profile",
+      "suppressed": false,
+      "finishes": [
+        {
+          "id": "d8ea0fbe-5f55-4502-be8e-5dd8f4b6f8fc",
+          "name": "Cap thread",
+          "kind": "thread",
+          "end": "start",
+          "side": "internal",
+          "mode": "modeled",
+          "diameter": "thread_major + 0.20 mm",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "pen-refill",
+      "name": "Refill",
+      "kind": "revolve",
+      "amount": "360 deg",
+      "operation": "new",
+      "sketchId": "pen-refill-profile",
+      "suppressed": false
+    },
+    {
+      "id": "pen-clip",
+      "name": "Pocket clip",
+      "kind": "extrude",
+      "amount": "1.5 mm",
+      "operation": "new",
+      "sketchId": "pen-clip-profile",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "drawing": {
+      "sources": {
+        "body:barrel-revolve": {
+          "number": "TM-BRL-01",
+          "detail": true,
+          "detailEnd": "end",
+          "detailWidth": "shoulder_length"
+        },
+        "assembly": {
+          "number": "TM-ASM-01"
+        }
+      }
+    },
+    "bodyMaterials": {
+      "pen-cap": "Aluminum",
+      "pen-clip": "Steel",
+      "pen-refill": "Acetal"
+    },
+    "joints": {
+      "pen-cap": {
+        "kind": "screw",
+        "parent": "barrel-revolve",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0",
+        "max": "720 deg",
+        "pitch": "thread_pitch",
+        "starts": "1",
+        "hand": 1,
+        "threadMate": {
+          "moving": {
+            "featureId": "pen-cap",
+            "finishId": "d8ea0fbe-5f55-4502-be8e-5dd8f4b6f8fc"
+          },
+          "mating": {
+            "featureId": "barrel-revolve",
+            "finishId": "8ea27c18-c9c3-495b-8a10-daff579d554f"
+          },
+          "placement": "modeled",
+          "engagement": "0 mm",
+          "phase": "0 deg"
+        }
+      },
+      "pen-refill": {
+        "kind": "slider",
+        "parent": "barrel-revolve",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0",
+        "max": "4 mm",
+        "pitch": "thread_pitch",
+        "starts": "1",
+        "hand": 1
+      },
+      "pen-clip": {
+        "kind": "fixed",
+        "parent": "pen-cap",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0",
+        "max": "360 deg",
+        "pitch": "thread_pitch",
+        "starts": "1",
+        "hand": 1
+      }
+    },
+    "assemblyItems": {
+      "barrel-revolve": 1,
+      "pen-cap": 2,
+      "pen-refill": 3,
+      "pen-clip": 4
+    }
+  }
+}

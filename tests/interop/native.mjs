@@ -270,21 +270,20 @@ async function hardware() {
 }
 async function hardwareRegression() {
   const p = insertHardware(part(), "screw", 2, "12 mm", "modeled");
+  const radius = 2.5, minor = radius - 5 * Math.sqrt(3) * 0.8 / 16;
+  const threadedArea = Math.PI * (radius**2 / 8 + minor**2 / 4 +
+    5 * (radius**2 + radius * minor + minor**2) / 24);
+  const expectedVolume = 12 * threadedArea + 3.5 * Math.sqrt(3) * 8**2 / 2;
   const { features } = await evaluateModel(p);
+  const bodies = buildBodies(features);
   try {
-    const bodies = buildBodies(features);
-    releaseBodies(bodies);
-  } catch (error) {
-    if (!/M5 × 0.8.*one connected body/.test(error.message)) throw error;
-    console.log(
-      "XFAIL INTEROP-001 12 mm M5 modeled library screw should build as one valid solid:",
-      error.message,
-    );
-    return;
-  }
-  throw Error(
-    "XPASS INTEROP-001 — remove the known-failure mark after reviewing the result.",
-  );
+    if (bodies.length !== 1) throw Error("Expected one M5 screw");
+    const result = metrics(bodies[0]);
+    if (!result.valid || result.solids !== 1 || Math.abs(result.volume - expectedVolume) > 0.02)
+      throw Error("INTEROP-001: invalid or incorrectly sized solid: " + JSON.stringify(result));
+    console.log("PASS INTEROP-001: one connected modeled M5 × 12 mm screw; volume", result.volume, "analytic", expectedVolume);
+  } finally { releaseBodies(bodies); }
+
 }
 async function hardwareAlternates() {
   await save("m5-nut", insertHardware(part(), "nut", 2, "4 mm", "modeled"));
@@ -333,7 +332,7 @@ async function terminal() {
 }
 async function projects() {
   const base = resolve(process.env.TURNMILL_PROJECT_EVIDENCE || "test-evidence/projects");
-  const required = ["bolt-library/bolt-nut", "bolt-scratch/bolt-nut", "click-pen/click-study", "click-coil/click-with-coil", "hinge/hinge", "pen/twist-pen", "ruler/graduated-ruler"];
+  const required = ["pen/M10-pen", "bolt-library/M5-modeled-screw", "bolt-library/bolt-nut", "bolt-scratch/bolt-nut", "click-pen/click-study", "click-coil/click-with-coil", "hinge/hinge", "pen/twist-pen", "ruler/graduated-ruler"];
   for (const stem of required) {
     if (process.env.QA_ONLY_CASE && !("ui-"+stem.replace("/","-")).startsWith(process.env.QA_ONLY_CASE)) continue;
     for (const ext of [".turnmill",".step"]) {
