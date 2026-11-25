@@ -1,3 +1,4 @@
+import { observeGeometry } from "../tests/hook/observe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createStudio, type View } from "./studio";
 import type { RenderBody } from "./geometry";
@@ -125,6 +126,7 @@ export function Viewport({
       name: "turnmill-solid-modeler",
     });
     engine.current = worker;
+    if(import.meta.env.VITE_CAD_QA==="1") observeGeometry(worker,()=>revision.current);
     worker.onmessage = ({ data }: MessageEvent<KernelReply>) => {
       const buildReply =
         data.type === "updated" ||
@@ -196,6 +198,7 @@ export function Viewport({
       });
     };
     return () => {
+      if(import.meta.env.VITE_CAD_QA==="1") observeGeometry();
       worker.terminate();
       engine.current = undefined;
       retained.current.clear();

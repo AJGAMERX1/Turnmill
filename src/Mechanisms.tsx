@@ -1,3 +1,4 @@
+import { observeJoints } from "../tests/hook/observe";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
 import CamStudy from "./CamStudy";
@@ -260,6 +261,12 @@ function JointStudio({
   } catch (e) {
     problem = (e as Error).message;
   }
+  useEffect(()=>{
+    if(import.meta.env.VITE_CAD_QA==="1") {
+      observeJoints(()=>({ids,selected,poses,matrices,config,min,max,current,lead,readings,problem}));
+      return ()=>observeJoints();
+    }
+  });
   const running = useRef({ min, max, current, selected, d });
   running.current = { min, max, current, selected, d };
   const signature = useMemo(() => JSON.stringify(features), [features]);

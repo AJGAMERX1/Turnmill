@@ -23,8 +23,8 @@ Source inspection, November 25, 2026. “Built” identifies an implementation. 
 | Straight metric/inch fractional/decimal, ratio, architectural and angular scales | Built | secondaryScale.ts, Scale.tsx. Tick and label settings exposed. |
 | Dual scales and engraving on blank/existing planar face | Partly built | One associative layout per project; top/bottom scales share stock length and offset. Independent endpoints for 150 mm plus 6 in are not built yet. |
 | Native save/open, autosave, history recovery, offline restart | Built | journal.ts, journalStore.ts, projects.ts, offline-worker.js. |
-| STEP, STL, 3MF export; STEP/STL import | Built | geometry.ts, exchangeSolids.ts. One STEP output dialect, no schema selector. Fixed binary STL settings 0.005 mm deflection / 0.08 rad angular deflection. |
-| Selectable AP242 export, 3MF and PDF import | Not built yet | No UI or serializer switch for a second STEP protocol. 3MF and PDF are output-only. |
+| STEP, STL, 3MF export; STEP/STL import | Built | geometry.ts, exchangeSolids.ts. Header emits AP242, no schema selector. Fixed binary STL settings 0.005 mm deflection / 0.08 rad angular deflection. |
+| Selectable alternative STEP protocol (AP214), 3MF and PDF import | Not built yet | No UI or serializer switch for a second STEP protocol. 3MF and PDF are output-only. |
 | DXF/SVG export and planar profile import | Partly built | DXF/SVG import supports closed profiles and selected lines/arcs. Drawing and Scale provide distinct vector outputs. |
 | PDF drawings/export/print | Built | drawingPdf.ts, DownloadDrawingPdf.tsx. |
 | Orbit, pan, zoom, fit, selection highlighting, responsive layouts and high DPI | Built | studio.ts, Viewport.tsx, style.css. |

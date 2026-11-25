@@ -1,0 +1,30 @@
+name: Turnmill QA
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install CAD readers and independent STEP checker
+        run: bash tests/qa/linux-tools.sh
+      - name: Measure a solid in FreeCAD and check its STEP and STL
+        run: |
+          printf 'import Part; print("QA_BOX_VOLUME", Part.makeBox(2,3,4).Volume)\nexit()\n' | xvfb-run -a "$FREECAD_CMD" --console | tee /tmp/freecad-tool.log
+          grep -F 'QA_BOX_VOLUME 24' /tmp/freecad-tool.log
+          "$STEPCODE_AP242" test-evidence/interop/block.step
+          xvfb-run -a "$PRUSASLICER" --info test-evidence/interop/block.stl
+          "$QA_PYTHON" -c 'import ezdxf; print(ezdxf.__version__)'

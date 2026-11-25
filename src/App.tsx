@@ -1,3 +1,4 @@
+import { observeModel } from "../tests/hook/observe";
 import PenGuidePanel, { GuideProfile } from "./PenGuidePanel";
 import {
   addGuideParts,
@@ -410,6 +411,13 @@ export default function App() {
     (valid ? kernel.bodyProperties || [] : []).filter(inScope),
     solidFeatures.filter(inScope).map((f) => densityOf(f.id)),
   );
+  useEffect(()=>{
+    if(import.meta.env.VITE_CAD_QA==="1") observeModel(()=>{
+      const total=massProperties(valid ? kernel.bodyProperties || [] : [],solidFeatures.map((f)=>densityOf(f.id)));
+      return {project, features:project.features,parameters:project.parameters,values:model.values,mode,busy,error,
+        volume:valid?kernel.volume:0,area:valid?kernel.area:0,mass:total.mass,centerOfMass:total.center,selected,saveState};
+    });
+  });
   const props = {
     project,
     values: model.values,

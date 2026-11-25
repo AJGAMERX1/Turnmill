@@ -1,3 +1,4 @@
+import { inspectBodies } from "../tests/hook/metrics";
 import initOC from "replicad-opencascadejs";
 import wasmUrl from "replicad-opencascadejs/wasm?url";
 import { setOC } from "replicad";
@@ -11,6 +12,7 @@ const model = new ModelBodies();
 let currentRevision = -1;
 
 type Request =
+  | {type:"inspect-qa";revision:number;port:MessagePort}
   | {
       type: "build";
       revision: number;
@@ -38,6 +40,16 @@ const buffers = (m: RenderBody) =>
 worker.onmessage = async ({ data }: MessageEvent<Request>) => {
   try {
     await ready;
+    if (data.type === "inspect-qa") {
+      if (import.meta.env.VITE_CAD_QA === "1") {
+        try {
+          if (currentRevision!==data.revision || currentRevision<0) throw Error("The exact model is still rebuilding.");
+          data.port.postMessage({bodies:inspectBodies(model.bodies)});
+        } catch (e) {data.port.postMessage({error:String(e)});} finally {data.port.close();}
+      }
+      return;
+    }
+
     if (data.type === "build") {
       currentRevision = -1;
       const { changes, keys, ...properties } = model.build(
