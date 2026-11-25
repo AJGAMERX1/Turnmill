@@ -71,6 +71,15 @@ async function simple(){
   p.workspaces={joints:{b:{kind:"revolute",parent:"a",axis:"X",min:"0 deg",max:"180 deg",origin:["0","0","0"],offset:["0","0","0"]}}};
   await save("hinge",p);
 }
+async function rod(){
+  const p=part();append(p,"rod","Plain threaded rod","revolve",rect(0,0,8,2.5),360);
+  p.features[0].finishes=[{id:"m5",name:"M5 × 0.8",kind:"thread",diameter:"5 mm",length:"4 mm",pitch:"0.8 mm",end:"end",preset:"M5 × 0.8",side:"external",mode:"modeled",hand:"right"}];
+  // Integrate r² over one pitch, including the flat crest, flat root and two straight 60° flanks.
+  const R=2.5,r=R-5*Math.sqrt(3)*.8/16;
+  const plain=Math.PI*R*R, threaded=Math.PI*(R*R/8+r*r/4+5*(R*R+R*r+r*r)/24);
+  const volume=4*(plain+threaded);
+  await save("threaded-rod",p,{formula:"4πR² + 4π[R²/8 + r²/4 + 5(R²+Rr+r²)/24], R=2.5, r=R−5√3·0.8/16",volume,bbox:[[0,-2.5,-2.5],[8,2.5,2.5]],center:[(2*4*plain+6*4*threaded)/volume,0,0]});
+}
 async function hardware(){
   let p=insertHardware(part(),"screw",2,"12 mm","modeled");
   p=insertHardware(p,"nut",2,"4 mm","modeled");
@@ -142,5 +151,5 @@ async function reverse(){
   }
   await json("reverse.json",rows);
 }
-try{for(const command of process.argv.slice(2).length?process.argv.slice(2):["simple","hardware","pen","ruler"])await ({simple,hardware,hardwareRegression,hardwareAlternates,pen,ruler,terminal,projects,reverse})[command]();}
+try{for(const command of process.argv.slice(2).length?process.argv.slice(2):["simple","hardware","pen","ruler"])await ({simple,rod,hardware,hardwareRegression,hardwareAlternates,pen,ruler,terminal,projects,reverse})[command]();}
 finally{await server.close();}

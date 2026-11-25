@@ -1,0 +1,6 @@
+{
+  "id": "SYS-003",
+  "title": "Editing the last additive feature exceeds the 500 ms interaction budget",
+  "outcome": "XFAIL",
+  "message": "Median of three warm last-feature edits was 517.35 ms, budget 500 ms."
+}

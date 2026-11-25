@@ -1,0 +1,1846 @@
+[
+  {
+    "joint": "fixed",
+    "coordinate": 0,
+    "step": 0.25,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Current pose · 8.00000 mm minimum nominal gap.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 1,
+      "lowerBound": 7.9999898
+    }
+  },
+  {
+    "joint": "revolute",
+    "coordinate": 0,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 10,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 15,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 20,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 25,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 30,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 35,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 40,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 45,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 50,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 55,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 60,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 65,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 70,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 75,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 80,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 85,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 90,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 95,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 100,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 105,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 110,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 115,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 120,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 125,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 130,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 135,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 140,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 145,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 150,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 155,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 160,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 165,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 170,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 175,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 180,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.77854 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.778548330920817
+    }
+  },
+  {
+    "joint": "slider",
+    "coordinate": 0,
+    "step": 0.25,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 0.25,
+        "expectedGap": 8.25,
+        "measuredGap": 8.25
+      },
+      {
+        "at": 0.5,
+        "expectedGap": 8.5,
+        "measuredGap": 8.5
+      },
+      {
+        "at": 0.75,
+        "expectedGap": 8.75,
+        "measuredGap": 8.75
+      },
+      {
+        "at": 1,
+        "expectedGap": 9,
+        "measuredGap": 9
+      },
+      {
+        "at": 1.25,
+        "expectedGap": 9.25,
+        "measuredGap": 9.25
+      },
+      {
+        "at": 1.5,
+        "expectedGap": 9.5,
+        "measuredGap": 9.5
+      },
+      {
+        "at": 1.75,
+        "expectedGap": 9.75,
+        "measuredGap": 9.75
+      },
+      {
+        "at": 2,
+        "expectedGap": 10,
+        "measuredGap": 10
+      },
+      {
+        "at": 2.25,
+        "expectedGap": 10.25,
+        "measuredGap": 10.25
+      },
+      {
+        "at": 2.5,
+        "expectedGap": 10.5,
+        "measuredGap": 10.5
+      },
+      {
+        "at": 2.75,
+        "expectedGap": 10.75,
+        "measuredGap": 10.75
+      },
+      {
+        "at": 3,
+        "expectedGap": 11,
+        "measuredGap": 11
+      },
+      {
+        "at": 3.25,
+        "expectedGap": 11.25,
+        "measuredGap": 11.25
+      },
+      {
+        "at": 3.5,
+        "expectedGap": 11.5,
+        "measuredGap": 11.5
+      },
+      {
+        "at": 3.75,
+        "expectedGap": 11.75,
+        "measuredGap": 11.75
+      },
+      {
+        "at": 4,
+        "expectedGap": 12,
+        "measuredGap": 12
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 7.99998 mm. Smallest sampled gap 8.00000 mm at 0.000mm.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 7.9999898
+    }
+  },
+  {
+    "joint": "cylindrical",
+    "coordinate": 0,
+    "step": 0.25,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 0.25,
+        "expectedGap": 8.25,
+        "measuredGap": 8.25
+      },
+      {
+        "at": 0.5,
+        "expectedGap": 8.5,
+        "measuredGap": 8.5
+      },
+      {
+        "at": 0.75,
+        "expectedGap": 8.75,
+        "measuredGap": 8.75
+      },
+      {
+        "at": 1,
+        "expectedGap": 9,
+        "measuredGap": 9
+      },
+      {
+        "at": 1.25,
+        "expectedGap": 9.25,
+        "measuredGap": 9.25
+      },
+      {
+        "at": 1.5,
+        "expectedGap": 9.5,
+        "measuredGap": 9.5
+      },
+      {
+        "at": 1.75,
+        "expectedGap": 9.75,
+        "measuredGap": 9.75
+      },
+      {
+        "at": 2,
+        "expectedGap": 10,
+        "measuredGap": 10
+      },
+      {
+        "at": 2.25,
+        "expectedGap": 10.25,
+        "measuredGap": 10.25
+      },
+      {
+        "at": 2.5,
+        "expectedGap": 10.5,
+        "measuredGap": 10.5
+      },
+      {
+        "at": 2.75,
+        "expectedGap": 10.75,
+        "measuredGap": 10.75
+      },
+      {
+        "at": 3,
+        "expectedGap": 11,
+        "measuredGap": 11
+      },
+      {
+        "at": 3.25,
+        "expectedGap": 11.25,
+        "measuredGap": 11.25
+      },
+      {
+        "at": 3.5,
+        "expectedGap": 11.5,
+        "measuredGap": 11.5
+      },
+      {
+        "at": 3.75,
+        "expectedGap": 11.75,
+        "measuredGap": 11.75
+      },
+      {
+        "at": 4,
+        "expectedGap": 12,
+        "measuredGap": 12
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 7.99998 mm. Smallest sampled gap 8.00000 mm at 0.000mm.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 7.9999898
+    }
+  },
+  {
+    "joint": "cylindrical",
+    "coordinate": 1,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 10,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 15,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 20,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 25,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 30,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 35,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 40,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 45,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 50,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 55,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 60,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 65,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 70,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 75,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 80,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 85,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 90,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 95,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 100,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 105,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 110,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 115,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 120,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 125,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 130,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 135,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 140,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 145,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 150,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 155,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 160,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 165,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 170,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 175,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 180,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.77854 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.778548330920817
+    }
+  },
+  {
+    "joint": "ball",
+    "coordinate": 0,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 10,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 15,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 20,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 25,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 30,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 35,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 40,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 45,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 50,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 55,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 60,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 65,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 70,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 75,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 80,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 85,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 90,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 95,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 100,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 105,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 110,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 115,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 120,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 125,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 130,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 135,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 140,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 145,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 150,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 155,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 160,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 165,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 170,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 175,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 180,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.27929 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.279290753648674
+    }
+  },
+  {
+    "joint": "ball",
+    "coordinate": 1,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 10,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 15,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 20,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 25,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 30,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 35,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 40,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 45,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 50,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 55,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 60,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 65,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 70,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 75,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 80,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 85,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 90,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 95,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 100,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 105,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 110,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 115,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 120,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 125,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 130,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 135,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 140,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 145,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 150,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 155,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 160,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 165,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 170,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 175,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 180,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.27929 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.279290753648674
+    }
+  },
+  {
+    "joint": "ball",
+    "coordinate": 2,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 10,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 15,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 20,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 25,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 30,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 35,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 40,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 45,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 50,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 55,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 60,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 65,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 70,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 75,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 80,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 85,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 90,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 95,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 100,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 105,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 110,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 115,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 120,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 125,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 130,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 135,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 140,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 145,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 150,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 155,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 160,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 165,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 170,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 175,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 180,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.27929 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.279290753648674
+    }
+  },
+  {
+    "joint": "planar",
+    "coordinate": 0,
+    "step": 0.25,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 0.25,
+        "expectedGap": 8.00312451187128,
+        "measuredGap": 8.003124511876305
+      },
+      {
+        "at": 0.5,
+        "expectedGap": 8.012492197250394,
+        "measuredGap": 8.012492197266056
+      },
+      {
+        "at": 0.75,
+        "expectedGap": 8.02808556006579,
+        "measuredGap": 8.028085560078658
+      },
+      {
+        "at": 1,
+        "expectedGap": 8.04987562112089,
+        "measuredGap": 8.049875621169644
+      },
+      {
+        "at": 1.25,
+        "expectedGap": 8.077822185373186,
+        "measuredGap": 8.077822185393844
+      },
+      {
+        "at": 1.5,
+        "expectedGap": 8.111874208078342,
+        "measuredGap": 8.111874208078792
+      },
+      {
+        "at": 1.75,
+        "expectedGap": 8.151970252123476,
+        "measuredGap": 8.151970252162148
+      },
+      {
+        "at": 2,
+        "expectedGap": 8.19803902718557,
+        "measuredGap": 8.198039027200881
+      },
+      {
+        "at": 2.25,
+        "expectedGap": 8.25,
+        "measuredGap": 8.250000000007633
+      },
+      {
+        "at": 2.5,
+        "expectedGap": 8.307764064044152,
+        "measuredGap": 8.307764064056387
+      },
+      {
+        "at": 2.75,
+        "expectedGap": 8.371234256345769,
+        "measuredGap": 8.371234256367568
+      },
+      {
+        "at": 3,
+        "expectedGap": 8.44030650891055,
+        "measuredGap": 8.440306508928492
+      },
+      {
+        "at": 3.25,
+        "expectedGap": 8.514870422406545,
+        "measuredGap": 8.51487042240702
+      },
+      {
+        "at": 3.5,
+        "expectedGap": 8.594810050208546,
+        "measuredGap": 8.594810050265306
+      },
+      {
+        "at": 3.75,
+        "expectedGap": 8.680004681646913,
+        "measuredGap": 8.680004681653239
+      },
+      {
+        "at": 4,
+        "expectedGap": 8.77032961426901,
+        "measuredGap": 8.770329614279321
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 6.38515 mm. Smallest sampled gap 8.00000 mm at 0.000mm.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 6.385154607139659
+    }
+  },
+  {
+    "joint": "planar",
+    "coordinate": 1,
+    "step": 0.25,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 0.25,
+        "expectedGap": 8.00312451187128,
+        "measuredGap": 8.003124511871277
+      },
+      {
+        "at": 0.5,
+        "expectedGap": 8.012492197250394,
+        "measuredGap": 8.012492197250394
+      },
+      {
+        "at": 0.75,
+        "expectedGap": 8.02808556006579,
+        "measuredGap": 8.02808556006579
+      },
+      {
+        "at": 1,
+        "expectedGap": 8.04987562112089,
+        "measuredGap": 8.049875621120888
+      },
+      {
+        "at": 1.25,
+        "expectedGap": 8.077822185373186,
+        "measuredGap": 8.077822185373185
+      },
+      {
+        "at": 1.5,
+        "expectedGap": 8.111874208078342,
+        "measuredGap": 8.111874208078342
+      },
+      {
+        "at": 1.75,
+        "expectedGap": 8.151970252123476,
+        "measuredGap": 8.151970252123476
+      },
+      {
+        "at": 2,
+        "expectedGap": 8.19803902718557,
+        "measuredGap": 8.198039027185569
+      },
+      {
+        "at": 2.25,
+        "expectedGap": 8.25,
+        "measuredGap": 8.249999999999998
+      },
+      {
+        "at": 2.5,
+        "expectedGap": 8.307764064044152,
+        "measuredGap": 8.30776406404415
+      },
+      {
+        "at": 2.75,
+        "expectedGap": 8.371234256345769,
+        "measuredGap": 8.371234256345769
+      },
+      {
+        "at": 3,
+        "expectedGap": 8.44030650891055,
+        "measuredGap": 8.440306508910549
+      },
+      {
+        "at": 3.25,
+        "expectedGap": 8.514870422406545,
+        "measuredGap": 8.514870422406545
+      },
+      {
+        "at": 3.5,
+        "expectedGap": 8.594810050208546,
+        "measuredGap": 8.594810050208544
+      },
+      {
+        "at": 3.75,
+        "expectedGap": 8.680004681646913,
+        "measuredGap": 8.680004681646913
+      },
+      {
+        "at": 4,
+        "expectedGap": 8.77032961426901,
+        "measuredGap": 8.770329614269007
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 6.38515 mm. Smallest sampled gap 8.00000 mm at 0.000mm.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 6.3851546071345044
+    }
+  },
+  {
+    "joint": "planar",
+    "coordinate": 2,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 10,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 15,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 20,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 25,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 30,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 35,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 40,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 45,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 50,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 55,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 60,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 65,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 70,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 75,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 80,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 85,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 90,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 95,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 100,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 105,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 110,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 115,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 120,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 125,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 130,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 135,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 140,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 145,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 150,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 155,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 160,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 165,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 170,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 175,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 180,
+        "expectedGap": 8,
+        "measuredGap": 8
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.77854 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.778548330920817
+    }
+  },
+  {
+    "joint": "screw",
+    "coordinate": 0,
+    "step": 5,
+    "poses": [
+      {
+        "at": 0,
+        "expectedGap": 8,
+        "measuredGap": 8
+      },
+      {
+        "at": 5,
+        "expectedGap": 8.011111111111111,
+        "measuredGap": 8.011111111111111
+      },
+      {
+        "at": 10,
+        "expectedGap": 8.022222222222222,
+        "measuredGap": 8.022222222222222
+      },
+      {
+        "at": 15,
+        "expectedGap": 8.033333333333333,
+        "measuredGap": 8.033333333333333
+      },
+      {
+        "at": 20,
+        "expectedGap": 8.044444444444444,
+        "measuredGap": 8.044444444444444
+      },
+      {
+        "at": 25,
+        "expectedGap": 8.055555555555555,
+        "measuredGap": 8.055555555555555
+      },
+      {
+        "at": 30,
+        "expectedGap": 8.066666666666666,
+        "measuredGap": 8.066666666666666
+      },
+      {
+        "at": 35,
+        "expectedGap": 8.077777777777778,
+        "measuredGap": 8.077777777777778
+      },
+      {
+        "at": 40,
+        "expectedGap": 8.088888888888889,
+        "measuredGap": 8.088888888888889
+      },
+      {
+        "at": 45,
+        "expectedGap": 8.1,
+        "measuredGap": 8.1
+      },
+      {
+        "at": 50,
+        "expectedGap": 8.11111111111111,
+        "measuredGap": 8.11111111111111
+      },
+      {
+        "at": 55,
+        "expectedGap": 8.122222222222222,
+        "measuredGap": 8.122222222222222
+      },
+      {
+        "at": 60,
+        "expectedGap": 8.133333333333333,
+        "measuredGap": 8.133333333333333
+      },
+      {
+        "at": 65,
+        "expectedGap": 8.144444444444444,
+        "measuredGap": 8.144444444444444
+      },
+      {
+        "at": 70,
+        "expectedGap": 8.155555555555555,
+        "measuredGap": 8.155555555555555
+      },
+      {
+        "at": 75,
+        "expectedGap": 8.166666666666666,
+        "measuredGap": 8.166666666666666
+      },
+      {
+        "at": 80,
+        "expectedGap": 8.177777777777777,
+        "measuredGap": 8.177777777777777
+      },
+      {
+        "at": 85,
+        "expectedGap": 8.188888888888888,
+        "measuredGap": 8.188888888888888
+      },
+      {
+        "at": 90,
+        "expectedGap": 8.2,
+        "measuredGap": 8.2
+      },
+      {
+        "at": 95,
+        "expectedGap": 8.21111111111111,
+        "measuredGap": 8.21111111111111
+      },
+      {
+        "at": 100,
+        "expectedGap": 8.222222222222221,
+        "measuredGap": 8.222222222222221
+      },
+      {
+        "at": 105,
+        "expectedGap": 8.233333333333333,
+        "measuredGap": 8.233333333333333
+      },
+      {
+        "at": 110,
+        "expectedGap": 8.244444444444444,
+        "measuredGap": 8.244444444444444
+      },
+      {
+        "at": 115,
+        "expectedGap": 8.255555555555556,
+        "measuredGap": 8.255555555555556
+      },
+      {
+        "at": 120,
+        "expectedGap": 8.266666666666667,
+        "measuredGap": 8.266666666666667
+      },
+      {
+        "at": 125,
+        "expectedGap": 8.277777777777779,
+        "measuredGap": 8.277777777777779
+      },
+      {
+        "at": 130,
+        "expectedGap": 8.28888888888889,
+        "measuredGap": 8.28888888888889
+      },
+      {
+        "at": 135,
+        "expectedGap": 8.3,
+        "measuredGap": 8.3
+      },
+      {
+        "at": 140,
+        "expectedGap": 8.311111111111112,
+        "measuredGap": 8.311111111111112
+      },
+      {
+        "at": 145,
+        "expectedGap": 8.322222222222223,
+        "measuredGap": 8.322222222222223
+      },
+      {
+        "at": 150,
+        "expectedGap": 8.333333333333334,
+        "measuredGap": 8.333333333333334
+      },
+      {
+        "at": 155,
+        "expectedGap": 8.344444444444445,
+        "measuredGap": 8.344444444444445
+      },
+      {
+        "at": 160,
+        "expectedGap": 8.355555555555556,
+        "measuredGap": 8.355555555555556
+      },
+      {
+        "at": 165,
+        "expectedGap": 8.366666666666667,
+        "measuredGap": 8.366666666666667
+      },
+      {
+        "at": 170,
+        "expectedGap": 8.377777777777778,
+        "measuredGap": 8.377777777777778
+      },
+      {
+        "at": 175,
+        "expectedGap": 8.38888888888889,
+        "measuredGap": 8.38888888888889
+      },
+      {
+        "at": 180,
+        "expectedGap": 8.4,
+        "measuredGap": 8.4
+      }
+    ],
+    "continuous": {
+      "id": "carrier",
+      "pair": "ground",
+      "status": "clear",
+      "message": "Clear throughout this joint travel · conservative nominal gap ≥ 5.96956 mm. Smallest sampled gap 8.00000 mm at 0.000°.",
+      "coordinate": 0,
+      "sampledGap": 8,
+      "probes": 2,
+      "lowerBound": 5.969563338413632
+    }
+  }
+]

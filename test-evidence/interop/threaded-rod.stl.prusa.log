@@ -1,0 +1,14 @@
+[threaded-rod.stl]
+size_x = 8.000000
+size_y = 5.000000
+size_z = 4.999851
+min_x = 0.000000
+min_y = -2.500000
+min_z = -2.500000
+max_x = 8.000000
+max_y = 2.500000
+max_z = 2.499851
+number_of_facets = 7954
+manifold = yes
+number_of_parts =  1
+volume = 142.825409

@@ -24,17 +24,41 @@
         4.0
       ]
     ],
-    "parts": "1"
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 1878
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            -4.618802070617676,
+            -4.0,
+            -7.979727989493313e-17
+          ],
+          [
+            4.618802070617676,
+            4.0,
+            4.0
+          ]
+        ],
         "volume": 157.3994016264083,
         "closed": true,
         "triangles": 7366
       }
     ],
-    "buildItems": 1
+    "buildItems": 1,
+    "names": [
+      "M5 hex nut"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 157.399536,
+        "manifold": true
+      }
+    ]
   }
 }

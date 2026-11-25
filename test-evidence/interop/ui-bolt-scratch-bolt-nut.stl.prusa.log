@@ -1,0 +1,14 @@
+[ui-bolt-scratch-bolt-nut.stl]
+size_x = 9.237604
+size_y = 8.000000
+size_z = 12.000000
+min_x = -4.618802
+min_y = -4.000000
+min_z = -8.000000
+max_x = 4.618802
+max_y = 4.000000
+max_z = 4.000000
+number_of_facets = 15380
+manifold = yes
+number_of_parts =  2
+volume = 494.213593

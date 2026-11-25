@@ -1,45 +1,12 @@
-# Independent file interchange · Phase 1
+# Independent file interchange
 
-Volumes are in mm³. This checkpoint records files measured in both kernels. For complex models without an approved reference, a matched transfer does not establish design correctness. Pending baselines need owner sign-off.
+[Complete per-file table for STEP, STL, 3MF, planar files and reverse STEP](test-evidence/interop/results.md) · [Full numerical results](test-evidence/interop/measurements.json) · [Candidate values awaiting approval](test-evidence/interop/candidate-references.md)
+
+The main set contains 37 outward solid cases and 41 reverse STEP files, including four built directly in FreeCAD. The actual writer emitted AP242. Each measured source uses the recorded fixed STL export settings. The analytical 10 mm diameter × 100 mm cylinder is 7,853.981634 mm³ in FreeCAD and its STL is 7,851.923828 mm³ in PrusaSlicer. A matched complex-part transfer establishes fidelity only; it does not approve the underlying design.
 
 | File | Format | Expected (source) | Our volume | FreeCAD volume | Diff % | Bbox match | Valid in FreeCAD | Import warnings | Structure OK | Result |
 |---|---|---|---:|---:|---:|---|---|---|---|---|
-| [SYS-002](test-evidence/interop/SYS-002.step) | AP242 | Unapproved candidate | 78.400000 | 78.400000 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [block](test-evidence/interop/block.step) | AP242 | 1000, hand: 20 × 10 × 5 | 1000.000000 | 1000.000000 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Pass |
-| [cylinder](test-evidence/interop/cylinder.step) | AP242 | 7853.98, hand: π × 5² × 100 | 7853.981634 | 7853.981634 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Pass |
-| [hinge-1](test-evidence/interop/hinge-1.step) | AP242 | Unapproved candidate | 205.055658 | 205.055658 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [hinge-2](test-evidence/interop/hinge-2.step) | AP242 | Unapproved candidate | 205.055658 | 205.055658 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [hinge-3](test-evidence/interop/hinge-3.step) | AP242 | Unapproved candidate | 203.080403 | 203.080403 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [hinge](test-evidence/interop/hinge.step) | AP242 | Unapproved candidate | 613.191719 | 613.191719 | 0.000000 | True | True | 0 flagged text lines | 3 solids; see names/placement findings | Sign-off pending |
-| [m5-cosmetic](test-evidence/interop/m5-cosmetic.step) | AP242 | Unapproved candidate | 429.609139 | 429.609139 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [m5-nut](test-evidence/interop/m5-nut.step) | AP242 | Unapproved candidate | 157.386747 | 157.386747 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ruler-blank](test-evidence/interop/ruler-blank.step) | AP242 | 6216, hand: 155.4 × 20 × 2 | 6216.000000 | 6216.000000 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Pass |
-| [ruler](test-evidence/interop/ruler.step) | AP242 | Unapproved candidate | 6200.977448 | 6200.977448 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [twist-pen-1](test-evidence/interop/twist-pen-1.step) | AP242 | Unapproved candidate | 6431.618931 | 6431.618508 | 0.000007 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [twist-pen-2](test-evidence/interop/twist-pen-2.step) | AP242 | Unapproved candidate | 1187.948431 | 1187.948395 | 0.000003 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [twist-pen-3](test-evidence/interop/twist-pen-3.step) | AP242 | Unapproved candidate | 2415.272140 | 2415.272140 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [twist-pen-4](test-evidence/interop/twist-pen-4.step) | AP242 | Unapproved candidate | 53.475000 | 53.475000 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [twist-pen](test-evidence/interop/twist-pen.step) | AP242 | Unapproved candidate | 10088.314502 | 10088.313693 | 0.000008 | True | True | 0 flagged text lines | 4 solids; see names/placement findings | Sign-off pending |
-| [ui-bolt-library-bolt-nut-1](test-evidence/interop/ui-bolt-library-bolt-nut-1.step) | AP242 | Unapproved candidate | 429.609139 | 429.609139 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-bolt-library-bolt-nut-2](test-evidence/interop/ui-bolt-library-bolt-nut-2.step) | AP242 | Unapproved candidate | 157.386747 | 157.386747 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-bolt-library-bolt-nut](test-evidence/interop/ui-bolt-library-bolt-nut.step) | AP242 | Unapproved candidate | 586.995886 | 586.995882 | 0.000001 | True | True | 0 flagged text lines | 2 solids; see names/placement findings | Sign-off pending |
-| [ui-click-pen-click-study-1](test-evidence/interop/ui-click-pen-click-study-1.step) | AP242 | Unapproved candidate | 1281.769803 | 1281.769803 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-click-pen-click-study-2](test-evidence/interop/ui-click-pen-click-study-2.step) | AP242 | Unapproved candidate | 145.801315 | 145.801315 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-click-pen-click-study-3](test-evidence/interop/ui-click-pen-click-study-3.step) | AP242 | Unapproved candidate | 183.783170 | 183.783170 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-click-pen-click-study](test-evidence/interop/ui-click-pen-click-study.step) | AP242 | Unapproved candidate | 1611.354288 | 1611.354288 | 0.000000 | True | True | 0 flagged text lines | 3 solids; see names/placement findings | Sign-off pending |
-| [ui-hinge-hinge-1](test-evidence/interop/ui-hinge-hinge-1.step) | AP242 | Unapproved candidate | 160.992938 | 160.992938 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-hinge-hinge-2](test-evidence/interop/ui-hinge-hinge-2.step) | AP242 | Unapproved candidate | 160.992938 | 160.992938 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-hinge-hinge-3](test-evidence/interop/ui-hinge-hinge-3.step) | AP242 | Unapproved candidate | 120.165919 | 120.165919 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-hinge-hinge](test-evidence/interop/ui-hinge-hinge.step) | AP242 | Unapproved candidate | 442.151795 | 442.151795 | 0.000000 | True | True | 0 flagged text lines | 3 solids; see names/placement findings | Sign-off pending |
-| [ui-pen-twist-pen-1](test-evidence/interop/ui-pen-twist-pen-1.step) | AP242 | Unapproved candidate | 6430.324148 | 6430.318472 | 0.000088 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-pen-twist-pen-2](test-evidence/interop/ui-pen-twist-pen-2.step) | AP242 | Unapproved candidate | 1187.948431 | 1187.948395 | 0.000003 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-pen-twist-pen-3](test-evidence/interop/ui-pen-twist-pen-3.step) | AP242 | Unapproved candidate | 2415.272140 | 2415.272140 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-pen-twist-pen-4](test-evidence/interop/ui-pen-twist-pen-4.step) | AP242 | Unapproved candidate | 53.475000 | 53.475000 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
-| [ui-pen-twist-pen](test-evidence/interop/ui-pen-twist-pen.step) | AP242 | Unapproved candidate | 10087.019718 | 10087.013181 | 0.000065 | True | True | 0 flagged text lines | 4 solids; see names/placement findings | Sign-off pending |
-| [ui-ruler-graduated-ruler](test-evidence/interop/ui-ruler-graduated-ruler.step) | AP242 | Unapproved candidate | 6794.453374 | 6794.453374 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
+| [Mounted blocks](test-evidence/ASM-001/two-blocks.step) | AP242 | 2 × (20 × 10 × 5) = 2,000 mm³ hand; span 25 mm; zero overlap | 2,000 | 2,000 summed | 0 | No, 5 mm Z span | Two valid solids; strict schema accepted | See log | No, overlap 1,000 mm³ | Fail ASM-001 |
+| [Barrel and assembly drawing sets](test-evidence/drawings/) | PDF | A4 landscape, 297 × 210 mm by design | — | — | — | Yes for sheet size | PDF reader | See browser log | Views, dimension, section, title block and BOM checked | Pass for measured sheets |
 
-**ASM-001:** the deliberate two-block 20 mm mounting translation fails assembly placement with 1,000 mm³ overlap. See BUG_REPORT.md. PDF inspection covered four barrel pages and four assembly pages. All measured 297 × 210 mm. Full reader logs, returned files, and additional mesh/vector results are in test-evidence.
-
-## Files produced through the project workflows
-
-The actual UI produced the click-pen study, hinge, bolt and nut, fully finished pen, and dual-scale ruler files under [project evidence](test-evidence/projects/). The reader suite also checks available per-body files. The requested M10 pen and modeled M5 library screw failed before valid solid export. Their evidence is UI-001 and INTEROP-001.
+The requested M10 pen and the modeled M5 library screw failed before valid exports existed. UI-001 and INTEROP-001 preserve those originals. A completed example with 9.7 mm major diameter and a scratch-built M5 pair are identified separately. [Real project outcomes](test-evidence/projects/RESULTS.md)

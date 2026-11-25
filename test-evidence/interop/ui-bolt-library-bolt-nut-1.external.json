@@ -24,17 +24,41 @@
         3.5
       ]
     ],
-    "parts": "1"
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 3758
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            -4.618802070617676,
+            -4.0,
+            -12.0
+          ],
+          [
+            4.618802070617676,
+            4.0,
+            3.5
+          ]
+        ],
         "volume": 429.54703701146514,
         "closed": true,
         "triangles": 652
       }
     ],
-    "buildItems": 1
+    "buildItems": 1,
+    "names": [
+      "M5 hex screw \u00b7 12 mm"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 429.547028,
+        "manifold": true
+      }
+    ]
   }
 }

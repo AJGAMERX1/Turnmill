@@ -24,27 +24,85 @@
         4.999012
       ]
     ],
-    "parts": "3"
+    "parts": "3",
+    "sliceExit": 0,
+    "extrusionMoves": 2024
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            0.0,
+            -5.0,
+            -4.999011516571045
+          ],
+          [
+            32.0,
+            5.0,
+            4.999011516571045
+          ]
+        ],
         "volume": 1281.431969146753,
         "closed": true,
         "triangles": 1264
       },
       {
+        "bbox": [
+          [
+            0.0,
+            -3.200000047683716,
+            -3.1993675231933594
+          ],
+          [
+            7.0,
+            3.200000047683716,
+            3.1993675231933594
+          ]
+        ],
         "volume": 145.76288849676644,
         "closed": true,
         "triangles": 1264
       },
       {
+        "bbox": [
+          [
+            0.0,
+            -1.5,
+            -1.4997035264968872
+          ],
+          [
+            26.0,
+            1.5,
+            1.4997035264968872
+          ]
+        ],
         "volume": 183.73473625125928,
         "closed": true,
         "triangles": 628
       }
     ],
-    "buildItems": 3
+    "buildItems": 3,
+    "names": [
+      "Guide tube",
+      "Cam ring",
+      "Plunger"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 1281.431763,
+        "manifold": true
+      },
+      {
+        "volume": 145.762955,
+        "manifold": true
+      },
+      {
+        "volume": 183.734604,
+        "manifold": true
+      }
+    ]
   }
 }

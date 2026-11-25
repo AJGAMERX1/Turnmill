@@ -3,7 +3,11 @@ import os,traceback,json
 from pathlib import Path
 import FreeCAD as A, FreeCADGui as G, Import, Part
 from PySide import QtCore
-out=Path(os.environ['QA_OUT']);results={}
+def wait(ms):
+    loop=QtCore.QEventLoop()
+    QtCore.QTimer.singleShot(ms,loop.quit)
+    loop.exec()
+out=Path(os.environ['QA_OUT']);results=json.loads((out/'gui.json').read_text()) if (out/'gui.json').exists() else {}
 def gui_cases():
     for name in json.loads(os.environ['QA_GUI_CASES']):
         doc=A.newDocument("QAView")
@@ -14,8 +18,26 @@ def gui_cases():
             for label in ('iso','front','detail'):
                 if label=='front':view.viewFront()
                 else:view.viewIsometric()
+                wait(450)
                 view.fitAll()
-                if label=='detail':view.zoomIn();view.zoomIn()
+                wait(120)
+                if label=='detail':
+                    if 'pen' in name and (name.endswith('-1') or name.endswith('-2')):
+                        if name.endswith('-2'):view.viewLeft()
+                        else:
+                            # Point the camera at the actual threaded shoulder instead of the barrel midpoint.
+                            from pivy import coin
+                            shape=Part.read(str(out/(name+'.step')))
+                            box=shape.optimalBoundingBox(False,False)
+                            cameraNode=view.getCameraNode()
+                            pos=cameraNode.position.getValue()
+                            direction=cameraNode.orientation.getValue().multVec(coin.SbVec3f(0,0,-1))
+                            focus=pos+direction*cameraNode.focalDistance.getValue()
+                            target=coin.SbVec3f(box.XMax-4,0,0)
+                            cameraNode.position=pos+target-focus
+                            cameraNode.height.setValue(23)
+                    else:view.zoomIn();view.zoomIn()
+                wait(350)
                 G.updateGui()
                 view.saveImage(str(out/(name+'.freecad-'+label+'.png')),560,400,'White')
             results[name]='rendered'

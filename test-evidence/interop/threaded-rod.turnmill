@@ -1,0 +1,57 @@
+{
+  "id": "0dca517a-e114-4135-afbe-8e569411cea9",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "rod-profile",
+      "name": "Plain threaded rod profile",
+      "points": [
+        {
+          "x": "0 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "8 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "8 mm",
+          "y": "2.5 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "2.5 mm"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "rod",
+      "name": "Plain threaded rod",
+      "kind": "revolve",
+      "operation": "new",
+      "sketchId": "rod-profile",
+      "amount": "360 deg",
+      "suppressed": false,
+      "finishes": [
+        {
+          "id": "m5",
+          "name": "M5 × 0.8",
+          "kind": "thread",
+          "diameter": "5 mm",
+          "length": "4 mm",
+          "pitch": "0.8 mm",
+          "end": "end",
+          "preset": "M5 × 0.8",
+          "side": "external",
+          "mode": "modeled",
+          "hand": "right"
+        }
+      ]
+    }
+  ]
+}

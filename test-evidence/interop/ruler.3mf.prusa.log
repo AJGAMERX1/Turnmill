@@ -1,0 +1,14 @@
+[ruler.3mf]
+size_x = 155.399994
+size_y = 20.000000
+size_z = 2.000000
+min_x = -77.699997
+min_y = -10.000000
+min_z = -1.000000
+max_x = 77.699997
+max_y = 10.000000
+max_z = 1.000000
+number_of_facets = 99440
+manifold = yes
+number_of_parts =  1
+volume = 6201.341797

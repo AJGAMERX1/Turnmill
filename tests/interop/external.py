@@ -39,8 +39,16 @@ def slicer(path):
     binary=command('PRUSASLICER','prusa-slicer','PrusaSlicer.app/Contents/MacOS/PrusaSlicer')
     status,lines=cli([binary,'--info',path],out/(path.name+'.prusa.log'))
     fields=dict(re.findall(r'^([a-z_]+) =\s*([^\n]+)',lines,re.M))
-    return {'exit':status,'manifold':fields.get('manifold'), 'volume':float(fields['volume']) if 'volume' in fields else None,
+    data={'exit':status,'manifold':fields.get('manifold'), 'volume':float(fields['volume']) if 'volume' in fields else None,
             'bbox':[[float(fields[k+'_'+a]) for a in 'xyz'] for k in ['min','max']] if 'min_x' in fields else None,'parts':fields.get('number_of_parts')}
+    # Use an isolated temporary output and the same nominal printer/layer settings on each mesh.
+    with tempfile.TemporaryDirectory() as tmp:
+        gcode=Path(tmp)/'proof.gcode'
+        sliced,log=cli([binary,'--export-gcode','--layer-height','0.30','--fill-density','0%','--output',gcode,path],out/(path.name+'.slice.log'))
+        lines=gcode.read_text(errors='replace').splitlines() if gcode.exists() else []
+        data['sliceExit']=sliced
+        data['extrusionMoves']=sum(bool(re.search(r'^G1\b.* [XY]-?[0-9].* E[0-9]',line)) for line in lines)
+    return data
 def mf(path):
     ns={'m':'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
     with ZipFile(path) as z:
@@ -54,8 +62,13 @@ def mf(path):
             for t in tris:
                 a,b,c=[v[i] for i in t];vol+=sum(a[i]*(b[(i+1)%3]*c[(i+2)%3]-b[(i+2)%3]*c[(i+1)%3]) for i in range(3))/6.
                 for i,j in zip(t,(t[1],t[2],t[0])):incidence[tuple(sorted((v[i],v[j])))]+=1
-            result.append({'volume':vol,'closed':all(x==2 for x in incidence.values()),'triangles':len(tris)})
-        return {'unit':doc.get('unit'),'meshes':result,'buildItems':len(doc.findall('m:build/m:item',ns))}
+            result.append({'bbox':[[min(row[k] for row in v) for k in range(3)],[max(row[k] for row in v) for k in range(3)]],'volume':vol,'closed':all(x==2 for x in incidence.values()),'triangles':len(tris)})
+        data={'unit':doc.get('unit'),'meshes':result,'buildItems':len(doc.findall('m:build/m:item',ns)),'names':[o.get('name') for o in doc.findall('m:resources/m:object',ns)]}
+        binary=command('PRUSASLICER','prusa-slicer','PrusaSlicer.app/Contents/MacOS/PrusaSlicer')
+        status,log=cli([binary,'--info',path],out/(path.name+'.prusa.log'))
+        data['slicerExit']=status
+        data['slicerParts']=[{'volume':float(v),'manifold':flag=='yes'} for flag,v in re.findall(r'manifold = (yes|no).*?\bvolume = (-?[0-9.]+)',log,re.S)]
+        return data
 def vectors(dxf,svg):
     import ezdxf
     drawing=ezdxf.readfile(dxf);audit=drawing.audit()

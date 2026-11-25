@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 3854,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 142.825409,
+    "bbox": [
+      [
+        0.0,
+        -2.5,
+        -2.5
+      ],
+      [
+        8.0,
+        2.5,
+        2.499851
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 1825
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -2.5,
+            -2.5
+          ],
+          [
+            8.0,
+            2.5,
+            2.4998512268066406
+          ]
+        ],
+        "volume": 142.8252889791834,
+        "closed": true,
+        "triangles": 7954
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Plain threaded rod"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 142.825363,
+        "manifold": true
+      }
+    ]
+  }
+}

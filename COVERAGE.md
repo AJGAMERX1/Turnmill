@@ -1,38 +1,38 @@
-# Phase 1 coverage
+# Phase 1 coverage matrix
 
-Independent interchange checkpoint. Updated cells apply only to the cases described in INTEROP.md and BUG_REPORT.md.
+A status describes the exercised examples in that cell. “Fail” takes precedence when exercised cases disagree. “Not covered” identifies missing evidence. [System-level measurements](test-evidence/systems/COVERAGE.md) · [Interchange results](INTEROP.md)
 
-| System | Nominal | Edge/error | UI | Persistence/exchange |
-|---|---|---|---|---|
-| Parametric sketches, lines, arcs, rectangle, polygon, pan, selection and dragging | Not covered | Not covered | Not covered | Not covered |
-| Coincident, tangent, parallel, equal, symmetric, length/distance/radius and coordinate dimensions | Not covered | Not covered | Not covered | Not covered |
-| Under/full/over-constraint and conflicting rules | Not covered | Not covered | Not covered | Not covered |
-| Extrude, revolve, add/cut, fillet, chamfer, shell, hole | Not covered | Not covered | Not covered | Not covered |
-| Linear/circular patterns, mirror, sweep, loft | Not covered | Not covered | Not covered | Not covered |
-| Cosmetic and modeled standard/custom threads | Not covered | Not covered | Not covered | Not covered |
-| Straight and diamond knurls, flat/cylindrical engraving and embossing, text and graphics | Not covered | Not covered | Not covered | Not covered |
-| Parameters, unit math, history edit/reorder/suppress/remove/rename, undo/redo | Not covered | Not covered | Not covered | Not covered |
-| Materials, per-body densities, volume, mass, center of balance | Not covered | Not covered | Not covered | Not covered |
-| Fixed/revolute/slider/cylindrical/ball/planar/screw joints, limits, drag, animation/record | Not covered | Not covered | Not covered | Not covered |
-| Springs, cam/follower, click-pen physical latch | Not covered | Not covered | Not covered | Not covered |
-| Pose interference, required clearance, continuous full travel | Not covered | Not covered | Not covered | Not covered |
-| ISO fits | Not covered | Not covered | Not covered | Not covered |
-| Screws, nuts, washers, pins, O-rings, springs, BOM | Not covered | Not covered | Not covered | Not covered |
-| Linked views, sections, details, dimensions, tolerance/GD&T/thread annotations, title block | Not covered | Not covered | Not covered | Not covered |
-| Exploded assembly, numbered balloons, assembly sections, BOM/PDF | Not covered | Not covered | Not covered | Not covered |
-| Straight metric/inch fractional/decimal, ratio, architectural and angular scales | Not covered | Not covered | Not covered | Not covered |
-| Dual scales and engraving on blank/existing planar face | Not covered | Not covered | Not covered | Not covered |
-| Native save/open, autosave, history recovery, offline restart | Not covered | Not covered | Not covered | Not covered |
-| STEP, STL, 3MF export; STEP/STL import | Fail | Fail | Fail | Fail |
-| Selectable AP242 export, 3MF and PDF import | Not built yet | Not built yet | Not built yet | Not built yet |
-| DXF/SVG export and planar profile import | Not covered | Not covered | Not covered | Not covered |
-| PDF drawings/export/print | Pass | Not covered | Pass | Pass |
-| Orbit, pan, zoom, fit, selection highlighting, responsive layouts and high DPI | Not covered | Not covered | Not covered | Not covered |
-| Live section in the Part viewport, light theme, general preferences panel | Not built yet | Not built yet | Not built yet | Not built yet |
-| Command palette, keyboard shortcuts, tooltips, empty states, guided pen | Not covered | Not covered | Not covered | Not covered |
-| Large histories/assemblies, rebuild caching | Not covered | Not covered | Not covered | Not covered |
-| All six project families | Not covered | Not covered | Not covered | Not covered |
-| Independent interoperability checking, chaos/fuzz, regression and CI | Not covered | Not covered | Not covered | Not covered |
+| System | Nominal | Edge/error | UI | Persistence/exchange | Scope and evidence |
+|---|---|---|---|---|---|
+| Sketch tools / constraints | Pass | Pass | Pass | Pass | All 14 implemented rule labels, solve watchdog, valid/contradictory status, polygon/rectangle and constrained drag. One closed contour. |
+| Sketch-local Undo/Redo | Pass | Fail | Fail | Not covered | SYS-004. Distinct from the document journal. |
+| Extrude, revolve, add/cut | Pass | Pass | Pass | Pass | Analytic bounds, volumes, topology and rebuild evidence. |
+| Fillet, chamfer, shell, hole | Pass | Pass | Pass | Pass | Directed kernel/reference tests, selected UI paths, STEP exports. UI per parameter combination not exhaustive. |
+| Linear/circular patterns, mirror, sweep, loft | Pass | Pass | Not covered | Pass | Measured in feature suite; UI-specific coverage per operation was not repeated. |
+| Modeled/cosmetic threads | Fail | Fail | Fail | Fail | UI-001, INTEROP-001, INTEROP-006. Independent thread sections measured for samples. |
+| Straight/diamond knurl | Pass | Pass | Pass | Pass | Both kernel cases, straight-groove UI and independent STEP reader. Complex reference sign-off pending. |
+| Flat/cylindrical marks and emboss | Pass | Fail | Pass | Pass | SYS-002. Through-cut depth accepted, documented; all thickness/graphic combinations not measured. |
+| Parameters, references, rename, reorder, suppress, remove | Pass | Pass | Pass | Pass | Model reverted exactly after parameter changes, invalid target rejected, keyboard reorder/undo verified. |
+| Document undo, autosave, reopen, multiple tabs, storage interruption | Pass | Pass | Pass | Pass | Legacy 85 snapshots, lazy reads, interrupted write retry, branch truncation, native rescue and reopen; see browser/history.json. |
+| All seven joints, limits and motion poses | Pass | Fail | Fail | Fail | SYS-001 for named angular limits and ASM-001 for exported placement. 328 analytic clearance measurements and 12 continuous ranges. |
+| Cam, plunger and spring mechanism | Pass | Pass | Pass | Pass | Quasistatic cam law, physical spring, all-pair hinge/click travel. Video capture across browser codecs not repeated. |
+| Physical click latch | Not built yet | Not built yet | Not built yet | Not built yet | No stateful mechanical latch. |
+| Fits and tolerances | Pass | Pass | Not covered | Not covered | Supported four ISO fit classes and size limits, 48 table checks; physical gauges unavailable. |
+| Fastener library / BOM | Fail | Fail | Fail | Fail | Differentiate modeled M5 library screw failure from verified BOM, scratch pair and the remaining library families. |
+| Drawing views, section/detail, dimensions, annotations, BOM | Pass | Fail | Pass | Pass | SYS-001 blocks assembly drawing for a named angle; linked dimension, valid/invalid references and printed outputs tested. |
+| Ruler/scale geometry, labels, ticks and applied depth | Pass | Fail | Fail | Fail | All supported unit families in logic tests. Ruler edges and cut depth measured. INTEROP-003 and INTEROP-005. Independent terminal lengths not implemented. |
+| Native, STEP, STL, DXF and SVG import/export; 3MF/PDF export | Fail | Fail | Fail | Fail | See individual formats in INTEROP.md, results differ by format. |
+| Second STEP schema selector or 3MF/PDF import | Not built yet | Not built yet | Not built yet | Not built yet | AP242 from Turnmill, AP214/AP242 readers, output-only PDF/3MF. |
+| Viewport orbit/pan/zoom, picking and highlighting | Pass | Pass | Pass | Not covered | Inspected tiny/large blocks, face highlight, high-DPI screenshots; 50-part geometry load timed separately. |
+| Live Part viewport cutting plane | Not built yet | Not built yet | Not built yet | Not built yet | Drawing sections tested separately. |
+| Performance under load | Pass | Fail | Fail | Not covered | Cold pen, 100 features and 50 parts; SYS-003 for common edit. No general hardware guarantee. |
+| Number entry and formulas | Pass | Pass | Pass | Pass | 1/2 in, formulas, negative/zero, huge/tiny, empty, letters, infinity and divide-by-zero. Comma decimal is rejected. |
+| Command palette and shortcuts | Pass | Pass | Pass | Not covered | Search, focus restoration, tool routing, modal isolation, shortcut registry and keyboard persona. Every key in every platform layout remains untested. |
+| Measure, material, density, mass and balance | Pass | Pass | Pass | Pass | Individual and assembly density-weighted mass and center; UI compared within display precision. |
+| Unicode, spaces and long names | Pass | Not covered | Pass | Pass | Document serialization and rename, not every host OS filename limit. |
+| Preferences, UI labels, errors, empty state, guidance | Pass | Fail | Fail | Pass | Persisted project settings/guide, misleading finish/angle errors. Tooltip/empty-state census incomplete. |
+| Responsive and high DPI | Pass | Pass | Pass | Not covered | Phone/tablet widths and DPR2 inspected; no physical touch device or Safari/Firefox session. |
+| Light theme, global preferences | Not built yet | Not built yet | Not built yet | Not built yet | One theme. Workspace options have their own persistence. |
 
 ## Project and persona coverage
 

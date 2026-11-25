@@ -24,17 +24,41 @@
         1.499704
       ]
     ],
-    "parts": "1"
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 143
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            0.0,
+            -1.5,
+            -1.4997035264968872
+          ],
+          [
+            26.0,
+            1.5,
+            1.4997035264968872
+          ]
+        ],
         "volume": 183.73473625125928,
         "closed": true,
         "triangles": 628
       }
     ],
-    "buildItems": 1
+    "buildItems": 1,
+    "names": [
+      "Plunger"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 183.734604,
+        "manifold": true
+      }
+    ]
   }
 }

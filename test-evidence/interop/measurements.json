@@ -335,6 +335,51 @@
       "strictSchemaExit": 0
     },
     {
+      "case": "threaded-rod",
+      "expected": {
+        "formula": "4\u03c0R\u00b2 + 4\u03c0[R\u00b2/8 + r\u00b2/4 + 5(R\u00b2+Rr+r\u00b2)/24], R=2.5, r=R\u22125\u221a3\u00b70.8/16",
+        "volume": 142.85562301843493,
+        "bbox": [
+          [
+            0,
+            -2.5,
+            -2.5
+          ],
+          [
+            8,
+            2.5,
+            2.5
+          ]
+        ],
+        "center": [
+          3.800861746139049,
+          0,
+          0
+        ]
+      },
+      "native": 142.84992021322637,
+      "freecad": 142.85556438489473,
+      "prusaStl": 142.825409,
+      "freecadStl": 142.82542419433594,
+      "pctDifference": 4.104391479529682e-05,
+      "maxBoundError": 1.270095140171179e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Plain threaded rod"
+      ],
+      "knownMesh": [
+        "INTEROP-006"
+      ],
+      "overlap": [],
+      "roots": [
+        "Plain threaded rod"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
       "case": "twist-pen-1",
       "expected": null,
       "native": 6431.618930961377,
@@ -491,6 +536,168 @@
         "Threaded cap",
         "Refill",
         "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-bolt-nut-1",
+      "expected": null,
+      "native": 429.609139466949,
+      "freecad": 429.6091394669419,
+      "prusaStl": 429.54715,
+      "freecadStl": 429.5449523925781,
+      "pctDifference": 1.653928351342172e-12,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex screw \u00b7 12 mm"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex screw \u00b7 12 mm"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-bolt-nut-2",
+      "expected": null,
+      "native": 157.38674658812351,
+      "freecad": 157.386746597095,
+      "prusaStl": 157.399307,
+      "freecadStl": 157.39895629882812,
+      "pctDifference": 5.700278648901559e-09,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex nut"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-library-bolt-nut",
+      "expected": null,
+      "native": 586.9958860550726,
+      "freecad": 586.995881988827,
+      "prusaStl": 586.947144,
+      "freecadStl": 586.9493408203125,
+      "pctDifference": 6.92721300815647e-07,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 2,
+      "names": [
+        "M5 hex screw \u00b7 12 mm",
+        "M5 hex nut"
+      ],
+      "knownMesh": [
+        "ASM-001"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 137.71340042862997
+        }
+      ],
+      "roots": [
+        "M5 hex screw \u00b7 12 mm",
+        "M5 hex nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-scratch-bolt-nut-1",
+      "expected": null,
+      "native": 336.8440290758374,
+      "freecad": 336.8440281215531,
+      "prusaStl": 336.81369,
+      "freecadStl": 336.8125305175781,
+      "pctDifference": 2.833015344675137e-07,
+      "maxBoundError": 1.6351364706679306e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hand-built shank"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hand-built shank"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-scratch-bolt-nut-2",
+      "expected": null,
+      "native": 157.38674657930716,
+      "freecad": 157.38674658825894,
+      "prusaStl": 157.399307,
+      "freecadStl": 157.3989715576172,
+      "pctDifference": 5.6877640982416095e-09,
+      "maxBoundError": 1.6351364706679306e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hand-built nut"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hand-built nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-bolt-scratch-bolt-nut",
+      "expected": null,
+      "native": 494.23077565514456,
+      "freecad": 494.2308666641926,
+      "prusaStl": 494.213593,
+      "freecadStl": 494.2169189453125,
+      "pctDifference": 1.8414281856118283e-05,
+      "maxBoundError": 1.6351364706679306e-12,
+      "valid": true,
+      "solidCount": 2,
+      "names": [
+        "Hand-built shank",
+        "Hand-built nut"
+      ],
+      "knownMesh": [
+        "ASM-001"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 137.71340042089844
+        }
+      ],
+      "roots": [
+        "Hand-built shank",
+        "Hand-built nut"
       ],
       "warnings": [],
       "stepSchema": "AP242",
@@ -726,6 +933,168 @@
       "strictSchemaExit": 0
     },
     {
+      "case": "ui-pen-twist-pen-1",
+      "expected": null,
+      "native": 6430.324147784153,
+      "freecad": 6430.318472036463,
+      "prusaStl": 6428.516113,
+      "freecadStl": 6428.150390625,
+      "pctDifference": 8.826534338119321e-05,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Barrel"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Barrel"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-2",
+      "expected": null,
+      "native": 1187.9484305955523,
+      "freecad": 1187.9483945798136,
+      "prusaStl": 1187.531128,
+      "freecadStl": 1187.8885498046875,
+      "pctDifference": 3.031759442357881e-06,
+      "maxBoundError": 1.7763568394002505e-15,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Threaded cap"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Threaded cap"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-3",
+      "expected": null,
+      "native": 2415.2721400431005,
+      "freecad": 2415.2721400429505,
+      "prusaStl": 2414.612549,
+      "freecadStl": 2414.607666015625,
+      "pctDifference": 6.213238802558092e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Refill"
+      ],
+      "knownMesh": [
+        "INTEROP-002"
+      ],
+      "overlap": [],
+      "roots": [
+        "Refill"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen-4",
+      "expected": null,
+      "native": 53.475000000000016,
+      "freecad": 53.474999999975005,
+      "prusaStl": 53.475006,
+      "freecadStl": 53.475067138671875,
+      "pctDifference": 4.677158354138479e-11,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Pocket clip"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-pen-twist-pen",
+      "expected": null,
+      "native": 10087.019718422805,
+      "freecad": 10087.013181400458,
+      "prusaStl": 10084.105469,
+      "freecadStl": 10082.7333984375,
+      "pctDifference": 6.480628104119603e-05,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 4,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "knownMesh": [
+        "INTEROP-002",
+        "overlap at interface"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            4
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            4
+          ],
+          "volume": 0.15048545638725214
+        }
+      ],
+      "roots": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
       "case": "ui-ruler-graduated-ruler",
       "expected": null,
       "native": 6794.453373627474,
@@ -906,6 +1275,16 @@
       "strictExit": 0
     },
     {
+      "file": "threaded-rod.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.771267691155731e-05,
+      "names": [
+        "threaded-rod.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
       "file": "twist-pen-1.return.step",
       "solids": 1,
       "maxVolumeErrorPct": 8.894620551168727e-07,
@@ -954,6 +1333,68 @@
         "twist-pen.return \u00b7 2",
         "twist-pen.return \u00b7 3",
         "twist-pen.return \u00b7 4"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-bolt-nut-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.0641025824750223e-12,
+      "names": [
+        "ui-bolt-library-bolt-nut-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-bolt-nut-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2715108286099138e-06,
+      "names": [
+        "ui-bolt-library-bolt-nut-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-library-bolt-nut.return.step",
+      "solids": 2,
+      "maxVolumeErrorPct": 1.2715108286099138e-06,
+      "names": [
+        "ui-bolt-library-bolt-nut.return \u00b7 1",
+        "ui-bolt-library-bolt-nut.return \u00b7 2"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-scratch-bolt-nut-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.3638705624518069e-06,
+      "names": [
+        "ui-bolt-scratch-bolt-nut-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-scratch-bolt-nut-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2715108286812992e-06,
+      "names": [
+        "ui-bolt-scratch-bolt-nut-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-bolt-scratch-bolt-nut.return.step",
+      "solids": 2,
+      "maxVolumeErrorPct": 1.3638705624518069e-06,
+      "names": [
+        "ui-bolt-scratch-bolt-nut.return \u00b7 1",
+        "ui-bolt-scratch-bolt-nut.return \u00b7 2"
       ],
       "schema": "AP214",
       "strictExit": 0
@@ -1033,11 +1474,64 @@
     {
       "file": "ui-hinge-hinge.return.step",
       "solids": 3,
-      "maxVolumeErrorPct": 1.7265621815782966e-11,
+      "maxVolumeErrorPct": 1.7671664046624416e-11,
       "names": [
         "ui-hinge-hinge.return \u00b7 1",
         "ui-hinge-hinge.return \u00b7 2",
         "ui-hinge-hinge.return \u00b7 3"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.3773742530031124e-05,
+      "names": [
+        "ui-pen-twist-pen-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4175561021554693e-07,
+      "names": [
+        "ui-pen-twist-pen-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4852955210233298e-12,
+      "names": [
+        "ui-pen-twist-pen-3.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen-4.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.986214506369888e-14,
+      "names": [
+        "ui-pen-twist-pen-4.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-pen-twist-pen.return.step",
+      "solids": 4,
+      "maxVolumeErrorPct": 1.3773742530031124e-05,
+      "names": [
+        "ui-pen-twist-pen.return \u00b7 1",
+        "ui-pen-twist-pen.return \u00b7 2",
+        "ui-pen-twist-pen.return \u00b7 3",
+        "ui-pen-twist-pen.return \u00b7 4"
       ],
       "schema": "AP214",
       "strictExit": 0
@@ -1053,9 +1547,5 @@
       "strictExit": 0
     }
   ],
-  "unexpected": [
-    "ui-hinge-hinge.return.step reverse geometry",
-    "ui-hinge-hinge.return.step reverse geometry",
-    "ui-scale scale edge 1 all line positions"
-  ]
+  "unexpected": []
 }

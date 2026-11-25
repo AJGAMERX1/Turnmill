@@ -1,0 +1,6 @@
+{
+  "id": "SYS-004",
+  "title": "Sketch editor discards its earliest undo actions after 80 edits",
+  "outcome": "XFAIL",
+  "message": "Expected to undo 82 edits, ran out after 80\n\n80 !== 82\n"
+}

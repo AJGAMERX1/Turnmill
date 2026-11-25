@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "id": "large",
+  "name": "large",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "profile",
+      "name": "profile",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "50000",
+          "y": "0"
+        },
+        {
+          "x": "50000",
+          "y": "25000"
+        },
+        {
+          "x": "0",
+          "y": "25000"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "block",
+      "name": "block",
+      "kind": "extrude",
+      "sketchId": "profile",
+      "amount": "800",
+      "operation": "new",
+      "suppressed": false
+    }
+  ]
+}

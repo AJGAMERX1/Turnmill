@@ -1,0 +1,14 @@
+[ui-pen-twist-pen-4.3mf]
+size_x = 37.000000
+size_y = 2.000000
+size_z = 1.500000
+min_x = -18.500000
+min_y = -1.000000
+min_z = -0.750000
+max_x = 18.500000
+max_y = 1.000000
+max_z = 0.750000
+number_of_facets = 28
+manifold = yes
+number_of_parts =  1
+volume = 53.475006

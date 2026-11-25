@@ -12,6 +12,6 @@ SECOND PASS complete:  261 instances valid.
 
 Finished reading file.
 
-p21 ReadExchangeFile() Physical memory: -1805853680kb; Virtual memory: 0kb; User CPU time: 6100821024ms; System CPU time: 6100821104ms
+p21 ReadExchangeFile() Physical memory: -1833853936kb; Virtual memory: 0kb; User CPU time: 6128821280ms; System CPU time: 6128821360ms
 /Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/interop-tools/step-build/bin/p21read_sdai_ap242: write file ...
-/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/interop-tools/step-build/bin/p21read_sdai_ap242: /var/folders/k2/y82gz3197s52ldqmcr60m2fh0000gn/T/tmpqlsfs8je/rewrite.stp written
+/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/interop-tools/step-build/bin/p21read_sdai_ap242: /var/folders/k2/y82gz3197s52ldqmcr60m2fh0000gn/T/tmppg2e4h_t/rewrite.stp written

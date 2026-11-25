@@ -1,0 +1,46 @@
+[
+  {
+    "input": "1/2 in",
+    "value": 12.7
+  },
+  {
+    "input": "length/2+3",
+    "value": 13
+  },
+  {
+    "input": "-3 mm",
+    "value": -3
+  },
+  {
+    "input": "0",
+    "value": 0
+  },
+  {
+    "input": "1e12 mm",
+    "value": 1000000000000
+  },
+  {
+    "input": "0.000001 mm",
+    "value": 0.000001
+  },
+  {
+    "input": "12,7",
+    "rejected": "Use numbers, named parameters, units, parentheses, or + − × /."
+  },
+  {
+    "input": "",
+    "rejected": "Enter a number or parameter name."
+  },
+  {
+    "input": "abc",
+    "rejected": "Unknown parameter “abc”. Add it in Parameters or correct the name."
+  },
+  {
+    "input": "2/0",
+    "rejected": "Cannot divide by zero. Change the denominator."
+  },
+  {
+    "input": "1e999",
+    "rejected": "Enter a finite value."
+  }
+]

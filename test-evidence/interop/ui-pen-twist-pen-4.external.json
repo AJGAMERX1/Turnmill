@@ -24,17 +24,41 @@
         1.5
       ]
     ],
-    "parts": "1"
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 154
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            68.375,
+            6.099999904632568,
+            0.0
+          ],
+          [
+            105.375,
+            8.100000381469727,
+            1.5
+          ]
+        ],
         "volume": 53.47501051425934,
         "closed": true,
         "triangles": 28
       }
     ],
-    "buildItems": 1
+    "buildItems": 1,
+    "names": [
+      "Pocket clip"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 53.475006,
+        "manifold": true
+      }
+    ]
   }
 }

@@ -1,0 +1,58 @@
+[
+  {
+    "suite": "sketch",
+    "outcome": "Pass",
+    "durationMs": 544,
+    "timeoutMs": 20000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "geometry",
+    "outcome": "Pass",
+    "durationMs": 5232,
+    "timeoutMs": 150000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "motion",
+    "outcome": "Pass",
+    "durationMs": 2029,
+    "timeoutMs": 90000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "findings",
+    "outcome": "Pass",
+    "durationMs": 1036,
+    "timeoutMs": 90000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "parameters-history",
+    "outcome": "Pass",
+    "durationMs": 1028,
+    "timeoutMs": 60000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "performance",
+    "outcome": "Pass",
+    "durationMs": 45399,
+    "timeoutMs": 180000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "fuzz",
+    "outcome": "Pass",
+    "durationMs": 35662,
+    "timeoutMs": 155000,
+    "code": 0,
+    "timedOut": false
+  }
+]

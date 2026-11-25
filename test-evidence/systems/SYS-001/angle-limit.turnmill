@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "id": "qa-model",
+  "name": "QA model",
+  "parameters": [
+    {
+      "name": "hinge_limit",
+      "kind": "angle",
+      "expression": "180 deg"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "stock",
+      "name": "stock",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "4",
+          "y": "0"
+        },
+        {
+          "x": "4",
+          "y": "4"
+        },
+        {
+          "x": "0",
+          "y": "4"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "leaf",
+      "name": "leaf",
+      "points": [
+        {
+          "x": "10",
+          "y": "0"
+        },
+        {
+          "x": "14",
+          "y": "0"
+        },
+        {
+          "x": "14",
+          "y": "4"
+        },
+        {
+          "x": "10",
+          "y": "4"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "plate",
+      "name": "plate",
+      "kind": "extrude",
+      "sketchId": "stock",
+      "amount": "2",
+      "operation": "new",
+      "suppressed": false
+    },
+    {
+      "id": "moving",
+      "name": "moving",
+      "kind": "extrude",
+      "sketchId": "leaf",
+      "amount": "2",
+      "operation": "new",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "joints": {
+      "moving": {
+        "kind": "revolute",
+        "parent": "plate",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "hinge_limit",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1
+      }
+    }
+  }
+}

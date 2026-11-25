@@ -54,20 +54,27 @@ def inspect_case(f):
         check(delta(arrays(s['bbox']),arrays(expected['bbox']))<=.01 and delta(s['center'],expected['center'])<=.01,name+' analytic dimensions')
     check(pcd(s['volume'],reference)<=.1,name+' STEP reference volume')
     mesh=fc['stl'];prusa=ext['stl']
+    check(prusa['sliceExit']==0 and prusa['extrusionMoves']>0,name+' Prusa nominal slicing')
     check(prusa['exit']==0 and pcd(prusa['volume'],reference)<=1 and pcd(mesh['volume'],reference)<=1,name+' STL volume')
     check(delta(arrays(prusa['bbox']),arrays(s['bbox']))<=.01 and delta(arrays(mesh['bbox']),arrays(s['bbox']))<=.01,name+' STL dimensions')
     known=[]
     if not mesh['closed'] or mesh['nonManifold']:
-        if name.startswith('twist-pen') or name.startswith('ui-twist-pen'):known.append('INTEROP-002')
+        if 'twist-pen' in name:known.append('INTEROP-002')
+        elif name in ['ui-bolt-library-bolt-nut','ui-bolt-scratch-bolt-nut']:known.append('ASM-001')
         else:check(False,name+' STL closure')
     if mesh['selfIntersections']:
         if 'ruler' in name:known.append('INTEROP-003')
-        elif name=='twist-pen' or name.startswith('ui-twist-pen'):known.append('overlap at interface')
+        elif 'twist-pen' in name:known.append('overlap at interface')
+        elif name=='threaded-rod':known.append('INTEROP-006')
+        elif name in ['ui-bolt-library-bolt-nut','ui-bolt-scratch-bolt-nut']:known.append('ASM-001')
         else:check(False,name+' STL self-intersection')
     if prusa['manifold']!='yes' and not known:check(False,name+' Prusa manifold')
     if '3mf' in ext:
-        x=ext['3mf'];check(x['unit']=='millimeter' and x['buildItems']==len(native) and all(a['closed'] for a in x['meshes']) and pcd(sum(a['volume'] for a in x['meshes']),reference)<=1,name+' 3MF unit/count/manifold/volume')
-    return {'case':name,'expected':expected,'native':nv,'freecad':s['volume'],'prusaStl':prusa['volume'],'freecadStl':mesh['volume'],'pctDifference':pcd(s['volume'],reference),'maxBoundError':max(delta(arrays(x['bbox']),arrays(y['bbox'])) for x,y in zip(native,physical)), 'valid':s['valid'] and s['shapeCheck']=='OK','solidCount':s['solids'],'names':names,'knownMesh':known,'overlap':s.get('overlaps',[]),'roots':s['roots'],'warnings':warnings,'stepSchema':schemaData['schema'],'strictSchemaExit':schemaData['strictExit']}
+        x=ext['3mf']
+        check(x['slicerExit']==0 and len(x['slicerParts'])==len(native) and all(row['manifold'] for row in x['slicerParts']) and pcd(sum(q['volume'] for q in x['slicerParts']),reference)<=1,name+' 3MF Prusa re-import')
+        check(x['names']==[q['name'] for q in native] and all(delta(arrays(a['bbox']),arrays(b['bbox']))<=.01 for a,b in zip(x['meshes'],native)),name+' 3MF object bounds and labels')
+        check(x['unit']=='millimeter' and x['buildItems']==len(native) and all(a['closed'] for a in x['meshes']) and pcd(sum(a['volume'] for a in x['meshes']),reference)<=1,name+' 3MF unit/count/manifold/volume')
+    return {'case':name,'expected':expected,'native':nv,'freecad':s['volume'],'prusaStl':prusa['volume'],'freecadStl':mesh['volume'],'pctDifference':pcd(s['volume'],reference),'maxBoundError':max(delta(arrays(x['bbox']),arrays(y['bbox'])) for x,y in zip(native,physical)), 'valid':s['valid'] and s['shapeCheck']=='OK','solidCount':s['solids'],'names':names,'knownMesh':list(dict.fromkeys(known)),'overlap':s.get('overlaps',[]),'roots':s['roots'],'warnings':warnings,'stepSchema':schemaData['schema'],'strictSchemaExit':schemaData['strictExit']}
 def reverse_checks():
     data=json.loads((out/'reverse.json').read_text());source=json.loads((out/'freecad-sources.json').read_text()); summary=[]
     for row in data:
@@ -89,7 +96,7 @@ def reverse_checks():
     return summary
 def setup_and_check():
     if not options.existing:
-        node('simple','hardwareRegression','hardwareAlternates','pen','ruler','terminal')
+        node('simple','rod','hardwareRegression','hardwareAlternates','pen','ruler','terminal')
         if (root/'test-evidence/projects').exists():node('projects')
     run('create_references.py','references')
     with concurrent.futures.ThreadPoolExecutor(2) as pool:
@@ -101,6 +108,12 @@ def setup_and_check():
         run('planar.py','ui-scale')
     for name in ['ruler','ui-scale']:
         if (out/(name+'.dxf')).exists():put(name+'.vectors.json',vectors(out/(name+'.dxf'),out/(name+'.svg')))
+    from external import diagnostics
+    assert diagnostics('1 ERROR 0 WARNINGS') and diagnostics('0 ERRORS 1 WARNING') and not diagnostics('0 ERRORS 0 WARNINGS')
+    invalid=out/'negative-schema-control.invalid.stp'
+    invalid.write_text((out/'block.step').read_text().replace('APPLICATION_CONTEXT(', 'INVALID_QA_ENTITY(',1))
+    negative=schema(invalid);assert negative['strictExit']!=0 and negative['diagnostics']
+    put('schema-negative.json',negative)
     node('reverse')
     for path in sorted(set(out.glob('*.return.step')) | set(out.glob('fc-*.step'))):put(path.name+'.strict.json',schema(path))
     if options.gui:

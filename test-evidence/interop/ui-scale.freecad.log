@@ -16,8 +16,8 @@ Manual scaling factor: 1.000000
 Final scaling: 1 DXF unit = 1.0000 mm
 
 Performance:
-  - C++ import time: 0.4894 seconds
-  - Total import time: 0.4970 seconds
+  - C++ import time: 0.5486 seconds
+  - Total import time: 0.5575 seconds
 
 Import settings:
   - Import hidden blocks: No

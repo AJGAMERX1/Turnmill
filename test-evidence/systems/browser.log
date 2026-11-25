@@ -1,0 +1,3 @@
+XFAIL SYS-001 Browser named-angle clearance Expected 6 mm, displayed Expected a angle value.
+XFAIL SYS-002 Browser engraving volume Volume for complete graphic: expected 77.6 ± 0.0024; measured 78.4
+Confirmed clearance/assembly sheet and rotated engraving in release browser

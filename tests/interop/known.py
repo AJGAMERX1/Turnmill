@@ -20,6 +20,14 @@ def run():
     expect('INTEROP-002',refill['closed'] and not refill['nonManifold'] and not raw['degenerate'],'Refill STL must be closed and manifold with no collapsed facets. '+str(raw)+' FreeCAD '+str(refill))
     ruler=json.loads((out/'ruler.freecad.json').read_text())['stl']
     expect('INTEROP-003',not ruler['selfIntersections'],'FreeCAD Mesh reports self-intersection in graduated ruler: '+str(ruler['selfIntersections']))
+    rod=json.loads((out/'threaded-rod.freecad.json').read_text())['stl']
+    expect('INTEROP-006',not rod['selfIntersections'],'The independent FreeCAD Mesh check should find no self-intersections on the analytic M5 rod STL. Actual '+str(rod['selfIntersections']))
+    for kit in ['ui-bolt-library-bolt-nut','ui-bolt-scratch-bolt-nut']:
+        if not (out/(kit+'.freecad.json')).exists():continue
+        check=json.loads((out/(kit+'.freecad.json')).read_text());mesh=check['stl']
+        # Both shipped UI studies put the bolt head through the nut in the exported coordinates.
+        overlap=sum(r['volume'] for r in check['step']['overlaps'])
+        expect('ASM-001',overlap<=1e-6 and mesh['closed'] and not mesh['selfIntersections'],kit+' assembled STEP overlap '+str(overlap)+' mm³, STL closed '+str(mesh['closed'])+', self-intersections '+str(mesh['selfIntersections']))
     from external import vectors
     marks=vectors(out/'terminal.dxf',out/'terminal.svg')['edges'][0]
     nominal=155.0; center=marks[-1][0]

@@ -4,6 +4,7 @@ from pathlib import Path
 import os,json
 out=Path(os.getenv('QA_INTEROP_OUT',Path(__file__).resolve().parents[2]/'test-evidence/interop'))
 cases=[p.name.removesuffix('.native.json') for p in sorted(out.glob('*.native.json'))]
+cases+=sorted(json.loads((out/'freecad-sources.json').read_text()))
 for group in range((len(cases)+4)//5):
     names=cases[group*5:group*5+5];sheet=Image.new('RGB',(1080,30+len(names)*170),'white');draw=ImageDraw.Draw(sheet)
     for k,t in enumerate(['Turnmill isometric','FreeCAD isometric','FreeCAD front','FreeCAD zoom']):draw.text((k*270+8,5),t,fill='black')

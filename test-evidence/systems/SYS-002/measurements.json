@@ -1,0 +1,33 @@
+{
+  "stockVolume": 80,
+  "designArea": 12,
+  "requestedDepth": 0.2,
+  "expectedRemoved": 2.4,
+  "actualRemoved": 1.5999999999999943,
+  "shape": {
+    "name": "plate",
+    "valid": true,
+    "volume": 78.4,
+    "area": 136.79999999999998,
+    "center": [
+      5.020408163265305,
+      2,
+      0.9816326530612245
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        10,
+        4,
+        2
+      ]
+    ],
+    "faces": 10,
+    "edges": 24,
+    "solids": 1
+  }
+}

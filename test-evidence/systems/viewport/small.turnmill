@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "id": "small",
+  "name": "small",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "profile",
+      "name": "profile",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "0.1",
+          "y": "0"
+        },
+        {
+          "x": "0.1",
+          "y": "0.2"
+        },
+        {
+          "x": "0",
+          "y": "0.2"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "block",
+      "name": "block",
+      "kind": "extrude",
+      "sketchId": "profile",
+      "amount": "0.3",
+      "operation": "new",
+      "suppressed": false
+    }
+  ]
+}

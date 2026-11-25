@@ -24,17 +24,41 @@
         6.198774
       ]
     ],
-    "parts": "1"
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 8307
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            84.375,
+            -6.199999809265137,
+            -6.198774337768555
+          ],
+          [
+            108.375,
+            6.199999809265137,
+            6.198774337768555
+          ]
+        ],
         "volume": 1187.5369504534526,
         "closed": true,
         "triangles": 19544
       }
     ],
-    "buildItems": 1
+    "buildItems": 1,
+    "names": [
+      "Threaded cap"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 1187.529663,
+        "manifold": true
+      }
+    ]
   }
 }

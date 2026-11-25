@@ -24,17 +24,41 @@
         3.199383
       ]
     ],
-    "parts": "1"
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 578
   },
   "3mf": {
     "unit": "millimeter",
     "meshes": [
       {
+        "bbox": [
+          [
+            0.0,
+            -3.200000047683716,
+            -3.1993725299835205
+          ],
+          [
+            7.900000095367432,
+            9.5,
+            3.199383020401001
+          ]
+        ],
         "volume": 205.0182258016885,
         "closed": true,
         "triangles": 1244
       }
     ],
-    "buildItems": 1
+    "buildItems": 1,
+    "names": [
+      "Hinge leaf A"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 205.018204,
+        "manifold": true
+      }
+    ]
   }
 }
