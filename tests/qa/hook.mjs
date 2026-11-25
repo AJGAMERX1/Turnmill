@@ -7,6 +7,9 @@ try {
   const s = await measure(page);
   assert.equal(s.error, "");
   assert.equal(s.bodies.length, 1);
+  assert.deepEqual(s.bbox, s.bodies[0].bbox);
+  assert.equal(s.topology.solids, 1);
+  assert.equal(s.valid, true);
   assert.equal(s.bodies[0].valid, true);
   assert.equal(s.bodies[0].solids, 1);
   assert.ok(

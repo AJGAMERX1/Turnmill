@@ -1,0 +1,275 @@
+{
+  "SYS-002": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "block": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "cylinder": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "hinge-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "hinge-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "hinge-3": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "hinge": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true,
+      true
+    ]
+  },
+  "m5-cosmetic": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "m5-nut": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ruler-blank": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ruler": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "threaded-rod": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "twist-pen-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "twist-pen-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "twist-pen-3": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "twist-pen-4": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "twist-pen": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "ui-bolt-library-bolt-nut-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-bolt-library-bolt-nut-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-bolt-library-bolt-nut": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true
+    ]
+  },
+  "ui-bolt-scratch-bolt-nut-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-bolt-scratch-bolt-nut-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-bolt-scratch-bolt-nut": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true
+    ]
+  },
+  "ui-click-pen-click-study-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-pen-click-study-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-pen-click-study-3": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-pen-click-study": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true,
+      true
+    ]
+  },
+  "ui-hinge-hinge-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-hinge-hinge-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-hinge-hinge-3": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-hinge-hinge": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true,
+      true
+    ]
+  },
+  "ui-pen-twist-pen-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-pen-twist-pen-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-pen-twist-pen-3": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-pen-twist-pen-4": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-pen-twist-pen": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "ui-ruler-graduated-ruler": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  }
+}

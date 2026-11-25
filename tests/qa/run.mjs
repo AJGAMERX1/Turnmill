@@ -87,7 +87,13 @@ try {
     {},
     70 * 60000,
   );
+  await run("approved-reference-values", ["node", "tests/qa/approved.mjs"]);
 } finally {
   server.close();
+}
+if (await run("release-build", ["npm", "run", "build"], { VITE_CAD_QA: "0" })) {
+  if (await run("pages-subpath", ["node", "tests/qa/pages-smoke.mjs"])) {
+    await run("pages-step-volume", [py, "tests/qa/pages-volume.py"]);
+  }
 }
 if (results.some((r) => r.exit !== 0)) process.exitCode = 1;

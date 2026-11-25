@@ -66,7 +66,7 @@
 
 ### SYS-003 · Editing the final feature in a 100-feature body exceeds 500 ms
 
-**Medium · Rebuild performance.** Open the 100-feature fixture, edit the final additive extrusion three times, and time from Apply to the next Ready state. The specific interactive budget is 500 ms. Recorded Chromium times on the test Mac were 996, 996 and 1,144 ms. The unchanged-body cache helps independent parts; all 100 features in this case belong to one solid. Timings vary with hardware and load.
+**Medium · Rebuild performance.** Open the 100-feature fixture, edit the final additive extrusion three times, and time from Apply to the next Ready state. The specific interactive budget is 500 ms. Recorded Chromium times on the test Mac were 613, 607 and 688 ms. The unchanged-body cache helps independent parts; all 100 features in this case belong to one solid. Timings vary with hardware and load.
 
 **Expected-failing test** `SYS-003` in tests/systems/performance.mjs and performance-browser.mjs. [Fixture, individual timings and screenshot](test-evidence/systems/SYS-003/)
 
