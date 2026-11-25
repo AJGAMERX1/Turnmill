@@ -6,6 +6,8 @@ The QA branch includes the Phase 1 findings, independent FreeCAD measurements an
 
 ## Run the app
 
+[Open Turnmill CAD on GitHub Pages](https://ajgamerx1.github.io/Turnmill/). Projects and undo history are saved in this browser. Use **Save project file** to keep a portable copy or move a project to another device.
+
 On this Mac, double-click **Launch Turnmill.command**. Keep its Terminal window open while you use Turnmill. The launcher serves the included production build on your own computer and opens the browser. Node.js 22.12 or newer is required. The included build runs without downloading dependencies.
 
 You can also start Turnmill from a terminal in its folder.

@@ -1,5 +1,7 @@
 # External CAD measurements
 
+These are the original Phase 1 observations on Turnmill 0.5.0. For repaired behavior, see the [release results and independent measurements](../../BUG_REPORT.md#release-repairs).
+
 All volumes are in mm³. A pending reference requires owner sign-off. The delta for an unapproved solid compares FreeCAD to the current native solid. The STEP coordinate column compares each exported body with its raw Part-workspace bounds. Installed assembly placement is reported separately when a saved pose was checked.
 
 |File|Format|Expected (source)|App volume|Independent volume|Diff %|Raw body bounds ±0.01 mm|Valid in reader|Import warnings|Structure|Result|

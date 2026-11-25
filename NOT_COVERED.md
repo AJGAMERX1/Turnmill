@@ -1,5 +1,7 @@
 # Coverage gaps and limitations
 
+These are the original Phase 1 observations on Turnmill 0.5.0. For repaired behavior, see the [release results and independent measurements](BUG_REPORT.md#release-repairs).
+
 - **Unbuilt requirements.** The dynamic alternating click latch, separate endpoints for two scales on one ruler, general Part viewport section plane, light theme, arbitrary STEP protocol selection, general preferences and a full ISO catalog have no corresponding release implementation. The inventory distinguishes these from confirmed defects.
 - **Design baselines.** No preapproved complex-part mass/volume or process baseline was supplied. New FreeCAD measurements and hashes are candidates. Geometric agreement between two OCCT kernels does not certify a design. Analytic controls, STEPcode, mesh readers and actual section measurements provide distinct evidence.
 - **Blocked projects.** The M10 × 0.75 pen variant and modeled M5 × 12 library screw could not generate valid solids. Those exact cases have no positive downstream manufactured file to check. Alternative-size pen, scratch modeled M5 pair and cosmetic library fallback are recorded separately.

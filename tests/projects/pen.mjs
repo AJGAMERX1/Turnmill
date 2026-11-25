@@ -78,31 +78,39 @@ export async function guide(s) {
   );
 }
 
-export async function pen(s) {
+export async function pen(s, { keepM10 = false, checkpoint = sample } = {}) {
   const p = s.page;
   await openPen(p);
+  if (keepM10) {
+    await p.keyboard.press("Alt+r");
+    const name = p.getByRole("dialog", { name: "Rename project" });
+    await field(name, "Project name").fill("M10 twist pen");
+    await button(name, "Save name").click();
+  }
   await button(p, "All parameters").click();
   const d = p.getByRole("dialog");
   await input(d, "Expression for outer_diameter", "12.3 mm", false);
   await button(d, "Apply parameters").click();
   await ready(p);
-  const m10 = await sample(s, "M10-barrel");
+  const m10 = await checkpoint(s, "M10-barrel");
   assert.equal(m10.bodies.length, 4);
   assert.equal(m10.values.thread_major, 10);
   assert.equal(m10.values.thread_pitch, 0.75);
   assert(m10.bodies.every((b) => b.valid && b.solids === 1));
-  await native(s, "M10-pen");
-  await stepExport(s, "M10-pen");
-  await button(p, "Undo").click();
-  await ready(p);
+  if (!keepM10) {
+    await native(s, "M10-pen");
+    await stepExport(s, "M10-pen");
+    await button(p, "Undo").click();
+    await ready(p);
+  }
   await p
     .locator(".tree-item")
     .filter({ hasText: "Barrel" })
     .filter({ has: p.getByText("Barrel", { exact: true }) })
     .first()
     .click();
-  const base = await sample(s, "01-threaded-pen");
-  assert(Math.abs(base.values.thread_major - 9.7) < 0.00001);
+  const base = await checkpoint(s, "01-threaded-pen");
+  assert(Math.abs(base.values.thread_major - (keepM10 ? 10 : 9.7)) < 0.00001);
   assert.equal(base.values.thread_pitch, 0.75);
   await operation(
     p,
@@ -118,7 +126,7 @@ export async function pen(s) {
     },
     { add: true },
   );
-  const cut = await sample(s, "02-knurled-grip");
+  const cut = await checkpoint(s, "02-knurled-grip");
   assert(cut.volume < base.volume);
   await operation(
     p,
@@ -135,7 +143,7 @@ export async function pen(s) {
     },
     { add: true },
   );
-  const marked = await sample(s, "03-engraved-name");
+  const marked = await checkpoint(s, "03-engraved-name");
   assert(marked.volume < cut.volume);
   await native(s, "twist-pen");
   await stepExport(s, "twist-pen");
@@ -144,13 +152,19 @@ export async function pen(s) {
   await input(p, "Drive value", "360 deg");
   await p.getByText("Axial travel 0.750 mm", { exact: true }).waitFor();
   await button(p, "Save current pose").click({ timeout: 240000 });
-  await sample(s, "04-mated");
+  await checkpoint(s, "04-mated");
+  await field(p, "Compare with").selectOption("barrel-revolve");
+  assert.equal(await field(p, "Component").inputValue(), "pen-cap");
   const result = await jointReport(p, "Full travel");
   await writeFile(join(s.dir, "clearance.txt"), result);
-  await sample(s, "05-travel");
+  await checkpoint(s, "05-travel");
   assert.match(result, /clear throughout|throughout travel/i);
 }
-export async function drawing(s, source) {
+export async function drawing(
+  s,
+  source,
+  { currentProject = false, checkpoint = sample } = {},
+) {
   const p = s.page;
   if (source) {
     await field(p, "Open Turnmill project file").setInputFiles(source);
@@ -161,7 +175,7 @@ export async function drawing(s, source) {
       .waitFor({ timeout: 500 })
       .catch(() => {});
     await ready(p);
-  } else await openPen(p);
+  } else if (!currentProject) await openPen(p);
   await button(p, "Drawing").click();
   await p
     .getByRole("img", { name: "Linked part drawing" })
@@ -174,11 +188,11 @@ export async function drawing(s, source) {
   await field(p, "Detail width").fill("shoulder_length");
   await field(p, "Detail width").press("Enter");
   await button(p, /Views and section/).click();
-  await sample(s, "01-front-section");
+  await checkpoint(s, "01-front-section");
   await p.getByRole("button", { name: /Section detail/ }).click();
-  await sample(s, "02-thread-end-detail");
+  await checkpoint(s, "02-thread-end-detail");
   await p.getByRole("button", { name: /Dimensions 1/ }).click();
-  await sample(s, "03-dimensions");
+  await checkpoint(s, "03-dimensions");
   await download(
     p,
     () => button(p, "Download PDF").click(),
@@ -189,9 +203,9 @@ export async function drawing(s, source) {
     .getByRole("button", { name: /Exploded assembly/ })
     .waitFor({ timeout: 360000 });
   await p.getByRole("button", { name: /Exploded assembly/ }).click();
-  await sample(s, "04-exploded");
+  await checkpoint(s, "04-exploded");
   await p.getByRole("button", { name: /Bill of materials/ }).click();
-  await sample(s, "05-bom");
+  await checkpoint(s, "05-bom");
   await download(
     p,
     () => button(p, "Download PDF").click(),

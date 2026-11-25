@@ -42,6 +42,11 @@ function checkImage(bytes, size) {
 export async function captureViewport(page, path) {
   await rm(path, { force: true });
   await page.bringToFront();
+  await page.waitForFunction(async () => {
+    await document.fonts.ready;
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    return true;
+  }, undefined, { timeout: 15000 });
   const size = await page.evaluate(() => ({
     width: Math.round(innerWidth * devicePixelRatio),
     height: Math.round(innerHeight * devicePixelRatio),

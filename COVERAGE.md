@@ -1,5 +1,7 @@
 # Phase 1 coverage matrix
 
+These are the original Phase 1 observations on Turnmill 0.5.0. For repaired behavior, see the [release results and independent measurements](BUG_REPORT.md#release-repairs).
+
 A status describes the exercised examples in that cell. “Fail” takes precedence when exercised cases disagree. “Not covered” identifies missing evidence. [System-level measurements](test-evidence/systems/COVERAGE.md) · [Interchange results](INTEROP.md)
 
 | System | Nominal | Edge/error | UI | Persistence/exchange | Scope and evidence |

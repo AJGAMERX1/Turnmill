@@ -1,0 +1,41 @@
+{
+  "centerDisplacementFromPartToInstalledSTEPmm": {
+    "Pocket clip": [
+      0.7499999999999574,
+      1.7763568394002505e-15,
+      -9.992007221626409e-16
+    ],
+    "Threaded cap": [
+      0.7499999999999147,
+      7.621507591704102e-15,
+      5.469583119754873e-15
+    ],
+    "Refill": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Barrel": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "partSpaceMassGrams": 66.16258322338926,
+  "partSpaceCenterOfMassMm": [
+    46.775513108906175,
+    0.0480689496532621,
+    0.0043799056945530036
+  ],
+  "materialMassGramsByBody": {
+    "Pocket clip": 0.41977874999980386,
+    "Threaded cap": 3.305072699695331,
+    "Refill": 3.40553371746056,
+    "Barrel": 59.03219805623357
+  },
+  "independentCapBarrelBoundaryDistanceMmByDegree": {
+    "0": 0.049965562959915596,
+    "360": 0.04996430022397345,
+    "720": 0.04996503290109571
+  }
+}

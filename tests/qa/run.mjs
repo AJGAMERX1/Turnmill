@@ -72,6 +72,14 @@ try {
   await run("baseline", ["npm", "test"]);
   await run("test-hook", ["node", "tests/qa/hook.mjs"]);
   await run("projects", ["node", "tests/projects/run.mjs"], {}, 65 * 60000);
+  const m10 = await mkdtemp(resolve(evidence, "projects-m10-"));
+  if (await run("m10-acceptance", ["node", "tests/projects/m10-acceptance.mjs"], {
+    TURNMILL_PROJECT_EVIDENCE: m10,
+  })) {
+    await run("m10-acceptance-proof", [
+      env.QA_PDF_PYTHON || py, "tests/qa/m10-acceptance.py", resolve(m10, "m10-acceptance"),
+    ]);
+  }
   await run(
     "systems",
     ["node", "tests/systems/run.mjs"],

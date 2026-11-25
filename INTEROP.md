@@ -1,5 +1,7 @@
 # Independent file interchange
 
+These are the original Phase 1 observations on Turnmill 0.5.0. For repaired behavior, see the [release results and independent measurements](BUG_REPORT.md#release-repairs).
+
 [Complete per-file table for STEP, STL, 3MF, planar files and reverse STEP](test-evidence/interop/results.md) · [Full numerical results](test-evidence/interop/measurements.json) · [Candidate values awaiting approval](test-evidence/interop/candidate-references.md)
 
 The main set contains 42 outward solid cases and 46 reverse STEP files, including four built directly in FreeCAD. The actual writer emitted AP242. Each measured source uses the recorded fixed STL export settings. The analytical 10 mm diameter × 100 mm cylinder is 7,853.981634 mm³ in FreeCAD and its STL is 7,851.923828 mm³ in PrusaSlicer. A matched complex-part transfer establishes fidelity only; it does not approve the underlying design.

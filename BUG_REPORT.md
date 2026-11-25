@@ -2,6 +2,8 @@
 
 ## Release repairs
 
+The same four-part engraved M10 pen passed from modeling through a two-turn cap sweep and seven dimensioned drawing pages. At one turn, the installed STEP advanced the cap and clip 0.750 mm. FreeCAD measured cap-to-barrel clearance of 0.04996 mm at that pose. [Acceptance evidence, native project, STEP and drawings](test-evidence/phase2/m10-acceptance/)
+
 [Reviewed Phase 1 report, reproductions and original measurements](https://github.com/AJGAMERX1/Turnmill/blob/1b0e2b86b0fc5b88ae52e5f5651c666b86359d29/BUG_REPORT.md). The rows below record measured fixes as they reach the release branch.
 
 | Issue | Repair | Verified result |
