@@ -3,7 +3,7 @@ set -euo pipefail
 tools_dir="${RUNNER_TEMP:-/tmp}/turnmill-cad-tools"
 mkdir -p "$tools_dir"
 sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends cmake ninja-build build-essential libgl1 libegl1 libglu1-mesa libxkbcommon-x11-0 libxcb-cursor0 libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 xvfb xauth prusa-slicer poppler-utils
+sudo apt-get install -y --no-install-recommends cmake ninja-build build-essential libgl1 libegl1 libglu1-mesa libxkbcommon-x11-0 libxcb-cursor0 libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 xvfb xauth python3-pil prusa-slicer poppler-utils
 python3 -m venv "$tools_dir/venv"
 "$tools_dir/venv/bin/pip" install 'ezdxf==1.4.5' 'pypdf>=6,<7' 'Pillow>=11,<13' 'pdfplumber>=0.11,<0.12'
 cad_file=FreeCAD_1.1.4-Linux-x86_64-py311.AppImage

@@ -1,5 +1,5 @@
 import { readViewport } from "../qa/capture.mjs";
-import { chromium } from "playwright-core";
+import { openBrowser } from "../qa/browser.mjs";
 import { unzipSync, strFromU8 } from "fflate";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -9,13 +9,7 @@ import { join } from "node:path";
 const out = process.env.TURNMILL_SHORTCUT_EVIDENCE || "test-evidence/browser";
 const url = process.env.TURNMILL_URL || "http://127.0.0.1:4197/";
 await mkdir(out, { recursive: true });
-const browser = await chromium.launch({
-  executablePath:
-    process.env.CHROMIUM_PATH ||
-    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-  headless: true,
-  args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
-});
+const browser = await openBrowser({ displayEvidence: true });
 const page = await browser.newPage({
   viewport: { width: 1440, height: 930 },
   acceptDownloads: true,

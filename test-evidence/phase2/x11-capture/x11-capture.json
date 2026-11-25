@@ -1,0 +1,23 @@
+{
+  "chromium": "159.0.8154.6",
+  "checks": [
+    {
+      "width": 1440,
+      "height": 930,
+      "matchingPixels": 1339200,
+      "sha256": "83dda36197e1dec647b35d1c58eadb1dd717d09548eb2f96fd2141c1c3c1f652"
+    },
+    {
+      "width": 706,
+      "height": 760,
+      "matchingPixels": 536560,
+      "sha256": "364409291be35520c78bc0aa01d5b54a0f573854b944f0455e456d4b0471f77e"
+    },
+    {
+      "width": 1150,
+      "height": 800,
+      "matchingPixels": 920000,
+      "sha256": "59f01ff0bd7e6cf02749a0212f0252f77f3706b4d5d1ecd029633e6006b64d15"
+    }
+  ]
+}

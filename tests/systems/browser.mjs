@@ -1,9 +1,10 @@
+import { captureViewport } from "../qa/capture.mjs";
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { appUrl, measure, openBrowser } from "../qa/browser.mjs";
 import { save, near, evidence } from "./runtime.mjs";
-const browser = await openBrowser(),
+const browser = await openBrowser({ displayEvidence: true }),
   errors = [],
   warnings = [];
 try {
@@ -45,7 +46,7 @@ try {
       document.querySelector(".joint-check")?.innerText || "",
     ),
   );
-  await page.screenshot({ path: resolve(evidence, "SYS-001/clearance.png") });
+  await captureViewport(page, resolve(evidence, "SYS-001/clearance.png"));
   const clearance = await report.innerText();
   assert.match(clearance, /6\.00000 mm minimum nominal gap/);
   await button("Drawing").click();
@@ -60,7 +61,7 @@ try {
       (b) => b.textContent.includes("Download PDF") && !b.disabled,
     ),
   );
-  await page.screenshot({ path: resolve(evidence, "SYS-001/drawing.png") });
+  await captureViewport(page, resolve(evidence, "SYS-001/drawing.png"));
   await save("SYS-001/ui.json", {
     clearance,
     assemblyDrawingExportEnabled: await button("Download PDF").isEnabled(),
@@ -122,9 +123,7 @@ try {
   await button("Preview").click();
   await page.locator('.finish-form[data-preview="ready"]').waitFor();
   const preview = await page.locator(".finish-preview-status").innerText();
-  await page.screenshot({
-    path: resolve(evidence, "SYS-002/approved-preview.png"),
-  });
+  await captureViewport(page, resolve(evidence, "SYS-002/approved-preview.png"));
   await button("Apply finishes").click();
   await page.getByRole("dialog").waitFor({ state: "hidden" });
   await page.waitForFunction(
@@ -134,7 +133,7 @@ try {
   );
   const cut = await measure(page);
   assert.equal(cut.project.features[0].finishes[0].rotation, "15 deg");
-  await page.screenshot({ path: resolve(evidence, "SYS-002/engraving.png") });
+  await captureViewport(page, resolve(evidence, "SYS-002/engraving.png"));
   const physical = await page.locator(".ins-section.properties").innerText();
   const volume = cut.bodies[0].volume;
   near(volume, 77.6, 0.0024, "Volume for complete supported graphic");

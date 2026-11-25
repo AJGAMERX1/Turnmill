@@ -1,5 +1,5 @@
 import { captureViewport } from "../qa/capture.mjs";
-import { chromium } from "playwright-core";
+import { openBrowser } from "../qa/browser.mjs";
 import assert from "node:assert/strict";
 import { mkdir, writeFile, appendFile, readFile, rm } from "node:fs/promises";
 import { resolve, join } from "node:path";
@@ -269,14 +269,7 @@ export async function run(name, fn) {
   await mkdir(out, { recursive: true });
   const dir = join(out, name);
   await mkdir(dir, { recursive: true });
-  const b = await chromium.launch({
-    executablePath:
-      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
-      process.env.CHROMIUM_PATH ||
-      undefined,
-    headless: true,
-    args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
-  });
+  const b = await openBrowser({ displayEvidence: true });
   const ctx = await b.newContext({
       viewport: { width: 1440, height: 930 },
       acceptDownloads: true,

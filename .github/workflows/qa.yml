@@ -53,9 +53,11 @@ jobs:
         run: npx playwright-core install --with-deps chromium
       - name: Test the production build and all external readers
         env:
+          TURNMILL_X11_EVIDENCE: '1'
+          TURNMILL_X11_PYTHON: /usr/bin/python3
           QA_FUZZ_MS: ${{ github.event_name == 'schedule' && '3660000' || '540000' }}
           QA_SEED: ${{ github.event_name == 'schedule' && github.run_id || '539365669' }}
-        run: xvfb-run -a npm run qa
+        run: xvfb-run -a -s "-screen 0 1920x1200x24" npm run qa
       - name: Preserve measured results and failing cases
         uses: actions/upload-artifact@v4
         if: always()

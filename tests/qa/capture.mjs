@@ -1,6 +1,7 @@
 // Screen capture is evidence collection. Only the image acquisition itself can be retried.
 import { rm, writeFile } from "node:fs/promises";
 import utils from "playwright-core/lib/utilsBundle";
+import { hasX11Viewport, readX11Viewport } from "./x11-viewport.mjs";
 
 async function compositorFrame(page) {
   const session = await page.context().newCDPSession(page);
@@ -56,6 +57,7 @@ export async function readViewport(page, label = "viewport") {
   // after fonts and layout have settled. A screencast samples the displayed frame
   // through a separate DevTools command without navigating or replaying UI actions.
   for (const acquire of [
+    ...(hasX11Viewport(page) ? [() => readX11Viewport(page)] : []),
     () => compositorFrame(page),
     () => page.screenshot({ animations: "disabled", type: "png", timeout: 45000 }),
   ]) {

@@ -56,6 +56,8 @@ async function run(name, argv, extra = {}, limit = 40 * 60 * 1000) {
   console.log(name, status === 0 ? "PASS" : "FAIL", status);
   return status === 0;
 }
+if (env.TURNMILL_X11_EVIDENCE === "1" &&
+    !(await run("x11-viewport", ["node", "tests/qa/check-x11-viewport.mjs"]))) process.exit(1);
 if (
   !(await run("production-build", ["npm", "run", "build"], {
     VITE_CAD_QA: "1",

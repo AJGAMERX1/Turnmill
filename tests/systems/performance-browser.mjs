@@ -1,3 +1,4 @@
+import { captureViewport } from "../qa/capture.mjs";
 import { resolve } from "node:path";
 import {
   finalHistoryEdit,
@@ -5,7 +6,7 @@ import {
 } from "./interactive-budget.mjs";
 import { openBrowser, appUrl, measure } from "../qa/browser.mjs";
 import { evidence, save, near } from "./runtime.mjs";
-const browser = await openBrowser(),
+const browser = await openBrowser({ displayEvidence: true }),
   durations = [];
 try {
   const page = await browser.newPage({
@@ -64,7 +65,7 @@ try {
     near(current.volume, 149 + 1.5 * depth, 0.15, "edited geometry");
     durations.push(ms);
   }
-  await page.screenshot({ path: resolve(evidence, "SYS-003/history.png") });
+  await captureViewport(page, resolve(evidence, "SYS-003/history.png"));
   const result = evaluateInteractiveBudget(finalHistoryEdit, durations);
   await save("SYS-003/result.json", {
     ...result,

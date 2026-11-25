@@ -10,7 +10,7 @@ import {
   project,
   near,
 } from "./runtime.mjs";
-const browser = await openBrowser();
+const browser = await openBrowser({ displayEvidence: true });
 const edits = [];
 try {
   const fixture = project(
