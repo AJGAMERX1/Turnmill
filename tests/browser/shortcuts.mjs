@@ -51,6 +51,7 @@ async function rename(name) {
   const d = await open("Alt+r", "Rename project");
   await d.getByLabel("Project name").fill(name);
   await button(d, "Save name").click();
+  await d.waitFor({ state: "hidden" });
   await named(name);
 }
 async function download(key) {

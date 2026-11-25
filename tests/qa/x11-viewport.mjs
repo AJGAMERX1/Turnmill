@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 const execute = promisify(execFile);
 const helper = fileURLToPath(new URL("./x11-viewport.py", import.meta.url));
 const browserOffsets = new WeakMap();
-const sizes = new WeakMap();
 export const x11Evidence = process.env.TURNMILL_X11_EVIDENCE === "1";
 
 async function x11(command, ...args) {
@@ -95,17 +94,46 @@ export async function readX11Viewport(page) {
     throw Error(
       "This viewport uses an emulated pixel ratio; use the Chromium frame",
     );
-  const size = sizes.get(page);
-  if (view.width !== size?.width || view.height !== size?.height) {
-    await fitNativeWindow(page, view.width, view.height);
-    view = await geometry(page);
-    sizes.set(page, { width: view.width, height: view.height });
-  }
-  return x11(
-    "capture",
+  // The test can resize away and back between two evidence checkpoints.
+  // Reconcile the physical content area even if the CSS dimensions match.
+  await fitNativeWindow(page, view.width, view.height);
+  view = await geometry(page);
+  // An in-place edit can be ready in the DOM while X11 still displays the
+  // previous frame. Witness an actual paint at all four physical corners,
+  // remove the probe, then acquire the clean pixels following its removal.
+  const rgb = [0, 0, 0].map(() => 64 + Math.floor(Math.random() * 176));
+  const marker = await page.evaluateHandle((rgb) => {
+    const probe = document.createElement("div");
+    probe.popover = "manual";
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.cssText =
+      "all:initial;position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;margin:0;border:0;padding:0;background:transparent;overflow:hidden";
+    for (const corner of [
+      "left:0;top:0",
+      "right:0;top:0",
+      "left:0;bottom:0",
+      "right:0;bottom:0",
+    ]) {
+      const dot = document.createElement("i");
+      dot.style.cssText = `all:initial;position:absolute;${corner};width:2px;height:2px;pointer-events:none;background:rgb(${rgb.join(",")})`;
+      probe.append(dot);
+    }
+    document.documentElement.append(probe);
+    probe.showPopover();
+    return probe;
+  }, rgb);
+  const args = [
     view.width,
     view.height,
     view.left + offset.dx,
     view.top + offset.dy,
-  );
+    JSON.stringify(rgb),
+  ];
+  try {
+    await x11("present", ...args);
+  } finally {
+    await marker.evaluate((el) => el.remove());
+    await marker.dispose();
+  }
+  return x11("capture", ...args);
 }

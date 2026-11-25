@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { captureViewport } from "../qa/capture.mjs";
 import { join } from "node:path";
 import { writeFile, appendFile } from "node:fs/promises";
 import {
@@ -176,7 +177,7 @@ export async function chaos(s) {
   });
   await act("other-tab edit", 103, () => input(tab, "Barrel length", "103 mm"));
   await tab.getByText(/Another tab saved a newer revision/).waitFor();
-  await tab.screenshot({ path: join(s.dir, "05-conflict.png") });
+  await captureViewport(tab, join(s.dir, "05-conflict.png"));
   await download(
     tab,
     () => button(tab, "Save project file").click(),

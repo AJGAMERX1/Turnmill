@@ -47,11 +47,25 @@ if command == "locate":
         time.sleep(0.12)
     else:
         raise RuntimeError(f"Chromium calibration corners {width}×{height} were not visible on X display {screen.size}")
-elif command == "capture":
+elif command in ("present", "capture"):
     x, y = map(int, sys.argv[4:6])
-    pixels = viewport(grab(), x, y)
-    data = io.BytesIO()
-    pixels.save(data, format="PNG")
-    sys.stdout.buffer.write(data.getvalue())
+    color = tuple(json.loads(sys.argv[6]))
+    # Every probe is two physical pixels wide and tall at DPR 1.
+    corners = [(x + dx, y + dy) for dx in (0, 1, width - 2, width - 1)
+               for dy in (0, 1, height - 2, height - 1)]
+    deadline = time.monotonic() + 8
+    while time.monotonic() < deadline:
+        screen = grab()
+        marked = [screen.getpixel(point) == color for point in corners]
+        if command == "present" and all(marked):
+            break
+        if command == "capture" and not any(marked):
+            data = io.BytesIO()
+            viewport(screen, x, y).save(data, format="PNG")
+            sys.stdout.buffer.write(data.getvalue())
+            break
+        time.sleep(0.04)
+    else:
+        raise RuntimeError(f"X11 did not display the {command} frame at all four viewport corners")
 else:
     raise ValueError(f"Unknown X11 capture operation {command}")

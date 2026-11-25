@@ -11,13 +11,26 @@
       "width": 706,
       "height": 760,
       "matchingPixels": 536560,
-      "sha256": "364409291be35520c78bc0aa01d5b54a0f573854b944f0455e456d4b0471f77e"
+      "sha256": "fa8243f047ed32c66ae704975a080abde3d57dc40bae60882f700b57de0b9a77"
     },
     {
       "width": 1150,
       "height": 800,
       "matchingPixels": 920000,
-      "sha256": "59f01ff0bd7e6cf02749a0212f0252f77f3706b4d5d1ecd029633e6006b64d15"
+      "sha256": "7442fe724d0729ec5d39e3eb729ab744ebbf3403307bba825712c877f73b64ba"
+    },
+    {
+      "width": 1150,
+      "height": 800,
+      "matchingPixels": 920000,
+      "sha256": "38ba81537b88658ac31bfe277c3c4180fbc676e108f93f47392307f0fa819dce"
     }
+  ],
+  "formState": [
+    true,
+    true,
+    "92 mm",
+    0,
+    2
   ]
 }
