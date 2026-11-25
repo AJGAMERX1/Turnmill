@@ -1,0 +1,154 @@
+{
+  "issue": "SKETCH-001",
+  "baseRevision": "f3b70f2",
+  "scenario": "Type a new coordinate while delivery of the actual prior PlaneGCS result is held. Select text offsets 1–3, then deliver that result without further keyboard or pointer input.",
+  "browser": "Chromium 159.0.8154.6, macOS, Playwright",
+  "originalUncontrolledFailure": {
+    "suite": "sketch-undo-browser",
+    "edit": 31,
+    "expected": "10.31",
+    "actual": "10.30"
+  },
+  "controlledBefore": {
+    "events": [
+      {
+        "ms": 26.1,
+        "event": "solver result held",
+        "text": "10.30",
+        "focused": false,
+        "selection": [
+          5,
+          5
+        ],
+        "solver": "Solving sketch…"
+      },
+      {
+        "ms": 830.9,
+        "event": "input",
+        "text": "10.31",
+        "focused": true,
+        "selection": [
+          5,
+          5
+        ],
+        "solver": "Solving sketch…"
+      },
+      {
+        "ms": 860.7,
+        "event": "deliver prior solver result",
+        "text": "10.31",
+        "focused": true,
+        "selection": [
+          1,
+          3
+        ],
+        "solver": "Solving sketch…"
+      }
+    ],
+    "afterResult": {
+      "text": "10.3",
+      "focus": true,
+      "selection": [
+        4,
+        4
+      ]
+    }
+  },
+  "controlledAfter": {
+    "events": [
+      {
+        "ms": 3.6,
+        "event": "solver result held",
+        "text": "10.30",
+        "focused": false,
+        "selection": [
+          5,
+          5
+        ],
+        "solver": "Solving sketch…"
+      },
+      {
+        "ms": 143.4,
+        "event": "input",
+        "text": "10.31",
+        "focused": true,
+        "selection": [
+          5,
+          5
+        ],
+        "solver": "Solving sketch…"
+      },
+      {
+        "ms": 169.7,
+        "event": "deliver prior solver result",
+        "text": "10.31",
+        "focused": true,
+        "selection": [
+          1,
+          3
+        ],
+        "solver": "Solving sketch…"
+      }
+    ],
+    "afterResult": {
+      "text": "10.31",
+      "focus": true,
+      "selection": [
+        1,
+        3
+      ]
+    }
+  },
+  "regression": [
+    {
+      "previous": "10.30",
+      "typed": "10.31",
+      "before": {
+        "text": "10.31",
+        "focused": true,
+        "selection": [
+          1,
+          3
+        ]
+      },
+      "after": {
+        "text": "10.31",
+        "focused": true,
+        "selection": [
+          1,
+          3
+        ]
+      },
+      "commit": true
+    },
+    {
+      "previous": "10.40",
+      "typed": "10 + ",
+      "before": {
+        "text": "10 + ",
+        "focused": true,
+        "selection": [
+          1,
+          3
+        ]
+      },
+      "after": {
+        "text": "10 + ",
+        "focused": true,
+        "selection": [
+          1,
+          3
+        ]
+      },
+      "commit": false
+    }
+  ],
+  "journal": {
+    "edits": 82,
+    "undoCount": 82,
+    "afterUndo": 10,
+    "redoCount": 82,
+    "afterRedo": 10.82
+  },
+  "run": "QA_SYSTEM_BROWSER=1 node tests/systems/run.mjs, or node tests/systems/sketch-undo-browser.mjs against a QA-enabled production build."
+}

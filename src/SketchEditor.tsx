@@ -117,23 +117,32 @@ function Field({
   label: string;
   onCommit: (value: string) => void;
 }) {
-  const [text, setText] = useState(value);
-  useEffect(() => setText(value), [value]);
+  const [text, setText] = useState<string | null>(null);
+  const edited = useRef(false);
   return (
     <input
       aria-label={label}
-      value={text}
+      value={text ?? value}
       spellCheck={false}
-      onChange={(e) => setText(e.target.value)}
+      onFocus={(e) => {
+        edited.current = false;
+        setText(e.currentTarget.value);
+      }}
+      onChange={(e) => {
+        edited.current = true;
+        setText(e.target.value);
+      }}
       onBlur={() => {
-        if (text.trim() !== value) onCommit(text.trim());
+        if (edited.current && text !== null && text.trim() !== value)
+          onCommit(text.trim());
+        setText(null);
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter") e.currentTarget.blur();
         if (e.key === "Escape") {
           e.stopPropagation();
+          edited.current = false;
           setText(value);
-          e.currentTarget.value = value;
         }
       }}
     />

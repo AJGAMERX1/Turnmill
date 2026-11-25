@@ -1,3 +1,4 @@
+import { sketchFieldOverlap } from "./sketch-field-overlap.mjs";
 import { captureViewport } from "../qa/capture.mjs";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
@@ -33,6 +34,7 @@ try {
   const x = page.getByLabel("P2 X", { exact: true });
   const original = await x.inputValue();
   assert.equal(Number(original), 10);
+  await save("SKETCH-001/overlap.json", await sketchFieldOverlap(page, x));
   for (let i = 1; i <= 82; i++) {
     const step = (10 + i / 100).toFixed(2);
     await x.focus();

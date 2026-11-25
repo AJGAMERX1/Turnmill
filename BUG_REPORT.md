@@ -27,6 +27,12 @@ The same four-part engraved M10 pen passed from modeling through a two-turn cap 
 
 The committed edit now reuses the preview worker’s exact B-rep when the evaluated history and applied finish match. The model worker checks the restored solid and its volume. On the test Mac, the repaired browser run took 24.091 s for preview and **0.964 s from commit to Ready**. FreeCAD measured the same 128.66457625047 mm³ before and after transfer. The paired STL and 3MF exports matched byte for byte. The permanent scratch-bolt regression records both durations and enforces the original four-minute budget. [Timing, geometry and cancellation evidence](test-evidence/phase2/PERF-001/receipt.json)
 
+### SKETCH-001 · A completed solve could overwrite a coordinate being typed
+
+**High · Sketch editor · Found after Phase 1 review.** Edit a vertex from 10 mm to `10.30`, press Enter, then type `10.31` in the same field while the previous solve is finishing. On the affected release, the previous result replaced the new text with `10.3`. Chromium kept focus in the field and moved the selection to the end. A regular 82-edit browser run also observed the prior `10.30` value after typing `10.31`. SYS-004 separately covers the number of undoable edits. [Original failing browser evidence](test-evidence/phase2/SKETCH-001/before.png)
+
+A focused field now keeps its edit and selection when a solver result arrives. Enter and blur commit an edited value. Escape restores the current solved value. The regression test delays delivery of a genuine solver result until the next edit is underway. It checks both a complete coordinate and a partial expression, then verifies 82 edits, undo back to 10 mm, and redo to 10.82 mm. [Trace and regression measurements](test-evidence/phase2/SKETCH-001/receipt.json) · [Corrected field](test-evidence/phase2/SKETCH-001/after.png)
+
 ## Original Phase 1 findings
 
 The following entries describe the 0.5.0 observations at the review checkpoint. Their original expected-failure tests are visible at the linked Phase 1 revision.
