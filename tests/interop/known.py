@@ -132,15 +132,8 @@ def run():
     marks = vectors(out / "terminal.dxf", out / "terminal.svg")["edges"][0]
     nominal = 155.0
     center = marks[-1][0]
-    assert abs(center - 154.9625) <= 1e-5, (
-        f"INTEROP-005 changed terminal center: {center}"
-    )
-    expect(
-        "INTEROP-005",
-        abs(center - nominal) <= 0.01,
-        "Final full-size graduation at 155 mm must be centered within ±0.01 mm. Actual DXF/SVG contour center "
-        + str(center),
-    )
+    assert abs(center - nominal) <= 1e-5, f"INTEROP-005 terminal center: {center}"
+    assert abs(marks[-1][0] - marks[-2][0] - 1) <= 1e-5, "INTEROP-005 terminal pitch"
     if (out / "ui-click-coil-click-with-coil-4.native.json").exists():
         spring = json.loads(
             (out / "ui-click-coil-click-with-coil-4.freecad.json").read_text()

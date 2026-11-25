@@ -1,0 +1,46 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:36:28.244Z",
+  "stage": "01-two-scales",
+  "mode": "Scales",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n0 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [],
+  "mass": 0,
+  "centerOfMass": null,
+  "volume": 0,
+  "area": 0,
+  "bodies": [],
+  "joints": null,
+  "inspector": null,
+  "console": [
+    {
+      "time": "2026-11-25T18:36:21.671Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c0083d200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:36:21.671Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c0083d200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:36:21.671Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c0083d200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:36:21.671Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c0083d200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    },
+    {
+      "time": "2026-11-25T18:36:22.730Z",
+      "type": "requestfailed",
+      "value": "http://127.0.0.1:4209/node_modules/replicad-opencascadejs/dist/replicad_single.wasm net::ERR_ABORTED"
+    }
+  ]
+}

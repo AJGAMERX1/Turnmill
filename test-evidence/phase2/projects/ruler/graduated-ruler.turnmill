@@ -1,0 +1,59 @@
+{
+  "id": "92f54e4e-c1ed-4d72-a8b0-f64b503656ee",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "518f216e-a6ef-4f99-9804-2a89aaf0e049",
+      "name": "Scale blank · generated",
+      "constraints": [],
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "155 mm",
+          "y": "0"
+        },
+        {
+          "x": "155 mm",
+          "y": "22 mm"
+        },
+        {
+          "x": "0",
+          "y": "22 mm"
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "39322721-237e-45a0-9de0-8a10f4c5701f",
+      "name": "Engraved ruler",
+      "sketchId": "518f216e-a6ef-4f99-9804-2a89aaf0e049",
+      "kind": "extrude",
+      "amount": "2 mm",
+      "operation": "new",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "scale": {
+      "length": "155 mm",
+      "width": "22 mm",
+      "top": "mm",
+      "bottom": "in16",
+      "depth": "0.2 mm",
+      "modelId": "39322721-237e-45a0-9de0-8a10f4c5701f"
+    },
+    "assemblyItems": {
+      "39322721-237e-45a0-9de0-8a10f4c5701f": 1
+    },
+    "bodyDensities": {},
+    "bodyMaterials": {
+      "39322721-237e-45a0-9de0-8a10f4c5701f": "Aluminum"
+    }
+  }
+}

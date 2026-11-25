@@ -37,7 +37,7 @@ export async function ruler(s) {
     join(s.dir, "ruler.dxf"),
   );
   const svg = await readFile(join(s.dir, "ruler.svg"), "utf8");
-  assert.match(svg, /width="155mm"/);
+  assert.match(svg, /width="155\.075mm"/);
   assert.match(svg, /height="22mm"/);
   const polys = [...svg.matchAll(/<polygon\b[^>]*>/g)]
     .filter(([tag]) => tag.includes("Graduation_outlines"))
@@ -62,7 +62,10 @@ export async function ruler(s) {
       .sort((a, b) => a - b);
   assert.equal(top.length, 154);
   assert.equal(bottom.length, 97);
+  assert.equal(top.at(-1), 155);
+  assert.equal(top.at(-1) - top.at(-2), 1);
   assert(Math.abs(top[150] - top[0] - 150) < 0.01);
+  await p.getByText(/An end tick crosses the blank edge/).waitFor();
   assert(Math.abs(bottom.at(-1) - bottom[0] - 152.4) < 0.01);
   await button(p, "Create engraved stock").click();
   await button(p, "Part").click();

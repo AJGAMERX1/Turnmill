@@ -138,7 +138,7 @@ lines += [
     "",
     "## Ruler exports",
     "",
-    "Page size is the SVG sheet size. The FreeCAD extent is the bounding box of the imported marks and text. All dimensions and coordinates are in millimetres.",
+    "The SVG page includes the full widths of ticks centered on a blank edge. The FreeCAD extent is the bounding box of the imported marks and text. All dimensions and coordinates are in millimetres.",
     "",
     "|File|Independent reader|Units|Page size|FreeCAD content extent|Ticks, top / bottom|First / last top center|Maximum DXF–SVG tick contour difference|Result|",
     "|---|---|---|---|---|---:|---:|---:|---|",

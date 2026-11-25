@@ -2,7 +2,12 @@ import { cadFont, flattenInk } from "./secondaryInk";
 import type { Artwork, InkOutline } from "./markArtwork";
 import { evaluate } from "./expressions";
 import type { EvaluatedFeature, Feature, Project, Sketch } from "./types";
-import { makeScale, tickContour, type ScaleLayout } from "./secondaryScale";
+import {
+  makeScale,
+  supportedTick,
+  tickContour,
+  type ScaleLayout,
+} from "./secondaryScale";
 import type { XY } from "./secondaryVector";
 
 export const scaleDefaults = {
@@ -209,8 +214,17 @@ export function evaluateScaleStock(
       "This 3D cut supports up to 650 ticks. Increase the spacing, disable one edge, or shorten the scale.",
     );
   const ticks: XY[][] = [];
-  for (const m of strokes)
-    ticks.push(tickContour(m, c).map(([x, y]) => [x, sheet.height - y]));
+  const support: Record<number, XY[]> = {};
+  const toStock = (polygon: XY[]): XY[] =>
+    polygon.map(([x, y]) => [x, sheet.height - y]);
+  for (const m of strokes) {
+    const outline = tickContour(m, c);
+    if (attached) {
+      const inside = supportedTick(outline, c);
+      if (inside !== outline) support[ticks.length] = toStock(inside);
+    }
+    ticks.push(toStock(outline));
+  }
   const spans = ticks
     .map((p, i) => ({
       i,
@@ -295,6 +309,7 @@ export function evaluateScaleStock(
     edges,
     ruler: {
       ticks,
+      ...(Object.keys(support).length ? { support } : {}),
       depth,
       labels,
       ...(attached

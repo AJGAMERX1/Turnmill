@@ -1,0 +1,58 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:36:47.328Z",
+  "stage": "02-aluminum-stock",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Engraved ruler",
+      "id": "39322721-237e-45a0-9de0-8a10f4c5701f",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 18.345024108794185,
+  "centerOfMass": [
+    77.49059728618376,
+    10.99069151559508,
+    0.9966160687774611
+  ],
+  "volume": 6794.453373627474,
+  "area": 7837.529827746406,
+  "bodies": [
+    {
+      "name": "Engraved ruler",
+      "volume": 6794.453373627474,
+      "center": [
+        77.49059728618376,
+        10.99069151559508,
+        0.9966160687774611
+      ],
+      "area": 7837.529827746406,
+      "bbox": [
+        [
+          -1e-7,
+          -1e-7,
+          0
+        ],
+        [
+          155.0000001,
+          22.0000001,
+          2.0000001
+        ]
+      ],
+      "faces": 1800,
+      "edges": 5184,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n18.35 g\nBalance along X\n77.49 mm\nCenter of mass",
+  "console": []
+}

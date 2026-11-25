@@ -45,6 +45,7 @@ export type EvaluatedFeature = {
   brep?: string;
   ruler?: {
     ticks: [number, number][][];
+    support?: Record<number, [number, number][]>;
     depth: number;
     placement?: import("./secondaryEngraving").ScalePlacement;
     labels?: import("./markArtwork").Artwork["outlines"];

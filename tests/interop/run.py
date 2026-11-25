@@ -380,6 +380,7 @@ def report():
         )
         lengths = [3.7, 2.5, 1.4] if name == "ruler" else [5, 3.5, 2]
         offset = 0.5 if name == "ruler" else 2
+        stock_length = 155.4 if name == "ruler" else 155.0
         check(
             v["svgLabelGroups"] == 23,
             name + " sixteen metric / seven inch numeral groups",
@@ -388,7 +389,7 @@ def report():
             spacing = [1, 25.4 / 16][i]
             period = [10, 16][i]
             check(
-                len(edge) == int((v["svgMm"][0] - offset) / spacing + 1e-9) + 1
+                len(edge) == int((stock_length - offset) / spacing + 1e-9) + 1
                 and abs(edge[0][0] - offset) <= 0.01,
                 name + " tick count/start offset",
             )
@@ -402,20 +403,10 @@ def report():
                 )
             step = [1, 25.4 / 16][i]
             for j, (a, b) in enumerate(zip(edge, edge[1:])):
-                if name == "ui-scale" and i == 0 and j == len(edge) - 2:
-                    # The separate boundary regression explicitly checks this exact failure.
-                    from known import expect
-
-                    expect(
-                        "INTEROP-005",
-                        abs(b[0] - a[0] - step) <= 0.01,
-                        "Actual workflow boundary spacing " + str(b[0] - a[0]),
-                    )
-                else:
-                    check(
-                        abs(b[0] - a[0] - step) <= 0.01,
-                        name + " scale edge " + str(i + 1) + " at mark " + str(j + 1),
-                    )
+                check(
+                    abs(b[0] - a[0] - step) <= 0.01,
+                    name + " scale edge " + str(i + 1) + " at mark " + str(j + 1),
+                )
     put(
         "measurements.json",
         {"cases": entries, "reverse": reverse, "unexpected": issues},

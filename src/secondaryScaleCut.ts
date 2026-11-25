@@ -157,11 +157,22 @@ export function cutScale(
   const floorAllowance = Math.min(0.0001, (span - depth) / 2),
     height = depth + floorAllowance + over;
   const local = makeTools(ruler, -depth - floorAllowance, height);
+  // Existing stock may extend beyond the layout, so the final cut always
+  // uses full-width tools. Only the in-layout footprint needs a depth floor.
+  let probeTools = local;
   try {
-    const probe = positioned(local, matrix);
+    if (ruler.support) {
+      const ticks = ruler.ticks.map((p, i) => ruler.support?.[i] ?? p);
+      probeTools = makeTools(
+        { ...ruler, ticks },
+        -depth - floorAllowance,
+        height,
+      );
+    }
+    const probe = positioned(probeTools, matrix);
     try {
       const expected =
-        (measureVolume(local) * (depth + floorAllowance)) / height;
+        (measureVolume(probeTools) * (depth + floorAllowance)) / height;
       const support = stock.intersect(probe);
       try {
         if (
@@ -186,6 +197,7 @@ export function cutScale(
       tool.delete();
     }
   } finally {
+    if (probeTools !== local) probeTools.delete();
     local.delete();
   }
 }

@@ -1,4 +1,16 @@
-# Turnmill 0.5.0 · Phase 1 findings
+# Turnmill CAD manufacturing QA
+
+## Release repairs
+
+[Reviewed Phase 1 report, reproductions and original measurements](https://github.com/AJGAMERX1/Turnmill/blob/1b0e2b86b0fc5b88ae52e5f5651c666b86359d29/BUG_REPORT.md). The rows below record measured fixes as they reach the release branch.
+
+| Issue | Repair | Verified result |
+|---|---|---|
+| ASM-001 | [cfdb620](https://github.com/AJGAMERX1/Turnmill/commit/cfdb620898b5a2448079343452f8c389cf6edcf7) | Mounted blocks retained the 15 mm gap with zero overlap. Unsaved rotation, selected component and Part exports passed across STEP, STL and 3MF. [FreeCAD and 3MF results](test-evidence/phase2/assembly/freecad.json) |
+
+## Original Phase 1 findings
+
+The following entries describe the 0.5.0 observations at the review checkpoint. Their original expected-failure tests are visible at the linked Phase 1 revision.
 
 **14 reproduced findings: 6 Critical, 2 High, 5 Medium, 1 Low.** By assigned system: solid/mesh/assembly interchange 6, ruler graduation geometry 1, hardware library 1, thread rebuilding 1, assembly/drawing parameter handling 1, engraving placement and labels 2, rebuild performance 1, sketch undo 1. Known cases have strict expected-failure regressions, or platform-scoped timed expectations for the performance finding. A passing suite can include these known defects.
 
