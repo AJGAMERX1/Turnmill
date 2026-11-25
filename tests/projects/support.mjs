@@ -20,9 +20,9 @@ export async function input(r, name, value, commit = true) {
 }
 export const ready = (p) =>
   p.waitForFunction(
-    () => document.querySelector(".status-bar")?.innerText.startsWith("Ready"),
+    () => document.querySelector(".status-bar > span:first-child")?.textContent.trim() === "Ready",
     null,
-    { timeout: 240000 },
+    { polling: 100, timeout: 240000 },
   );
 export const saved = (p) =>
   p.waitForFunction(
@@ -31,7 +31,7 @@ export const saved = (p) =>
         .querySelector(".save-state")
         ?.textContent.includes("Saved locally"),
     null,
-    { timeout: 12000 },
+    { polling: 100, timeout: 12000 },
   );
 export async function snap(p) {
   return await p.evaluate(async () => await window.__cadTest.snapshot());
@@ -245,7 +245,7 @@ export async function operation(p, kind, values, { add = false } = {}) {
       !document.querySelector("dialog[open]") ||
       document.querySelector(".finish-footer [role=alert]"),
     null,
-    { timeout: 240000 },
+    { polling: 100, timeout: 240000 },
   );
   if (await d.isVisible())
     throw Error("Finish rejected: " + (await d.getByRole("alert").innerText()));
@@ -261,7 +261,7 @@ export async function jointReport(p, kind) {
       return msg && !/^(Checking|Checked|Measuring)/.test(msg);
     },
     null,
-    { timeout: 360000 },
+    { polling: 100, timeout: 360000 },
   );
   return p.locator(".joint-check p[role=status]").innerText();
 }
@@ -289,6 +289,29 @@ export async function run(name, fn) {
     events.push(event);
     if (type === "pageerror") errors.push(event);
   };
+  // Keep actual preview and main-worker status transitions even if a later wait
+  // times out. The observer reads the rendered UI and never replays an edit.
+  const readiness = [];
+  await p.exposeFunction("recordCadReadiness", (row) => { readiness.push(row); });
+  await p.addInitScript(() => {
+    let lastStatus, lastFinish;
+    function record() {
+      const status = document.querySelector(".status-bar > span:first-child")?.textContent.trim();
+      if (!status) return;
+      const footer = document.querySelector("dialog[open] .finish-footer");
+      const finish = footer
+        ? footer.querySelector("[role=alert], [role=status]")?.textContent.trim() || "Editing"
+        : null;
+      if (status === lastStatus && finish === lastFinish) return;
+      lastStatus = status;
+      lastFinish = finish;
+      void window.recordCadReadiness({ timeMs: Date.now(), status, finish });
+    }
+    new MutationObserver(record).observe(document, {
+      subtree: true, childList: true, characterData: true,
+      attributes: true, attributeFilter: ["open"],
+    });
+  });
   ctx.on("page", (page) => listen(page));
   function listen(page) {
     page.on("pageerror", (e) => log("pageerror", e.message));
@@ -336,7 +359,7 @@ export async function run(name, fn) {
     }
     await writeFile(
       join(dir, "end.json"),
-      JSON.stringify({ status, message, events, errors }, null, 2),
+      JSON.stringify({ status, message, events, errors, readiness }, null, 2),
     );
     await b.close();
   }
