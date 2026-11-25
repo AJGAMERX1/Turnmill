@@ -20,6 +20,7 @@ const page = await browser.newPage({
 page.on("filechooser", () => {});
 page.setDefaultTimeout(15000);
 const results = [],
+  cameraFrames = {},
   pageErrors = [];
 page.on("pageerror", (e) => pageErrors.push(e.message));
 const dialog = (name) => page.getByRole("dialog", { name, exact: true });
@@ -68,14 +69,14 @@ async function download(key) {
     data: await readFile(await file.path()),
   };
 }
-async function canvasHash() {
+async function canvasFrame() {
   const canvas = page.locator(".solid-viewport canvas");
   const geometry = async () => canvas.evaluate((c) => {
     const { x, y, width, height } = c.getBoundingClientRect();
     return { x, y, width, height, dpr: devicePixelRatio };
   });
   const box = await geometry();
-  const { image } = await readViewport(page, "model viewport");
+  const { image, bytes } = await readViewport(page, "model viewport");
   assert.deepEqual(await geometry(), box, "Canvas shifted during capture");
   // Use pixels from the center of the solid canvas, away from menu and view
   // labels. A text-only change cannot satisfy the orientation or fit checks.
@@ -88,7 +89,30 @@ async function canvasHash() {
   const hash = createHash("sha256");
   for (let y = top; y < bottom; y++)
     hash.update(image.data.subarray(4 * (image.width*y + left), 4 * (image.width*y + right)));
-  return hash.digest("hex");
+  return { digest: hash.digest("hex"), bytes };
+}
+
+// A new headless screencast can start with the previously presented frame.
+// Observe frames after one input until the required pixels appear twice.
+// Neither the camera action nor any other interaction is replayed here.
+async function observeCamera(name, accepts, maxSamples = Number.POSITIVE_INFINITY) {
+  const observations = [];
+  cameraFrames[name] = observations;
+  const start = performance.now();
+  for (let i = 0; i < maxSamples && performance.now() - start < 15000; i++) {
+    const frame = await canvasFrame();
+    const previous = observations.at(-1)?.digest;
+    observations.push({
+      elapsedMs: Math.round(performance.now() - start),
+      digest: frame.digest,
+    });
+    if (accepts(frame.digest) && frame.digest === previous) {
+      await writeFile(join(out, "camera-" + name + ".png"), frame.bytes);
+      return frame.digest;
+    }
+  }
+  const observed = observations.map(({ digest }) => digest.slice(0, 12)).join(", ");
+  throw Error(name + " did not present the required stable camera image: " + observed);
 }
 try {
   await page.goto(url);
@@ -253,6 +277,8 @@ try {
     await page.locator(pane).first().waitFor();
     record(key, "Switched to visible " + workspace + " workspace");
   }
+  await state("button.view-select", "Isometric");
+  const initial = await observeCamera("initial", () => true);
   const images = [];
   for (const [key, view] of [
     ["2", "Front"],
@@ -262,7 +288,12 @@ try {
   ]) {
     await press(key);
     await state("button.view-select", view);
-    images.push(await canvasHash());
+    const digest = await observeCamera(view, (value) =>
+      view === "Isometric"
+        ? value === initial
+        : value !== initial && !images.includes(value),
+    );
+    images.push(digest);
     record(key, "Selected " + view + " view; SHA-256 " + images.at(-1));
   }
   assert.equal(
@@ -270,7 +301,17 @@ try {
     4,
     "Each orientation renders a different viewport image",
   );
-  assert.equal(await canvasHash(), images.at(-1), "An unchanged model view retains its frame");
+  const iso = images.at(-1);
+  assert.equal((await canvasFrame()).digest, iso, "An unchanged model view retains its frame");
+  await assert.rejects(
+    observeCamera("unchanged-control", (value) => value !== iso, 2),
+    /did not present the required stable camera image/,
+    "A camera that never moves must fail the changed-image check",
+  );
+  assert.deepEqual(
+    cameraFrames["unchanged-control"].map((sample) => sample.digest),
+    [iso, iso],
+  );
   const canvas = page.locator(".solid-viewport canvas"),
     area = await canvas.boundingBox();
   await page.mouse.move(
@@ -279,10 +320,10 @@ try {
   );
   await page.mouse.wheel(0, -520);
   await page.mouse.move(2, 2);
-  const zoomed = await canvasHash();
+  const zoomed = await observeCamera("zoomed", (value) => value !== iso);
   assert.notEqual(zoomed, images.at(-1), "Wheel visibly zoomed the model");
   await press("f");
-  const fitted = await canvasHash();
+  const fitted = await observeCamera("fitted", (value) => value === iso);
   assert.equal(
     fitted,
     images.at(-1),
@@ -328,6 +369,7 @@ try {
         time: new Date().toISOString(),
         chromium: browser.version(),
         results,
+        cameraFrames,
         pageErrors,
       },
       null,
