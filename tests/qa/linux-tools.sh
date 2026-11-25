@@ -19,10 +19,14 @@ echo "FreeCADCmd was not included in this archive; using the FreeCAD console fro
 exec "$app/AppRun" "$@"
 WRAPPER
 chmod +x "$tools_dir/freecadcmd"
-git clone --depth 1 --branch v0.8.2 https://github.com/stepcode/stepcode "$tools_dir/stepcode"
-test "$(git -C "$tools_dir/stepcode" rev-parse HEAD)" = 5cf8fc1a8907983365b233280f128566956713fa
-cmake -S "$tools_dir/stepcode" -B "$tools_dir/step-build" -G Ninja -DSC_BUILD_SCHEMAS='ap214e3;ap242' -DSC_UNITY_BUILD=ON -DCMAKE_BUILD_TYPE=Release
-cmake --build "$tools_dir/step-build" --parallel 2 --target p21read_sdai_ap214e3 p21read_sdai_ap242
+# The schema compiler generates several thousand C++ entities. Reuse only the
+# pinned checkers and their runtime libraries; each job still validates a STEP file.
+if [[ ! -x "$tools_dir/step-build/bin/p21read_sdai_ap242" || ! -x "$tools_dir/step-build/bin/p21read_sdai_ap214e3" ]]; then
+  git clone --depth 1 --branch v0.8.2 https://github.com/stepcode/stepcode "$tools_dir/stepcode"
+  test "$(git -C "$tools_dir/stepcode" rev-parse HEAD)" = 5cf8fc1a8907983365b233280f128566956713fa
+  cmake -S "$tools_dir/stepcode" -B "$tools_dir/step-build" -G Ninja -DSC_BUILD_SCHEMAS='ap214e3;ap242' -DSC_UNITY_BUILD=ON -DCMAKE_BUILD_TYPE=Release
+  cmake --build "$tools_dir/step-build" --parallel 2 --target p21read_sdai_ap214e3 p21read_sdai_ap242
+fi
 {
   echo "FREECAD_CMD=$tools_dir/freecadcmd"
   echo "PRUSASLICER=$(command -v prusa-slicer)"
