@@ -1,0 +1,88 @@
+.tm-dialog.command-palette {
+  width: min(540px, 94vw);
+  padding: 20px;
+}
+.command-palette .dialog-title {
+  margin-bottom: 13px;
+}
+.palette-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border: 1px solid #788a82;
+  border-radius: 5px;
+  background: #171d1e;
+}
+.palette-search:focus-within {
+  border-color: #c5a981;
+  outline: 1px solid #c5a981;
+}
+.palette-search input {
+  background: transparent;
+  border: 0;
+  padding: 10px 0;
+  box-shadow: none;
+  outline: none !important;
+}
+.palette-scope,
+.palette-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #b3bfba;
+  font-size: 11px;
+}
+.palette-scope {
+  padding: 12px 2px 6px;
+}
+.commands.palette-results {
+  margin: 0;
+  max-height: min(45vh, 365px);
+  overscroll-behavior: contain;
+}
+.palette-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 9px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 5px;
+}
+.palette-option:hover {
+  background: #2d3433;
+}
+.palette-option.active {
+  background: #323c38;
+  border-color: #6a7970;
+}
+.palette-option[aria-disabled="true"] {
+  cursor: default;
+}
+.palette-option[aria-disabled="true"] b {
+  color: #b2b9b5;
+}
+.palette-reason {
+  display: block;
+  color: #eabf98;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.palette-help {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 9px;
+  flex-wrap: wrap;
+}
+.palette-help code {
+  overflow-wrap: anywhere;
+  color: #c7d1cb;
+  font-size: 11px;
+}
+.palette-empty {
+  padding: 12px 2px;
+  font-size: 13px;
+}

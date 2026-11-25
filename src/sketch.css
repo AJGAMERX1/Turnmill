@@ -1,0 +1,623 @@
+.sk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  padding: clamp(10px, 3.3vh, 40px) clamp(12px, 3vw, 48px);
+  background: #080d0ec7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+.sk-dialog {
+  --sk-panel: #1d2325;
+  --sk-line: #343c3d;
+  --sk-text: #e8edeb;
+  --sk-mute: #a3afac;
+  --sk-accent: #f2bd6b;
+  display: flex;
+  flex-direction: column;
+  width: min(1320px, 100%);
+  height: min(850px, 94vh);
+  color: var(--sk-text);
+  background: #191f21;
+  border: 1px solid #495250;
+  border-radius: 12px;
+  box-shadow: 0 20px 100px #0009;
+  overflow: hidden;
+  text-align: left;
+  outline: 0;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 13px;
+}
+.sk-dialog * {
+  box-sizing: border-box;
+}
+.sk-dialog button,
+.sk-dialog input,
+.sk-dialog select {
+  font: inherit;
+  color: inherit;
+}
+.sk-dialog button {
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: transparent;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.sk-dialog button:focus-visible,
+.sk-dialog input:focus-visible,
+.sk-dialog select:focus-visible,
+.sk-dialog summary:focus-visible {
+  outline: 2px solid var(--sk-accent);
+  outline-offset: 1px;
+}
+.sk-dialog button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.sk-dialog button:hover:not(:disabled) {
+  background: #303838;
+}
+.sk-dialog input:not([type="checkbox"]),
+.sk-dialog select {
+  border: 1px solid #3c4747;
+  border-radius: 5px;
+  background: #151b1e;
+  min-width: 0;
+  text-align: left;
+  max-width: 100%;
+  height: 32px;
+  padding: 4px 7px;
+}
+.sk-head,
+.sk-foot,
+.sk-bar,
+.sk-caption,
+.sk-help {
+  display: flex;
+  align-items: center;
+}
+.sk-head {
+  gap: 12px;
+  border-bottom: 1px solid var(--sk-line);
+  background: #202729;
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+.sk-mark {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #5f5137;
+  border-radius: 8px;
+  background: #353026;
+  color: var(--sk-accent);
+  display: grid;
+  place-items: center;
+}
+.sk-head .sk-kicker {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--sk-mute);
+  font-weight: 650;
+}
+.sk-head h2 {
+  margin: 4px 0 0;
+  font-size: 19px;
+  font-weight: 620;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+.sk-plane {
+  margin-inline-start: auto;
+  color: var(--sk-mute);
+  font-size: 12px;
+}
+.sk-dismiss {
+  width: 32px;
+  height: 32px;
+  margin-inline-start: 8px;
+  border-radius: 5px;
+}
+.sk-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 310px);
+  flex: 1;
+  min-height: 0;
+}
+.sk-sheet,
+.sk-inspector {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sk-bar {
+  border-bottom: 1px solid var(--sk-line);
+  padding: 9px 13px;
+  background: #1b2223;
+  gap: 12px;
+  justify-content: space-between;
+}
+.sk-buttonset {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.sk-dialog .sk-tool {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 8px;
+  border-radius: 5px;
+  color: #c5cecb;
+  font-size: 12px;
+}
+.sk-dialog .sk-tool.is-active {
+  background: #383227;
+  color: #ffd69a;
+  border-color: #5e5039;
+}
+.sk-plot {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  background: #151b1d;
+}
+.sk-canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+.sk-canvas.mode-select .sk-node {
+  cursor: grab;
+}
+.sk-canvas.mode-rectangle,
+.sk-canvas.mode-polygon {
+  cursor: crosshair;
+}
+.sk-canvas.mode-pan {
+  cursor: grab;
+}
+.sk-canvas.mode-pan:active {
+  cursor: grabbing;
+}
+.sk-axis,
+.sk-vlabel {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #151b1d;
+  stroke-width: 3px;
+}
+.sk-axis {
+  fill: #a69a7c;
+}
+.sk-vlabel {
+  fill: #f6ce8c;
+}
+.sk-float {
+  position: absolute;
+  bottom: 13px;
+  right: 13px;
+  display: flex;
+  gap: 1px;
+  border: 1px solid #3a4544;
+  background: #202829ed;
+  border-radius: 6px;
+  padding: 2px;
+  box-shadow: 0 3px 10px #0003;
+}
+.sk-dialog .sk-float .sk-tool {
+  height: 28px;
+  min-width: 28px;
+  padding: 4px;
+}
+.sk-caption {
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  background: #1a2022;
+  border-top: 1px solid #303b3b;
+  color: var(--sk-mute);
+  font:
+    11px "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+.sk-caption label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.sk-caption input {
+  accent-color: var(--sk-accent);
+  margin: 0;
+}
+.sk-help {
+  min-height: 40px;
+  padding: 8px 13px;
+  gap: 8px;
+  color: #b7c0bc;
+  border-top: 1px solid var(--sk-line);
+  font-size: 12px;
+}
+.sk-help svg {
+  flex: none;
+  color: #b99b66;
+}
+.sk-help button {
+  margin-left: auto;
+  color: var(--sk-accent);
+  font-weight: 600;
+}
+.sk-inspector {
+  background: var(--sk-panel);
+  border-left: 1px solid var(--sk-line);
+}
+.sk-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--sk-line);
+  flex: none;
+}
+.sk-tabs button {
+  flex: 1;
+  gap: 6px;
+  padding: 15px 5px;
+  color: var(--sk-mute);
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sk-tabs button[aria-pressed="true"] {
+  border-bottom-color: var(--sk-accent);
+  color: var(--sk-text);
+}
+.sk-tabs span {
+  font:
+    10px "SFMono-Regular",
+    Consolas,
+    monospace;
+  background: #333c3b;
+  color: #bcc7c2;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.sk-scroll {
+  padding: 13px 12px;
+  overflow: auto;
+}
+.sk-note {
+  margin: 0 0 13px;
+  color: #adbbb5;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.sk-rows {
+  margin-bottom: 12px;
+}
+.sk-row {
+  display: grid;
+  grid-template-columns: 37px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+  border-radius: 3px;
+}
+.sk-row.sk-sel {
+  background: #65604530;
+}
+.sk-dialog .sk-rowname {
+  padding: 6px 2px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  color: #c1cec7;
+}
+.sk-sel .sk-rowname {
+  color: var(--sk-accent);
+}
+.sk-labels {
+  font:
+    10px "SFMono-Regular",
+    Consolas,
+    monospace;
+  color: var(--sk-mute);
+  padding-bottom: 6px;
+}
+.sk-dialog .sk-row input {
+  font:
+    11px "SFMono-Regular",
+    Consolas,
+    monospace;
+  width: 100%;
+  height: 30px;
+}
+.sk-params {
+  padding-top: 10px;
+  border-top: 1px solid var(--sk-line);
+  color: var(--sk-mute);
+  font-size: 11px;
+}
+.sk-params summary {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.sk-params > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+.sk-params code {
+  color: #c7d4c9;
+  font-size: 11px;
+}
+.sk-dialog .sk-add,
+.sk-dialog .sk-form button {
+  border: 1px solid #414e4a;
+  border-radius: 5px;
+  padding: 7px 9px;
+}
+.sk-dialog .sk-add {
+  justify-content: flex-start;
+  width: 100%;
+  margin-bottom: 10px;
+  background: #283031;
+  color: var(--sk-text);
+}
+.sk-form {
+  background: #222a2c;
+  border: 1px solid #3d4946;
+  border-radius: 7px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.sk-form label {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 11px;
+  color: #b7c6be;
+}
+.sk-form select,
+.sk-form input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.sk-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+}
+.sk-dialog .sk-form .sk-apply {
+  background: #5b4b31;
+  color: #ffda9e;
+}
+.sk-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--sk-line);
+}
+.sk-rule > svg {
+  flex: none;
+  color: var(--sk-accent);
+  margin-top: 2px;
+}
+.sk-rule > div {
+  flex: 1;
+  min-width: 0;
+}
+.sk-rule strong {
+  font-size: 12px;
+  font-weight: 580;
+}
+.sk-rule small {
+  display: block;
+  color: var(--sk-mute);
+  font:
+    10px "SFMono-Regular",
+    Consolas,
+    monospace;
+  margin-top: 4px;
+}
+.sk-rule input {
+  width: 100%;
+  margin-top: 7px;
+}
+.sk-rule button {
+  flex: none;
+  color: var(--sk-mute);
+  padding: 4px;
+  border-radius: 3px;
+}
+.sk-foot {
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--sk-line);
+  background: #202729;
+  flex-shrink: 0;
+}
+.sk-feedback {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  color: #b9c7be;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.sk-feedback span:last-child {
+  overflow-wrap: anywhere;
+}
+.sk-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 100%;
+  flex: none;
+  background: #83c3a4;
+}
+.sk-error {
+  color: #f3b5a2;
+}
+.sk-error .sk-dot {
+  background: #ed997f;
+}
+.sk-dialog .sk-cancel,
+.sk-dialog .sk-finish {
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid #46514d;
+  font-weight: 600;
+  min-height: 34px;
+}
+.sk-dialog .sk-finish {
+  background: var(--sk-accent);
+  color: #2d2517;
+  border-color: var(--sk-accent);
+}
+.sk-dialog .sk-finish:hover:not(:disabled) {
+  background: #ffd08a;
+}
+@media (max-width: 760px) {
+  .sk-backdrop {
+    padding: 0;
+  }
+  .sk-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+  }
+  .sk-head {
+    padding: 10px 13px;
+  }
+  .sk-mark {
+    width: 32px;
+    height: 32px;
+  }
+  .sk-head h2 {
+    font-size: 16px;
+  }
+  .sk-body {
+    grid-template-columns: minmax(0, 1fr) 230px;
+  }
+  .sk-bar {
+    padding: 6px;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .sk-buttonset {
+    gap: 1px;
+  }
+  .sk-dialog .sk-tool {
+    padding: 0 5px;
+  }
+  .sk-plot {
+    min-height: 100px;
+  }
+  .sk-foot {
+    padding: 9px;
+  }
+  .sk-scroll {
+    padding: 9px;
+  }
+}
+@media (max-width: 565px) {
+  .sk-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .sk-sheet {
+    flex: 1;
+    min-height: 225px;
+  }
+  .sk-inspector {
+    height: 34%;
+    min-height: 122px;
+    border-left: 0;
+    border-top: 1px solid var(--sk-line);
+  }
+  .sk-tabs button {
+    padding: 8px;
+  }
+  .sk-help {
+    min-height: 31px;
+    font-size: 11px;
+  }
+  .sk-plane {
+    font-size: 10px;
+  }
+  .sk-foot {
+    flex-wrap: wrap;
+  }
+  .sk-feedback {
+    font-size: 11px;
+  }
+  .sk-head {
+    gap: 8px;
+  }
+  .sk-buttonset {
+    gap: 2px;
+  }
+  .sk-row {
+    grid-template-columns: 38px 1fr 1fr;
+  }
+  .sk-tabs {
+    flex: none;
+  }
+}
+.sk-exact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #222a2a;
+  border-bottom: 1px solid var(--sk-line);
+  color: var(--sk-mute);
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.sk-exact label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sk-dialog .sk-exact input {
+  width: 74px;
+  height: 26px;
+  font:
+    11px "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+.sk-dialog .sk-exact button {
+  border: 1px solid #4b5550;
+  color: #dbc69f;
+  border-radius: 4px;
+  padding: 5px 7px;
+  font-size: 11px;
+}

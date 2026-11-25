@@ -1,0 +1,92 @@
+.dim-editor {
+  padding: 0 18px 16px;
+}
+.dim-editor-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.dim-editor-pair select,
+.dim-editor-pair input {
+  width: 100%;
+  min-width: 0;
+}
+.dim-editor-stage {
+  border: 1px solid #465050;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 6px 0 10px;
+}
+.dim-editor-stage svg {
+  display: block;
+  width: 100%;
+  max-height: 34vh;
+  background: #fafaf5;
+  cursor: crosshair;
+}
+.dim-outline {
+  stroke: #283431;
+  stroke-width: 0.32;
+  fill: none;
+}
+.dim-other,
+.dim-live {
+  fill: none;
+  stroke: #76877e;
+  pointer-events: none;
+}
+.dim-live {
+  stroke: #115f67;
+}
+.dim-other text,
+.dim-live text {
+  stroke: none;
+  fill: #115f67;
+  font-family: Arial, sans-serif;
+}
+.dim-other text {
+  fill: #76877e;
+}
+.dim-point {
+  fill: #f8fffb;
+  stroke: #1c756e;
+  stroke-width: 0.4;
+}
+.dim-point.picked {
+  fill: #e5ac59;
+  stroke: #4f3610;
+}
+.dim-point .dim-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: crosshair;
+}
+.dim-point:has(.dim-hit:hover) {
+  fill: #ffc772;
+  stroke: #513913;
+}
+.dim-editor-readout {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background: #232c2d;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.dim-editor-readout strong {
+  color: #eec17c;
+  white-space: nowrap;
+}
+.tm-dim-edit {
+  flex: 1;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 5px 0;
+  font: inherit;
+}
+.tm-dim-edit:hover {
+  text-decoration: underline;
+}

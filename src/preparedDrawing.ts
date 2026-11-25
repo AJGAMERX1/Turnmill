@@ -1,0 +1,116 @@
+import type { Shape3D } from "replicad";
+import { buildBodies, releaseBodies } from "./geometry";
+import {
+  exteriorDrawing,
+  partSection,
+  cutAssemblySection,
+  type SectionPlaneSpec,
+} from "./secondaryProjection";
+import { projectAssemblyDrawing } from "./assemblyDrawingProjection";
+import { positioned } from "./motionGeometry";
+import type { EvaluatedFeature } from "./types";
+import { bodyIds, buildPoses, type JointConfig } from "./kinematics";
+import { resolveThreadMates } from "./threadMates";
+
+export type DrawingSource = {
+  features: EvaluatedFeature[];
+  joints?: JointConfig;
+  values: Record<string, number>;
+  modeled: boolean;
+};
+export type DrawingBase =
+  | { part: ReturnType<typeof exteriorDrawing> }
+  | { assembly: ReturnType<typeof projectAssemblyDrawing> };
+export type DrawingCut =
+  | { part: ReturnType<typeof partSection> }
+  | { assembly?: ReturnType<typeof cutAssemblySection> };
+export type PreparedDrawing = {
+  base: DrawingBase;
+  cut: (plane?: SectionPlaneSpec) => DrawingCut;
+  dispose: () => void;
+};
+
+/** Exact solids live in the drawing worker only as long as this source stays open. */
+export function prepareDrawing({
+  features,
+  joints,
+  values,
+  modeled,
+}: DrawingSource): PreparedDrawing {
+  const simplified =
+    !modeled &&
+    features.some((f) =>
+      f.finishes?.some(
+        (g) => g.kind === "thread" && g.mode === "modeled" && !g.suppressed,
+      ),
+    );
+  const bodies = buildBodies(features);
+  const exact: Shape3D[] = [],
+    display: Shape3D[] = [];
+  const dispose = () => exact.splice(0).forEach((s) => s.delete());
+  try {
+    const screen = simplified
+      ? buildBodies(
+          features.map((f) => ({
+            ...f,
+            finishes: f.finishes?.map((g) =>
+              g.kind === "thread" ? { ...g, mode: "cosmetic" } : g,
+            ),
+          })),
+        )
+      : undefined;
+    try {
+      if (!joints) {
+        if (bodies.length !== 1)
+          throw Error("Choose a single body to generate its sheet.");
+        const base = exteriorDrawing(bodies[0].shape, screen?.[0].shape);
+        exact.push(bodies[0].shape.clone());
+        return {
+          base: { part: base },
+          cut: (plane = { axis: "Y", offset: 0 }) => ({
+            part: partSection(exact[0], base.bounds, plane),
+          }),
+          dispose,
+        };
+      }
+      const ids = bodyIds(features);
+      const resolved = resolveThreadMates(
+        joints,
+        bodies.flatMap((b) => b.threadFrames || []),
+        values,
+        ids,
+      );
+      const matrices = buildPoses(ids, resolved, {}, values);
+      for (let i = 0; i < bodies.length; i++) {
+        exact.push(positioned(bodies[i].shape, matrices[i]));
+        if (screen) display.push(positioned(screen[i].shape, matrices[i]));
+      }
+      const assembly = projectAssemblyDrawing(
+        screen ? display : exact,
+        ids,
+        bodies.map((b) => b.name),
+        resolved,
+        matrices,
+        simplified,
+        exact,
+      );
+      return {
+        base: { assembly },
+        cut: (plane) => ({
+          assembly: plane
+            ? cutAssemblySection(exact, ids, assembly.bounds, plane)
+            : undefined,
+        }),
+        dispose,
+      };
+    } finally {
+      if (screen) releaseBodies(screen);
+    }
+  } catch (e) {
+    dispose();
+    throw e;
+  } finally {
+    display.forEach((s) => s.delete());
+    releaseBodies(bodies);
+  }
+}

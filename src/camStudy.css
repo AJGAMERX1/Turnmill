@@ -1,0 +1,292 @@
+.cam-work .tm-work-main {
+  min-width: 0;
+}
+.cam-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 15px;
+}
+.cam-head h2 {
+  margin: 0;
+  color: #e9ede8;
+  font-size: 23px;
+  letter-spacing: -0.035em;
+}
+.cam-head p,
+.cam-note {
+  font-size: 12px;
+  color: #a5b2ad;
+  line-height: 1.5;
+  margin: 4px 0;
+}
+.cam-export,
+.cam-controls button,
+.cam-curve select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #46534e;
+  border-radius: 5px;
+  background: #29312f;
+  color: #dce5df;
+  padding: 6px 9px;
+  font: 12px inherit;
+  cursor: pointer;
+}
+.cam-stage,
+.cam-curve {
+  overflow: hidden;
+  background: #1d2526;
+  border: 1px solid #394541;
+  border-radius: 7px;
+}
+.cam-section,
+.cam-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  user-select: none;
+}
+.cam-section {
+  cursor: ew-resize;
+}
+.cam-chart {
+  cursor: crosshair;
+}
+.cam-section text,
+.cam-chart text {
+  font:
+    10px ui-monospace,
+    monospace;
+  fill: #abbeb5;
+  pointer-events: none;
+}
+.cam-controls,
+.cam-stage-caption,
+.cam-curve header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.cam-controls {
+  border-top: 1px solid #3d4943;
+  padding: 7px 10px;
+}
+.cam-controls button {
+  padding: 5px 7px;
+}
+.cam-controls input {
+  flex: 1;
+  min-width: 12px;
+  accent-color: #ecc084;
+}
+.cam-controls output {
+  font:
+    11px ui-monospace,
+    monospace;
+  min-width: 48px;
+  text-align: right;
+}
+.cam-stage-caption {
+  justify-content: space-between;
+  font-size: 11px;
+  color: #b7c4bb;
+  margin: 7px 1px 12px;
+}
+.cam-results {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 13px;
+}
+.cam-results > div {
+  border: 1px solid #37433e;
+  border-radius: 5px;
+  padding: 8px 10px;
+  background: #202829;
+}
+.cam-results span {
+  display: block;
+  font-size: 10px;
+  color: #a4b2ac;
+}
+.cam-results strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 17px;
+  color: #edf1ed;
+  font-weight: 580;
+}
+.cam-results small {
+  font:
+    10px ui-monospace,
+    monospace;
+  margin-left: 4px;
+  color: #b6c5bc;
+}
+.cam-curve header {
+  justify-content: space-between;
+  padding: 8px 12px 0;
+}
+.cam-work h3 {
+  font-size: 12px;
+  color: #deebe2;
+  margin: 0 0 7px;
+}
+.cam-curve h3 {
+  margin: 0;
+}
+.cam-curve select {
+  font: 11px inherit;
+  padding: 3px 6px;
+}
+.cam-limits {
+  margin: 14px 0;
+}
+.cam-limits > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(90px, auto) 64px;
+  gap: 10px;
+  align-items: center;
+  padding: 5px 0;
+  border-top: 1px solid #34413a;
+  font-size: 11px;
+}
+.cam-limits code,
+.cam-limits b {
+  font:
+    10px ui-monospace,
+    monospace;
+  text-align: right;
+}
+.cam-limits b.in {
+  color: #a4c8b1;
+}
+.cam-limits b.out {
+  color: #efb49b;
+}
+.cam-method {
+  font-size: 11px;
+  color: #a8b7b0;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.cam-method summary {
+  cursor: pointer;
+  color: #c4d2ca;
+}
+.cam-method a {
+  color: #e4be83;
+}
+.cam-inspector h3:not(:first-child) {
+  margin-top: 18px;
+  border-top: 1px solid #39443f;
+  padding-top: 13px;
+}
+.cam-inspector .cam-note {
+  font-size: 10px;
+}
+.cam-work :focus-visible {
+  outline: 2px solid #efbb71;
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .cam-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cam-head h2 {
+    font-size: 19px;
+  }
+  .cam-stage-caption {
+    font-size: 10px;
+  }
+  .cam-curve {
+    margin-bottom: 8px;
+  }
+}
+.cam-coupling {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.cam-coupling p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 7px 0 10px;
+}
+.cam-coupling > label,
+.cam-coupling details label {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.cam-coupling details {
+  margin: 10px 0;
+}
+.cam-coupling summary {
+  cursor: pointer;
+}
+.cam-coupling .cam-spring-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.cam-coupling input[type="checkbox"] {
+  width: auto;
+}
+.cam-coupling-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cam-coupling > .outline-btn {
+  margin-top: 8px;
+}
+.cam-coupling .tm-inline-error {
+  color: #edac9c;
+}
+.cam-readout {
+  border-top: 1px solid var(--line);
+  padding: 9px 0;
+}
+.cam-readout h3 {
+  margin: 0 0 6px;
+}
+.cam-readout dl {
+  margin: 4px 0;
+}
+.cam-readout dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.cam-readout dt {
+  color: var(--muted);
+}
+.cam-readout dd {
+  margin: 0;
+}
+.slider-spring dl {
+  margin: 8px 0;
+}
+.slider-spring dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.slider-spring dt {
+  color: var(--muted);
+}
+.slider-spring dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.slider-spring form > label,
+.slider-spring form > div {
+  margin: 7px 0;
+}

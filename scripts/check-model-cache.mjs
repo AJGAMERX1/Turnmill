@@ -1,0 +1,249 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { createServer } from "vite";
+import initOC from "replicad-opencascadejs";
+import { measureVolume, setOC } from "replicad";
+import { BufferGeometry } from "three";
+
+const solver = "@salusoft89/planegcs/dist/planegcs_dist/planegcs.wasm";
+const server = await createServer({
+  server: { middlewareMode: true, hmr: false },
+  appType: "custom",
+  plugins: [
+    {
+      name: "fixture-solver",
+      enforce: "pre",
+      resolveId(id) {
+        if (id === solver + "?url") return "virtual:fixture-solver";
+      },
+      load(id) {
+        if (id === "virtual:fixture-solver")
+          return (
+            "export default " +
+            JSON.stringify(fileURLToPath(import.meta.resolve(solver)))
+          );
+      },
+    },
+  ],
+});
+setOC(
+  await initOC({
+    wasmBinary: await readFile(
+      new URL(import.meta.resolve("replicad-opencascadejs/wasm")),
+    ),
+  }),
+);
+const { ModelBodies } = await server.ssrLoadModule("/src/modelBodies.ts");
+const { buildBodies, displayBodies, exportBodies, releaseBodies } =
+  await server.ssrLoadModule("/src/geometry.ts");
+const model = new ModelBodies();
+const near = (actual, expected, epsilon = 1e-6) =>
+  assert.ok(
+    Math.abs(actual - expected) <= epsilon,
+    actual + " versus " + expected,
+  );
+try {
+  const plate = {
+    id: "plate",
+    name: "Stock",
+    kind: "extrude",
+    operation: "new",
+    points: [
+      [0, 0],
+      [20, 0],
+      [20, 10],
+      [0, 10],
+    ],
+    amount: 5,
+  };
+  const tube = {
+    id: "tube",
+    name: "Tube",
+    kind: "revolve",
+    operation: "new",
+    points: [
+      [0, 2],
+      [0, 3],
+      [12, 3],
+      [12, 2],
+    ],
+    amount: 360,
+  };
+  const bore = {
+    id: "cut",
+    name: "Pocket",
+    kind: "extrude",
+    operation: "cut",
+    points: [
+      [2, 2],
+      [4, 2],
+      [4, 4],
+      [2, 4],
+    ],
+    amount: 3,
+  };
+  const a = model.build([plate, bore, tube]);
+  assert.equal(a.changes.length, 2);
+  const [plateKey, tubeKey] = a.keys;
+  const ref = model.bodies[1].shape;
+  const updated = [{ ...tube, name: "Spindle" }, plate, { ...bore, amount: 4 }];
+  const b = model.build(updated, a.keys);
+  assert.deepEqual(b.keys, [tubeKey, b.changes[0].key]);
+  assert.notEqual(b.keys[1], plateKey);
+  assert.equal(b.changes.length, 1);
+  assert.equal(model.bodies[0].shape, ref);
+  assert.equal(model.bodies[0].name, "Spindle");
+  const full = buildBodies(updated);
+  try {
+    const expected = displayBodies(full);
+    near(b.volume, expected.volume);
+    near(b.area, expected.area);
+    assert.deepEqual(b.bodyProperties, expected.bodyProperties);
+    assert.deepEqual(b.center, expected.center);
+    const edited = b.changes[0].mesh;
+    for (const key of ["vertices", "normals", "triangles", "edges"])
+      assert.deepEqual(edited[key], expected.meshes[1][key]);
+  } finally {
+    releaseBodies(full);
+  }
+  // A main thread which dropped an obsolete worker response requests its missing mesh again.
+  const resent = model.build(updated, [tubeKey]);
+  assert.deepEqual(resent.keys, b.keys);
+  assert.deepEqual(
+    resent.changes.map((c) => c.key),
+    [b.keys[1]],
+  );
+  assert.equal(model.build(updated, b.keys).changes.length, 0);
+  assert.throws(
+    () => model.build([tube, plate, { ...bore, amount: 0 }], b.keys),
+    /nonzero/,
+  );
+  assert.throws(() => model.build([bore], b.keys), /New body/);
+  assert.deepEqual(model.build(updated, b.keys).keys, b.keys);
+  const noPlate = model.build([tube], b.keys);
+  assert.deepEqual(noPlate.keys, [tubeKey]);
+  const restored = model.build(updated, noPlate.keys);
+  assert.equal(restored.changes.length, 1);
+  const { importSolidFile } = await server.ssrLoadModule(
+    "/src/exchangeSolids.ts",
+  );
+  const step = exportBodies(model.bodies, "step");
+  assert.match(await step.text(), /Spindle/);
+  const reopened = await importSolidFile("step", step, "Check");
+  try {
+    assert.equal(reopened.length, 2);
+    near(
+      reopened.reduce((s, p) => s + measureVolume(p.shape), 0),
+      b.volume,
+    );
+  } finally {
+    releaseBodies(reopened);
+  }
+  const importFeature = {
+    ...tube,
+    id: "import",
+    kind: "import",
+    brep: model.bodies[0].shape.serialize(),
+  };
+  const imported = model.build([importFeature, plate]);
+  const changed = model.build(
+    [{ ...importFeature, brep: model.bodies[1].shape.serialize() }, plate],
+    imported.keys,
+  );
+  near(changed.bodyProperties[0].volume, 1000);
+  assert.equal(changed.changes.length, 1);
+  model.clear();
+  const { setFaceHighlights } = await server.ssrLoadModule("/src/studio.ts");
+  const geo = new BufferGeometry();
+  geo.setIndex(Array.from({ length: 24 }, (_, i) => i));
+  const faces = [
+    { start: 0, count: 3 },
+    { start: 3, count: 9 },
+    { start: 12, count: 6 },
+    { start: 18, count: 6 },
+  ];
+  for (const [hover, selected] of [
+    [-1, -1],
+    [0, -1],
+    [0, 0],
+    [1, 3],
+    [3, 1],
+    [-1, 2],
+  ]) {
+    setFaceHighlights(geo, faces, hover, selected);
+    const restored = geo.groups.flatMap((g) =>
+      Array(g.count).fill(g.materialIndex),
+    );
+    const expected = faces.flatMap((f, i) =>
+      Array(f.count).fill(i === selected ? 2 : i === hover ? 1 : 0),
+    );
+    assert.deepEqual(restored, expected);
+    assert.ok(geo.groups.length <= 5);
+  }
+  geo.dispose();
+  console.log(
+    "Passed body reuse, name and order changes, dependent cuts, stale mesh recovery, failed rebuilds, suppression, embedded imports, STEP round-trip and highlighted face ranges.",
+  );
+
+  if (process.argv.includes("--pen")) {
+    const { evaluateModel } = await server.ssrLoadModule("/src/buildModel.ts");
+    const p = JSON.parse(
+      await readFile(
+        new URL("../examples/twist-pen.turnmill", import.meta.url),
+        "utf8",
+      ),
+    );
+    const { features: original } = await evaluateModel(p);
+    const initial = model.build(original);
+    p.parameters.find((p) => p.name === "refill_diameter").expression =
+      "5.5 mm";
+    const { features: edited } = await evaluateModel(p);
+    const start = performance.now();
+    const incremental = model.build(edited, initial.keys);
+    const cachedMs = performance.now() - start;
+    const cold = performance.now(),
+      reference = buildBodies(edited);
+    try {
+      const result = displayBodies(reference);
+      const fullMs = performance.now() - cold;
+      near(incremental.volume, result.volume);
+      near(incremental.area, result.area);
+      assert.deepEqual(incremental.bodyProperties, result.bodyProperties);
+      assert.deepEqual(incremental.center, result.center);
+      const changedIds = incremental.keys.flatMap((key, i) =>
+        initial.keys[i] === key ? [] : [edited[i].id],
+      );
+      assert.deepEqual(changedIds, ["pen-refill"]);
+      assert.deepEqual(
+        model.bodies.flatMap((b) => b.threadFrames || []),
+        reference.flatMap((b) => b.threadFrames || []),
+      );
+      const all = await importSolidFile(
+        "step",
+        exportBodies(model.bodies, "step"),
+        "Twist pen",
+      );
+      try {
+        assert.equal(all.length, 4);
+        const volumes = all
+          .map((b) => measureVolume(b.shape))
+          .sort((a, b) => a - b);
+        const exact = reference
+          .map((b) => measureVolume(b.shape))
+          .sort((a, b) => a - b);
+        volumes.forEach((v, i) => near(v, exact[i], 0.003));
+      } finally {
+        releaseBodies(all);
+      }
+      console.log(
+        `Modeled twist pen: refill edit rebuilt 1/4 bodies in ${cachedMs.toFixed(1)} ms; complete reference ${fullMs.toFixed(1)} ms. All four STEP solids and thread frames verified.`,
+      );
+    } finally {
+      releaseBodies(reference);
+    }
+  }
+} finally {
+  model.clear();
+  await server.close();
+}

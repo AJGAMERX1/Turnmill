@@ -1,0 +1,48 @@
+.tm-dialog .exchange-file {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 18px;
+  text-align: left;
+  border: 1px dashed #586560;
+  border-radius: 7px;
+  background: #1a2223;
+  color: #e8edeb;
+  cursor: pointer;
+}
+.tm-dialog .exchange-file:hover,
+.tm-dialog .exchange-file.drag-over {
+  border-color: #e8b56a;
+  background: #2d2f29;
+}
+.exchange-file > svg {
+  flex: none;
+  color: #f2bd6b;
+}
+.exchange-file > span {
+  display: block;
+  min-width: 0;
+}
+.exchange-file strong,
+.exchange-file small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.exchange-file small {
+  font-size: 11px;
+  margin-top: 5px;
+  color: #a3afac;
+}
+.exchange-unit {
+  display: block;
+  margin: 12px 0;
+  color: #bac7c1;
+  font-size: 12px;
+}
+.exchange-unit select {
+  display: block;
+  margin-top: 5px;
+  width: 100%;
+}

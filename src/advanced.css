@@ -1,0 +1,57 @@
+.ad-feature {
+  display: block;
+  color: #b6c2bb;
+  font-size: 12px;
+  margin: -2px 0 12px;
+}
+.ad-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.tm-dialog .ad-tools button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 4px;
+  background: #252d2e;
+  color: #bfcac5;
+  border: 1px solid #3b4542;
+  border-radius: 5px;
+  font-size: 11px;
+}
+.tm-dialog .ad-tools button[aria-pressed="true"] {
+  background: #3a3329;
+  color: #f4c785;
+  border-color: #6d5836;
+}
+.ad-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+.ad-fields label {
+  margin: 0 !important;
+  min-width: 0;
+}
+.ad-fields input,
+.ad-fields select {
+  width: 100%;
+  min-width: 0;
+}
+.ad-path {
+  width: 100%;
+  height: 82px;
+  display: block;
+  border: 1px solid #35413d;
+  border-radius: 5px;
+  margin-top: 10px;
+  background: #161d1e;
+}
+.dialog-actions .ad-remove {
+  margin-right: auto;
+}
+.tm-dialog .helper {
+  line-height: 1.45;
+}

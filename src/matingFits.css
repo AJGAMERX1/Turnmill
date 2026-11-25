@@ -1,0 +1,57 @@
+.fit-panel .fit-editor,
+.fit-panel .fit-saved {
+  margin: 0.65rem 0;
+}
+.fit-panel summary,
+.assembly-bom summary {
+  cursor: pointer;
+}
+.fit-panel .fit-reading {
+  margin: 0.6rem 0;
+}
+.fit-panel .fit-reading dl {
+  margin: 0.45rem 0;
+}
+.fit-reading dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  margin: 0.25rem 0;
+  flex-wrap: wrap;
+}
+.fit-reading dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.fit-hint,
+.fit-reading dt,
+.fit-reading small,
+.assembly-bom small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.fit-panel .fit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.fit-panel button,
+.assembly-bom button {
+  margin-top: 0.3rem;
+}
+.fit-panel a {
+  color: var(--gold);
+  font-size: 12px;
+}
+.assembly-bom {
+  margin: 1rem 0;
+}
+.assembly-bom ol {
+  padding: 0 0 0 1.4rem;
+}
+.assembly-bom li {
+  margin-bottom: 0.5rem;
+}
+.assembly-bom small {
+  display: block;
+}
