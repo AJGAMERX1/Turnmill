@@ -25,7 +25,8 @@ async function compositorFrame(page) {
 }
 
 function checkImage(bytes, size) {
-  const { data, width, height } = utils.PNG.sync.read(bytes);
+  const image = utils.PNG.sync.read(bytes);
+  const { data, width, height } = image;
   if (width !== size.width || height !== size.height)
     throw Error(`Captured viewport is ${width} × ${height}; expected ${size.width} × ${size.height}`);
   const colors = new Set();
@@ -33,20 +34,19 @@ function checkImage(bytes, size) {
     for (let x = 0; x < width; x += Math.max(1, Math.floor(width / 80))) {
       const i = 4 * (y * width + x);
       if (data[i + 3]) colors.add(data.readUInt32BE(i));
-      if (colors.size >= 8) return;
+      if (colors.size >= 8) return image;
     }
   }
   throw Error("The captured viewport is empty or uniform");
 }
 
-export async function captureViewport(page, path) {
-  await rm(path, { force: true });
+export async function readViewport(page, label = "viewport") {
   await page.bringToFront();
-  await page.waitForFunction(async () => {
-    await document.fonts.ready;
-    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-    return true;
-  }, undefined, { timeout: 15000 });
+  // Poll font readiness independently of animation frames. An occluded software
+  // surface can suspend requestAnimationFrame while the document remains usable.
+  await page.waitForFunction(() => document.fonts.status === "loaded", undefined, {
+    polling: 100, timeout: 15000,
+  });
   const size = await page.evaluate(() => ({
     width: Math.round(innerWidth * devicePixelRatio),
     height: Math.round(innerHeight * devicePixelRatio),
@@ -59,20 +59,25 @@ export async function captureViewport(page, path) {
     () => compositorFrame(page),
     () => page.screenshot({ animations: "disabled", type: "png", timeout: 45000 }),
   ]) {
-    let image;
+    let bytes, image;
     try {
-      image = await acquire();
-      checkImage(image, size);
+      bytes = await acquire();
+      image = checkImage(bytes, size);
     } catch (error) {
       failures.push(error);
       if (page.isClosed()) break;
       continue;
     }
-    if (failures.length) console.warn("Recovered viewport capture:", path, failures[0].message);
-    await writeFile(path, image);
-    return;
+    if (failures.length) console.warn("Recovered viewport capture:", label, failures[0].message);
+    return { bytes, image };
   }
-  throw Error(`Could not capture ${path}: ${failures.map((e) => e.message).join(" / ")}`, {
+  throw Error(`Could not capture ${label}: ${failures.map((e) => e.message).join(" / ")}`, {
     cause: failures.at(-1),
   });
+}
+
+export async function captureViewport(page, path) {
+  await rm(path, { force: true });
+  const { bytes } = await readViewport(page, path);
+  await writeFile(path, bytes);
 }

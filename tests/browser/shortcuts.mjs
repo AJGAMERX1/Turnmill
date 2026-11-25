@@ -1,3 +1,4 @@
+import { readViewport } from "../qa/capture.mjs";
 import { chromium } from "playwright-core";
 import { unzipSync, strFromU8 } from "fflate";
 import assert from "node:assert/strict";
@@ -69,7 +70,26 @@ async function download(key) {
   };
 }
 async function canvasHash() {
-  return hash(await page.locator(".solid-viewport canvas").screenshot());
+  const canvas = page.locator(".solid-viewport canvas");
+  const geometry = async () => canvas.evaluate((c) => {
+    const { x, y, width, height } = c.getBoundingClientRect();
+    return { x, y, width, height, dpr: devicePixelRatio };
+  });
+  const box = await geometry();
+  const { image } = await readViewport(page, "model viewport");
+  assert.deepEqual(await geometry(), box, "Canvas shifted during capture");
+  // Use pixels from the center of the solid canvas, away from menu and view
+  // labels. A text-only change cannot satisfy the orientation or fit checks.
+  const left = Math.round((box.x + box.width * 0.15) * box.dpr);
+  const right = Math.round((box.x + box.width * 0.85) * box.dpr);
+  const top = Math.round((box.y + box.height * 0.2) * box.dpr);
+  const bottom = Math.round((box.y + box.height * 0.8) * box.dpr);
+  assert(left >= 0 && top >= 0 && right <= image.width && bottom <= image.height);
+  assert(right > left && bottom > top, "The model canvas must be visible");
+  const hash = createHash("sha256");
+  for (let y = top; y < bottom; y++)
+    hash.update(image.data.subarray(4 * (image.width*y + left), 4 * (image.width*y + right)));
+  return hash.digest("hex");
 }
 try {
   await page.goto(url);
@@ -251,6 +271,7 @@ try {
     4,
     "Each orientation renders a different viewport image",
   );
+  assert.equal(await canvasHash(), images.at(-1), "An unchanged model view retains its frame");
   const canvas = page.locator(".solid-viewport canvas"),
     area = await canvas.boundingBox();
   await page.mouse.move(
