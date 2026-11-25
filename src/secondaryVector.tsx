@@ -33,7 +33,12 @@ type Label = Style & {
   ink?: Artwork["outlines"];
 };
 export type Mark = Path | Circle | Label;
-export type Sheet = { width: number; height: number; marks: Mark[] };
+export type Sheet = {
+  width: number;
+  height: number;
+  marks: Mark[];
+  svgBounds?: [number, number, number, number];
+};
 export const path = (
   pts: XY[],
   layer = "Outline",
@@ -271,7 +276,15 @@ export function svgFile(sheet: Sheet) {
     const tag = m.close ? "polygon" : "polyline";
     return `<${tag} points="${m.pts.map((p) => p.join(",")).join(" ")}" ${attribs}/>`;
   });
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sheet.width}mm" height="${sheet.height}mm" viewBox="0 0 ${sheet.width} ${sheet.height}">${contents.join("\n")}</svg>`;
+  const [x, y, right, bottom] = sheet.svgBounds ?? [
+    0,
+    0,
+    sheet.width,
+    sheet.height,
+  ];
+  const width = right - x,
+    height = bottom - y;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm" viewBox="${x} ${y} ${width} ${height}">${contents.join("\n")}</svg>`;
 }
 export function dxfFile(sheet: Sheet) {
   // DXF coordinates are millimetres, Y up. SVG text size is an em, DXF height is cap height.

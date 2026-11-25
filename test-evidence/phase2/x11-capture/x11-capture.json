@@ -1,0 +1,36 @@
+{
+  "chromium": "159.0.8154.6",
+  "checks": [
+    {
+      "width": 1440,
+      "height": 930,
+      "matchingPixels": 1339200,
+      "sha256": "83dda36197e1dec647b35d1c58eadb1dd717d09548eb2f96fd2141c1c3c1f652"
+    },
+    {
+      "width": 706,
+      "height": 760,
+      "matchingPixels": 536560,
+      "sha256": "fa8243f047ed32c66ae704975a080abde3d57dc40bae60882f700b57de0b9a77"
+    },
+    {
+      "width": 1150,
+      "height": 800,
+      "matchingPixels": 920000,
+      "sha256": "7442fe724d0729ec5d39e3eb729ab744ebbf3403307bba825712c877f73b64ba"
+    },
+    {
+      "width": 1150,
+      "height": 800,
+      "matchingPixels": 920000,
+      "sha256": "38ba81537b88658ac31bfe277c3c4180fbc676e108f93f47392307f0fa819dce"
+    }
+  ],
+  "formState": [
+    true,
+    true,
+    "92 mm",
+    0,
+    2
+  ]
+}

@@ -1,3 +1,4 @@
+import { observeJoints } from "../tests/hook/observe";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
 import CamStudy from "./CamStudy";
@@ -10,7 +11,7 @@ import { resolveThreadMates, type ThreadFrame } from "./threadMates";
 import type { FitSurface } from "./fitSurfaces";
 import type { ClearanceResult } from "./clearance";
 import { materials } from "./materials";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, type RefObject } from "react";
 import {
   Play,
   Pause,
@@ -68,8 +69,14 @@ function ExprField({
     </label>
   );
 }
+export type LiveAssembly = {
+  selected: string;
+  drivers: Record<string, number[]>;
+  problem: string;
+};
+
 export default function Mechanisms(
-  props: WorkspaceProps & { onImport: () => void; guideAssist?: number },
+  props: WorkspaceProps & { onImport: () => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?: number },
 ) {
   const [frameCache, cacheFrames] = useState<{
     features: WorkspaceProps["features"];
@@ -151,7 +158,8 @@ function JointStudio({
   onChange,
   onFrames,
   guideAssist,
-}: WorkspaceProps & { onFrames: (f: ThreadFrame[]) => void; guideAssist?:number }) {
+  liveAssembly,
+}: WorkspaceProps & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
   const guidedProbe=useRef<Project | null>(null);
@@ -260,6 +268,16 @@ function JointStudio({
   } catch (e) {
     problem = (e as Error).message;
   }
+  useLayoutEffect(() => {
+    liveAssembly.current = { selected, drivers: poses, problem };
+    return () => { liveAssembly.current = null; };
+  }, [liveAssembly, selected, poses, problem]);
+  useEffect(()=>{
+    if(import.meta.env.VITE_CAD_QA==="1") {
+      observeJoints(()=>({ids,selected,poses,matrices,config,min,max,current,lead,readings,problem}));
+      return ()=>observeJoints();
+    }
+  });
   const running = useRef({ min, max, current, selected, d });
   running.current = { min, max, current, selected, d };
   const signature = useMemo(() => JSON.stringify(features), [features]);

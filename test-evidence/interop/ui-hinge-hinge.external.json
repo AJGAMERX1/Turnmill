@@ -1,0 +1,108 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 1001,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 442.080231,
+    "bbox": [
+      [
+        0.0,
+        -12.0,
+        -2.499788
+      ],
+      [
+        17.0,
+        12.0,
+        2.499999
+      ]
+    ],
+    "parts": "3",
+    "sliceExit": 0,
+    "extrusionMoves": 879
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -12.0,
+            -2.499788522720337
+          ],
+          [
+            8.0,
+            2.4997575283050537,
+            2.4999990463256836
+          ]
+        ],
+        "volume": 160.97305043434295,
+        "closed": true,
+        "triangles": 1232
+      },
+      {
+        "bbox": [
+          [
+            9.0,
+            -2.4997575283050537,
+            -2.499788522720337
+          ],
+          [
+            17.0,
+            12.0,
+            2.4999990463256836
+          ]
+        ],
+        "volume": 160.97305043434613,
+        "closed": true,
+        "triangles": 1232
+      },
+      {
+        "bbox": [
+          [
+            0.0,
+            -1.5,
+            -1.4997035264968872
+          ],
+          [
+            17.0,
+            1.5,
+            1.4997035264968872
+          ]
+        ],
+        "volume": 120.1342506258232,
+        "closed": true,
+        "triangles": 628
+      }
+    ],
+    "buildItems": 3,
+    "names": [
+      "Fixed leaf",
+      "Moving leaf",
+      "Hinge pin"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 160.972992,
+        "manifold": true
+      },
+      {
+        "volume": 160.973083,
+        "manifold": true
+      },
+      {
+        "volume": 120.134521,
+        "manifold": true
+      }
+    ]
+  }
+}

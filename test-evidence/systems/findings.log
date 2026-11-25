@@ -1,0 +1,7 @@
+XFAIL SYS-001 Named angular limit breaks clearance worker and assembled drawing Assembled drawing worker should project both parts; got Expected a angle value.
++ actual - expected
+
++ 'Expected a angle value.'
+- undefined
+
+XFAIL SYS-002 Rotated flat engraving silently clips the requested artwork Complete 6 × 2 mm graphic cut (or reject placement): expected 2.4 ± 0.0024; measured 1.5999999999999943

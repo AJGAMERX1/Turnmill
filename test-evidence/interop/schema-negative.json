@@ -1,0 +1,30 @@
+{
+  "schema": "AP242",
+  "strictExit": 1,
+  "mm": true,
+  "entities": 359,
+  "unresolved": [],
+  "duplicateIds": 0,
+  "diagnostics": [
+    "Reading Data from /Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/test-evidence/interop/negative-schema-control.invalid.stp...",
+    "ERROR: instance #2 'INVALID_QA_ENTITY': Unknown ENTITY type.",
+    "1  ERRORS\t  0  WARNINGS",
+    "ERROR:  ENTITY #1 Application_Protocol_Definition",
+    "ERROR in EXCHANGE FILE: incomplete instance #1.",
+    "ERROR: in 2nd pass, instance #2 not found.",
+    "Data lost:  = INVALID_QA_ENTITY('Managed model based 3d engineering')",
+    "ERROR:  ENTITY #8 Product_Context",
+    "ERROR in EXCHANGE FILE: incomplete instance #8.",
+    "ERROR:  ENTITY #9 Product_Definition_Context",
+    "ERROR in EXCHANGE FILE: incomplete instance #9.",
+    "Invalid instances: 1",
+    "Incomplete instances (includes invalid instances): 0",
+    "Warnings: 0.",
+    "4  ERRORS\t  0  WARNINGS",
+    "Severity: SEVERITY_WARNING",
+    "In first pass through DATA section. Check for invalid entity types.",
+    "Invalid instances: 1",
+    "Incomplete instances (includes invalid instances): 0",
+    "Warnings: 0."
+  ]
+}

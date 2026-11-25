@@ -1,0 +1,14 @@
+[ui-ruler-graduated-ruler.stl]
+size_x = 155.000000
+size_y = 22.000000
+size_z = 2.000000
+min_x = 0.000000
+min_y = 0.000000
+min_z = 0.000000
+max_x = 155.000000
+max_y = 22.000000
+max_z = 2.000000
+number_of_facets = 84484
+manifold = yes
+number_of_parts =  1
+volume = 6794.302734

@@ -1,0 +1,339 @@
+{
+  "id": "9e56f3e3-b5a5-4c6c-9d03-aa27516e3b8a",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [
+    {
+      "name": "screw_d7714_diameter",
+      "expression": "5 mm",
+      "label": "Hex screw diameter"
+    },
+    {
+      "name": "screw_d7714_pitch",
+      "expression": "0.8 mm",
+      "label": "Hex screw pitch"
+    },
+    {
+      "name": "screw_d7714_across_flats",
+      "expression": "8 mm",
+      "label": "Hex screw across flats"
+    },
+    {
+      "name": "screw_d7714_height",
+      "expression": "3.5 mm",
+      "label": "Hex screw height"
+    },
+    {
+      "name": "screw_d7714_length",
+      "expression": "12 mm",
+      "label": "Hex screw length"
+    },
+    {
+      "name": "nut_c98a0_diameter",
+      "expression": "5 mm",
+      "label": "Hex nut diameter"
+    },
+    {
+      "name": "nut_c98a0_pitch",
+      "expression": "0.8 mm",
+      "label": "Hex nut pitch"
+    },
+    {
+      "name": "nut_c98a0_across_flats",
+      "expression": "8 mm",
+      "label": "Hex nut across flats"
+    },
+    {
+      "name": "nut_c98a0_height",
+      "expression": "4 mm",
+      "label": "Hex nut height"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "e25e14ea-96c9-443a-8e11-b8ccdf43fd73",
+      "name": "M5 hex screw · 12 mm profile",
+      "points": [
+        {
+          "x": "0 mm + screw_d7714_diameter/2",
+          "y": "0 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "0 mm + screw_d7714_diameter/2"
+        },
+        {
+          "x": "0 mm - screw_d7714_diameter/2",
+          "y": "0 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "0 mm - screw_d7714_diameter/2"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "5d9c11c7-136f-4105-9ae4-6ada395debfd",
+          "type": "arc",
+          "indices": [
+            0
+          ],
+          "value": "-(screw_d7714_diameter/2)"
+        },
+        {
+          "id": "62b50521-8323-44af-add1-0f211ff87ae7",
+          "type": "arc",
+          "indices": [
+            1
+          ],
+          "value": "-(screw_d7714_diameter/2)"
+        },
+        {
+          "id": "25ecdb52-b575-4fc3-bac2-c17721f90ea5",
+          "type": "arc",
+          "indices": [
+            2
+          ],
+          "value": "-(screw_d7714_diameter/2)"
+        },
+        {
+          "id": "fe609017-8d6b-466d-a680-0c9e5019255c",
+          "type": "arc",
+          "indices": [
+            3
+          ],
+          "value": "-(screw_d7714_diameter/2)"
+        }
+      ]
+    },
+    {
+      "id": "96ee09a9-678f-45f1-97d6-4b53a2c8c228",
+      "name": "Hex head profile",
+      "points": [
+        {
+          "x": "screw_d7714_across_flats * 0.577350269189626",
+          "y": "screw_d7714_across_flats * 0"
+        },
+        {
+          "x": "screw_d7714_across_flats * 0.288675134594813",
+          "y": "screw_d7714_across_flats * 0.5"
+        },
+        {
+          "x": "screw_d7714_across_flats * -0.288675134594813",
+          "y": "screw_d7714_across_flats * 0.5"
+        },
+        {
+          "x": "screw_d7714_across_flats * -0.577350269189626",
+          "y": "screw_d7714_across_flats * 0"
+        },
+        {
+          "x": "screw_d7714_across_flats * -0.288675134594813",
+          "y": "screw_d7714_across_flats * -0.5"
+        },
+        {
+          "x": "screw_d7714_across_flats * 0.288675134594813",
+          "y": "screw_d7714_across_flats * -0.5"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "3947d8fc-ac88-42f1-9052-e268dd78c274",
+      "name": "M5 hex nut profile",
+      "points": [
+        {
+          "x": "nut_c98a0_across_flats * 0.577350269189626",
+          "y": "nut_c98a0_across_flats * 0"
+        },
+        {
+          "x": "nut_c98a0_across_flats * 0.288675134594813",
+          "y": "nut_c98a0_across_flats * 0.5"
+        },
+        {
+          "x": "nut_c98a0_across_flats * -0.288675134594813",
+          "y": "nut_c98a0_across_flats * 0.5"
+        },
+        {
+          "x": "nut_c98a0_across_flats * -0.577350269189626",
+          "y": "nut_c98a0_across_flats * 0"
+        },
+        {
+          "x": "nut_c98a0_across_flats * -0.288675134594813",
+          "y": "nut_c98a0_across_flats * -0.5"
+        },
+        {
+          "x": "nut_c98a0_across_flats * 0.288675134594813",
+          "y": "nut_c98a0_across_flats * -0.5"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed",
+      "name": "M5 hex screw · 12 mm",
+      "kind": "extrude",
+      "amount": "-screw_d7714_length",
+      "sketchId": "e25e14ea-96c9-443a-8e11-b8ccdf43fd73",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "kind": "thread",
+          "id": "0146c85e-a51e-4950-af4f-00ac4cfa2d82",
+          "name": "M5 × 0.8",
+          "side": "external",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "screw_d7714_diameter",
+          "pitch": "screw_d7714_pitch",
+          "length": "screw_d7714_length",
+          "end": "start"
+        }
+      ]
+    },
+    {
+      "id": "0ae293e4-7de4-49aa-b2b6-2f29efbd72ec",
+      "name": "Hex head",
+      "kind": "extrude",
+      "amount": "screw_d7714_height",
+      "sketchId": "96ee09a9-678f-45f1-97d6-4b53a2c8c228",
+      "operation": "add",
+      "suppressed": false,
+      "finishes": [],
+      "bodyId": "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed"
+    },
+    {
+      "id": "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8",
+      "name": "M5 hex nut",
+      "kind": "extrude",
+      "amount": "nut_c98a0_height",
+      "sketchId": "3947d8fc-ac88-42f1-9052-e268dd78c274",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "kind": "hole",
+          "id": "4868bf5f-bf16-4e30-88f7-16b4b0968244",
+          "name": "Pilot bore",
+          "end": "start",
+          "diameter": "nut_c98a0_diameter - nut_c98a0_pitch * 1.08253175473",
+          "length": "nut_c98a0_height"
+        },
+        {
+          "kind": "thread",
+          "id": "f3ae2e77-ded4-4b65-9608-3796851cfa6a",
+          "name": "M5 × 0.8",
+          "side": "internal",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "nut_c98a0_diameter",
+          "pitch": "nut_c98a0_pitch",
+          "length": "nut_c98a0_height",
+          "end": "start"
+        }
+      ]
+    }
+  ],
+  "workspaces": {
+    "bodyMaterials": {
+      "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed": "Steel",
+      "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8": "Steel"
+    },
+    "hardwareComponents": {
+      "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed": {
+        "source": "Hex screw",
+        "dimensions": [
+          {
+            "label": "diameter",
+            "parameter": "screw_d7714_diameter"
+          },
+          {
+            "label": "pitch",
+            "parameter": "screw_d7714_pitch"
+          },
+          {
+            "label": "across flats",
+            "parameter": "screw_d7714_across_flats"
+          },
+          {
+            "label": "height",
+            "parameter": "screw_d7714_height"
+          },
+          {
+            "label": "length",
+            "parameter": "screw_d7714_length"
+          }
+        ]
+      },
+      "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8": {
+        "source": "Hex nut",
+        "dimensions": [
+          {
+            "label": "diameter",
+            "parameter": "nut_c98a0_diameter"
+          },
+          {
+            "label": "pitch",
+            "parameter": "nut_c98a0_pitch"
+          },
+          {
+            "label": "across flats",
+            "parameter": "nut_c98a0_across_flats"
+          },
+          {
+            "label": "height",
+            "parameter": "nut_c98a0_height"
+          }
+        ]
+      }
+    },
+    "assemblyItems": {
+      "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed": 1,
+      "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8": 2
+    },
+    "joints": {
+      "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8": {
+        "kind": "screw",
+        "parent": "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed",
+        "axis": "Z",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "360 deg",
+        "pitch": "0.8",
+        "starts": "1",
+        "hand": 1,
+        "threadMate": {
+          "moving": {
+            "featureId": "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8",
+            "finishId": "f3ae2e77-ded4-4b65-9608-3796851cfa6a"
+          },
+          "mating": {
+            "featureId": "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed",
+            "finishId": "0146c85e-a51e-4950-af4f-00ac4cfa2d82"
+          },
+          "placement": "entrances",
+          "engagement": "1 mm",
+          "phase": "0 deg"
+        }
+      }
+    },
+    "jointPose": {
+      "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8": [
+        360
+      ]
+    }
+  }
+}

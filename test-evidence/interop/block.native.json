@@ -1,0 +1,56 @@
+{
+  "model": "block",
+  "expected": {
+    "formula": "20 × 10 × 5",
+    "volume": 1000,
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        10,
+        5
+      ]
+    ],
+    "center": [
+      10,
+      5,
+      2.5
+    ]
+  },
+  "parts": [
+    {
+      "name": "Analytic block",
+      "volume": 999.9999999999998,
+      "area": 699.9999999999999,
+      "bbox": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          20,
+          10,
+          5
+        ]
+      ],
+      "center": [
+        9.999999999999998,
+        4.999999999999999,
+        2.5
+      ],
+      "faces": 6,
+      "edges": 12,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

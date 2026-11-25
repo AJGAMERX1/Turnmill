@@ -1,0 +1,14 @@
+[ruler-blank.stl]
+size_x = 155.399994
+size_y = 20.000000
+size_z = 2.000000
+min_x = 0.000000
+min_y = 0.000000
+min_z = 0.000000
+max_x = 155.399994
+max_y = 20.000000
+max_z = 2.000000
+number_of_facets = 12
+manifold = yes
+number_of_parts =  1
+volume = 6216.000000

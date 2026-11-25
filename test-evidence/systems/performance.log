@@ -1,0 +1,10 @@
+12:12:12 PM [vite] (client) Re-optimizing dependencies because vite config has changed
+Cold four-part twist pen, evaluation, exact solids and display meshes 20942.58 ms budget 90000 ms
+Warm refill-only edit, four-part pen 22.88 ms budget 500 ms
+Cold 100-feature history, one solid 596.62 ms budget 60000 ms
+Edit final additive feature to 0.75 mm in 100-feature solid 534.10 ms budget 500 ms
+Edit final additive feature to 0.5 mm in 100-feature solid 509.58 ms budget 500 ms
+Edit final additive feature to 0.625 mm in 100-feature solid 506.19 ms budget 500 ms
+Native diagnostic: 509.58 ms median; boolean fuses {"coldFuses":99,"unchangedFuses":0,"editedFuses":[99,99,99]}
+Cold 50-part assembly geometry 52.44 ms budget 15000 ms
+50-component parent chain, one pose 1.18 ms budget 500 ms

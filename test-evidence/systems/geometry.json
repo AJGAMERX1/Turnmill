@@ -1,0 +1,837 @@
+[
+  {
+    "feature": "extrude",
+    "expectedVolume": 1920,
+    "expectedBounds": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      6,
+      12
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 1919.9999999999998,
+    "area": 991.9999999999998,
+    "center": [
+      10.000000000000002,
+      6,
+      4
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "faces": 6,
+    "edges": 12,
+    "solids": 1
+  },
+  {
+    "feature": "revolve tube",
+    "expectedVolume": 603.1857894892403,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      4,
+      6
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 603.1857894892403,
+    "area": 703.7167544041138,
+    "center": [
+      5.999999999999999,
+      4.0051429322133174e-16,
+      -2.8604867317409217e-16
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "faces": 4,
+    "edges": 6,
+    "solids": 1
+  },
+  {
+    "feature": "blind rectangular cut",
+    "expectedVolume": 1824,
+    "expectedBounds": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      11,
+      24
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 1824,
+    "area": 1072,
+    "center": [
+      10.263157894736842,
+      6.052631578947368,
+      4.105263157894737
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "faces": 11,
+    "edges": 24,
+    "solids": 1
+  },
+  {
+    "feature": "open shell",
+    "expectedVolume": 660,
+    "expectedBounds": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      11,
+      24
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 659.9999999999998,
+    "area": 1383.9999999999998,
+    "center": [
+      10.000000000000004,
+      5.999999999999999,
+      3.045454545454545
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "faces": 11,
+    "edges": 24,
+    "solids": 1
+  },
+  {
+    "feature": "blind concentric bore",
+    "expectedVolume": 562.345084992573,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 562.3450849925728,
+    "area": 716.2831250184728,
+    "center": [
+      5.709497206703912,
+      -6.570382358727863e-16,
+      -1.417627653999371e-16
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "faces": 6,
+    "edges": 9,
+    "solids": 1
+  },
+  {
+    "feature": "outer chamfer",
+    "expectedVolume": 601.306462583924,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 601.3064625839241,
+    "area": 697.1162880526799,
+    "center": [
+      5.981614371752442,
+      -7.08998934792852e-16,
+      -1.146235038319665e-16
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "faces": 5,
+    "edges": 8,
+    "solids": 1
+  },
+  {
+    "feature": "outer fillet",
+    "expectedVolume": 602.3728181671158,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 602.3728181671158,
+    "area": 698.9429222919523,
+    "center": [
+      5.992008516697974,
+      -7.077438234236275e-16,
+      -1.1900254188984015e-16
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5.0000001
+      ],
+      [
+        12,
+        5,
+        5.0000001
+      ]
+    ],
+    "faces": 5,
+    "edges": 8,
+    "solids": 1
+  },
+  {
+    "feature": "linear pattern",
+    "expectedVolume": 48,
+    "expectedBounds": [
+      [
+        6,
+        3,
+        0
+      ],
+      [
+        24,
+        5,
+        4
+      ]
+    ],
+    "expectedTopology": [
+      3,
+      18,
+      36
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 47.99999999999997,
+    "area": 120,
+    "center": [
+      15.00000000000001,
+      4,
+      2
+    ],
+    "bbox": [
+      [
+        6,
+        3,
+        0
+      ],
+      [
+        24,
+        5,
+        4
+      ]
+    ],
+    "faces": 18,
+    "edges": 36,
+    "solids": 3
+  },
+  {
+    "feature": "circular pattern",
+    "expectedVolume": 64,
+    "expectedBounds": [
+      [
+        -8,
+        -8,
+        0
+      ],
+      [
+        8,
+        8,
+        4
+      ]
+    ],
+    "expectedTopology": [
+      4,
+      24,
+      48
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 63.99999999999998,
+    "area": 160,
+    "center": [
+      1.0547118733938991e-15,
+      -5.551115123125785e-16,
+      2
+    ],
+    "bbox": [
+      [
+        -8,
+        -8.000000000000002,
+        0
+      ],
+      [
+        8,
+        8,
+        4
+      ]
+    ],
+    "faces": 24,
+    "edges": 48,
+    "solids": 4
+  },
+  {
+    "feature": "mirror",
+    "expectedVolume": 16,
+    "expectedBounds": [
+      [
+        -4,
+        3,
+        0
+      ],
+      [
+        -2,
+        5,
+        4
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      6,
+      12
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 15.999999999999996,
+    "area": 40,
+    "center": [
+      -3.0000000000000004,
+      4,
+      2
+    ],
+    "bbox": [
+      [
+        -4,
+        3,
+        0
+      ],
+      [
+        -2,
+        5,
+        4
+      ]
+    ],
+    "faces": 6,
+    "edges": 12,
+    "solids": 1
+  },
+  {
+    "feature": "straight sweep",
+    "expectedVolume": 80,
+    "expectedBounds": [
+      [
+        0,
+        5,
+        3
+      ],
+      [
+        20,
+        7,
+        5
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      6,
+      12
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 79.99999999999999,
+    "area": 168,
+    "center": [
+      10.000000000000002,
+      6,
+      4
+    ],
+    "bbox": [
+      [
+        0,
+        5,
+        3
+      ],
+      [
+        20,
+        7,
+        5
+      ]
+    ],
+    "faces": 6,
+    "edges": 12,
+    "solids": 1
+  },
+  {
+    "feature": "square frustum loft",
+    "expectedVolume": 74.66666666666667,
+    "expectedBounds": [
+      [
+        4,
+        4,
+        0
+      ],
+      [
+        8,
+        8,
+        8
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      6,
+      12
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 74.66666666666669,
+    "area": 116.74709297958259,
+    "center": [
+      5.999999999999998,
+      5.999999999999998,
+      3.142857142857142
+    ],
+    "bbox": [
+      [
+        3.9999999,
+        3.9999999,
+        -1e-7
+      ],
+      [
+        8.0000001,
+        8.0000001,
+        8.0000001
+      ]
+    ],
+    "faces": 6,
+    "edges": 12,
+    "solids": 1
+  },
+  {
+    "feature": "cosmetic thread",
+    "expectedVolume": 603.1857894892403,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "expectedTopology": [
+      1,
+      4,
+      6
+    ],
+    "comparison": "analytic",
+    "valid": true,
+    "volume": 603.1857894892403,
+    "area": 703.7167544041138,
+    "center": [
+      5.999999999999999,
+      4.0051429322133174e-16,
+      -2.8604867317409217e-16
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "faces": 4,
+    "edges": 6,
+    "solids": 1
+  },
+  {
+    "feature": "modeled thread",
+    "expectedVolume": 582.3764978827535,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "expectedTopology": null,
+    "comparison": "analytic integration of the nominal CAD flank over four turns, not a tolerance-class test",
+    "valid": true,
+    "volume": 582.3689415145442,
+    "area": 755.9491517347426,
+    "center": [
+      5.839156665541243,
+      0.000010964427977015322,
+      -0.000014484020697745517
+    ],
+    "bbox": [
+      [
+        -1e-7,
+        -5.000000105107067,
+        -5.000000103390411
+      ],
+      [
+        12.000000101679248,
+        5.000000100000001,
+        5.000000115543799
+      ]
+    ],
+    "faces": 12,
+    "edges": 30,
+    "solids": 1
+  },
+  {
+    "feature": "straight knurl",
+    "expectedVolume": null,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "expectedTopology": null,
+    "comparison": "removed material; pending external reference",
+    "valid": true,
+    "volume": 602.7847515140813,
+    "area": 706.187502971229,
+    "center": [
+      5.998336728101732,
+      -2.347634075361613e-16,
+      -2.6374910235699363e-16
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "faces": 28,
+    "edges": 60,
+    "solids": 1
+  },
+  {
+    "feature": "diamond knurl",
+    "expectedVolume": null,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "expectedTopology": null,
+    "comparison": "removed material; pending external reference",
+    "valid": true,
+    "volume": 602.3952383180987,
+    "area": 709.6060259835741,
+    "center": [
+      5.996691669306897,
+      -3.496146987075509e-11,
+      -5.063337021720283e-10
+    ],
+    "bbox": [
+      [
+        -1e-7,
+        -5.0000001,
+        -5.00000078038018
+      ],
+      [
+        12.0000001,
+        5.0000001,
+        5.000000780380181
+      ]
+    ],
+    "faces": 46,
+    "edges": 102,
+    "solids": 1
+  },
+  {
+    "feature": "flat engrave",
+    "expectedVolume": null,
+    "expectedBounds": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "expectedTopology": null,
+    "comparison": "nonzero engrave; pending external reference",
+    "valid": true,
+    "volume": 1919.7563551422816,
+    "area": 993.9390893851102,
+    "center": [
+      9.999224651365266,
+      6.000010281075282,
+      3.9995050335723303
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8
+      ]
+    ],
+    "faces": 19,
+    "edges": 45,
+    "solids": 1
+  },
+  {
+    "feature": "flat emboss",
+    "expectedVolume": null,
+    "expectedBounds": null,
+    "expectedTopology": null,
+    "comparison": "nonzero emboss; pending external reference",
+    "valid": true,
+    "volume": 1920.2436448577187,
+    "area": 993.9390893851102,
+    "center": [
+      10.000775151878758,
+      5.999989721533691,
+      4.000520217275199
+    ],
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        20,
+        12,
+        8.200000000000001
+      ]
+    ],
+    "faces": 19,
+    "edges": 45,
+    "solids": 1
+  },
+  {
+    "feature": "cylindrical engrave",
+    "expectedVolume": null,
+    "expectedBounds": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "expectedTopology": null,
+    "comparison": "nonzero engrave; pending external reference",
+    "valid": true,
+    "volume": 602.9406524737183,
+    "area": 705.6707913241513,
+    "center": [
+      5.999142448136555,
+      0.00003302604688101821,
+      -0.0019800618256606804
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5
+      ]
+    ],
+    "faces": 17,
+    "edges": 43,
+    "solids": 1
+  },
+  {
+    "feature": "cylindrical emboss",
+    "expectedVolume": null,
+    "expectedBounds": null,
+    "expectedTopology": null,
+    "comparison": "nonzero emboss; pending external reference",
+    "valid": true,
+    "volume": 603.4308098187837,
+    "area": 705.6684982017521,
+    "center": [
+      6.000856446829337,
+      -0.00003297627286175601,
+      0.002059206739823684
+    ],
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        12,
+        5,
+        5.2
+      ]
+    ],
+    "faces": 17,
+    "edges": 43,
+    "solids": 1
+  }
+]

@@ -1,0 +1,4 @@
+XFAIL SYS-001 Browser named-angle clearance Expected 6 mm, displayed Expected a angle value.
+XFAIL SYS-005 Flat engraving labels the longitudinal start/end offset as the Z axis Actual options: Start · minimum Z / End · maximum Z; offset moves along X.
+XFAIL SYS-002 Browser engraving volume Volume for complete graphic: expected 77.6 ± 0.0024; measured 78.4
+Confirmed clearance/assembly sheet and rotated engraving in release browser

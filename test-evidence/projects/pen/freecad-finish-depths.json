@@ -1,0 +1,70 @@
+{
+  "source": "twist-pen.step",
+  "axis": "X",
+  "nominalRadius": 6,
+  "expectedDepth": 0.12,
+  "grip": {
+    "station": 20,
+    "exteriorRadius": 5.9999999999999085,
+    "rootsAngleRadius": [
+      [
+        45.0,
+        5.88
+      ],
+      [
+        90.0,
+        5.88
+      ],
+      [
+        135.0,
+        5.88
+      ],
+      [
+        180.0,
+        5.88
+      ],
+      [
+        225.0,
+        5.88
+      ],
+      [
+        270.0,
+        5.88
+      ],
+      [
+        315.0,
+        5.88
+      ],
+      [
+        360.0,
+        5.88
+      ]
+    ]
+  },
+  "inscription": {
+    "typed": "ANA",
+    "floorFacesByX": [
+      {
+        "startX": 33.99999999999969,
+        "endX": 35.609871668312,
+        "radius": 5.88,
+        "wires": 2,
+        "projectedHeight": 1.8000000000006668
+      },
+      {
+        "startX": 35.791115498519,
+        "endX": 37.214412635735,
+        "radius": 5.88,
+        "wires": 1,
+        "projectedHeight": 1.8000000000027052
+      },
+      {
+        "startX": 37.4152023692,
+        "endX": 39.025074037512,
+        "radius": 5.88,
+        "wires": 2,
+        "projectedHeight": 1.8000000000003629
+      }
+    ]
+  }
+}

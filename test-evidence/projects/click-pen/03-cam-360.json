@@ -1,0 +1,280 @@
+{
+  "time": "2026-11-25T17:43:03.577Z",
+  "stage": "03-cam-360",
+  "mode": "Assembly",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n3 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Guide tube",
+      "id": "3880cd56-cc50-4b9c-a4a3-cc1870d43d53",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Cam ring",
+      "id": "330e11c0-6135-44d6-af63-a130ffd91848",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Plunger",
+      "id": "d63ff563-3dee-407f-9e07-2632ce723cfa",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 13.696511447598294,
+  "centerOfMass": [
+    14.52678832543721,
+    3.6599677370156347e-16,
+    -1.7361946984369857e-16
+  ],
+  "volume": 1611.3542879527406,
+  "area": 2314.2856441934573,
+  "bodies": [
+    {
+      "name": "Guide tube",
+      "volume": 1281.7698026646353,
+      "center": [
+        15.999999999999996,
+        4.656498357175346e-16,
+        -2.0571779573936732e-16
+      ],
+      "area": 1789.1370162193875,
+      "bbox": [
+        [
+          0,
+          -5,
+          -5
+        ],
+        [
+          32,
+          5,
+          5
+        ]
+      ],
+      "faces": 4,
+      "edges": 6,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Cam ring",
+      "volume": 145.80131505310231,
+      "center": [
+        3.5,
+        1.0965066775138174e-16,
+        -9.173551154742681e-17
+      ],
+      "area": 265.9672340529119,
+      "bbox": [
+        [
+          0,
+          -3.2,
+          -3.2
+        ],
+        [
+          7,
+          3.2,
+          3.2
+        ]
+      ],
+      "faces": 4,
+      "edges": 6,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Plunger",
+      "volume": 183.7831702350029,
+      "center": [
+        12.999999999999998,
+        -1.256515429713982e-16,
+        -1.4715496153051123e-17
+      ],
+      "area": 259.1813939211579,
+      "bbox": [
+        [
+          0,
+          -1.5,
+          -1.5
+        ],
+        [
+          26,
+          1.5,
+          1.5
+        ]
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": {
+    "ids": [
+      "3880cd56-cc50-4b9c-a4a3-cc1870d43d53",
+      "330e11c0-6135-44d6-af63-a130ffd91848",
+      "d63ff563-3dee-407f-9e07-2632ce723cfa"
+    ],
+    "selected": "330e11c0-6135-44d6-af63-a130ffd91848",
+    "poses": {
+      "330e11c0-6135-44d6-af63-a130ffd91848": [
+        360
+      ]
+    },
+    "matrices": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -2.4492935982947064e-16,
+        0,
+        0,
+        2.4492935982947064e-16,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    ],
+    "config": {
+      "330e11c0-6135-44d6-af63-a130ffd91848": {
+        "kind": "revolute",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "360 deg",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1
+      },
+      "d63ff563-3dee-407f-9e07-2632ce723cfa": {
+        "kind": "slider",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 mm",
+        "max": "4 mm",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1,
+        "cam": {
+          "driver": "330e11c0-6135-44d6-af63-a130ffd91848",
+          "law": {
+            "lift": "1.2 mm",
+            "radius": "4.5 mm",
+            "lobes": "4",
+            "rise": "32 deg",
+            "high": "12 deg",
+            "returnAngle": "32 deg",
+            "preload": "0.6",
+            "rate": "0.7",
+            "load": "0.2",
+            "travel": "2.5 mm",
+            "compression": "4 mm",
+            "pressure": "45 deg"
+          },
+          "datum": "0 mm",
+          "phase": "0 deg",
+          "direction": 1,
+          "springEnabled": true
+        }
+      }
+    },
+    "min": 0,
+    "max": 360,
+    "current": 360,
+    "lead": 0,
+    "readings": [
+      {
+        "followerId": "d63ff563-3dee-407f-9e07-2632ce723cfa",
+        "driverId": "330e11c0-6135-44d6-af63-a130ffd91848",
+        "rotation": 360,
+        "position": 0,
+        "sample": {
+          "theta": 360,
+          "event": "Rise",
+          "lift": 0,
+          "slope": 0,
+          "spring": 0.6,
+          "closing": 0.8,
+          "compression": 0.8571428571428572,
+          "pressure": 0,
+          "normal": 0.8,
+          "torque": 0,
+          "state": "Contact"
+        },
+        "springEnabled": true,
+        "error": ""
+      }
+    ],
+    "problem": ""
+  },
+  "inspector": null,
+  "console": []
+}

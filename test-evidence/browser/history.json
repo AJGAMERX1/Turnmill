@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "name": "85 version-one snapshots opened with one payload read and one key cursor",
+      "detail": [
+        [
+          "openKeyCursor",
+          null
+        ],
+        [
+          "get",
+          57
+        ]
+      ]
+    },
+    {
+      "name": "Undo and Redo through cache eviction and across reload; rapid shortcuts restore exact revision",
+      "detail": 28
+    },
+    {
+      "name": "Branch replaced discarded redo snapshots and survived reload",
+      "detail": 30
+    },
+    {
+      "name": "Real abort on local transaction left an editable downloadable draft; Retry autosave persisted it"
+    },
+    {
+      "name": "Concurrent stale tab offered native recovery and preserved the first tab on disk"
+    },
+    {
+      "name": "Disabled browser storage retained in-session undo/redo and a native download reopened into a writable journal"
+    },
+    {
+      "name": "Zero page exceptions"
+    }
+  ],
+  "errors": []
+}

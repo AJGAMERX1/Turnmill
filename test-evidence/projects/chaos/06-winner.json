@@ -1,0 +1,63 @@
+{
+  "time": "2026-11-25T17:44:13.941Z",
+  "stage": "06-winner",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Twist pen barrel",
+  "parameters": {
+    "barrel_length": 99,
+    "outer_diameter": 12,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75
+  },
+  "features": [
+    {
+      "name": "Barrel revolve",
+      "id": "barrel-revolve",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 59.54599586555939,
+  "centerOfMass": [
+    47.36439782575384,
+    8.438784429167298e-16,
+    1.2106751613299195e-16
+  ],
+  "volume": 7005.411278301104,
+  "area": 5985.743366139673,
+  "bodies": [
+    {
+      "name": "Barrel revolve",
+      "volume": 7005.411278301104,
+      "center": [
+        47.36439782575384,
+        8.438784429167298e-16,
+        1.2106751613299195e-16
+      ],
+      "area": 5985.743366139673,
+      "bbox": [
+        [
+          0,
+          -6,
+          -6
+        ],
+        [
+          99,
+          6,
+          6
+        ]
+      ],
+      "faces": 22,
+      "edges": 41,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n59.55 g\nBalance along X\n47.36 mm\nCenter of mass",
+  "console": []
+}

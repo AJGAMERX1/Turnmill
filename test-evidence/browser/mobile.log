@@ -1,0 +1,73 @@
+Initial {
+  body: {
+    left: 0,
+    right: 390,
+    top: 0,
+    bottom: 825,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'visible'
+  },
+  '.app-header': {
+    left: 0,
+    right: 390,
+    top: 0,
+    bottom: 47,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'visible'
+  },
+  '.workspace-bar': {
+    left: 0,
+    right: 390,
+    top: 47,
+    bottom: 87,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'auto'
+  },
+  '.work-area': {
+    left: 0,
+    right: 390,
+    top: 87,
+    bottom: 797,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'auto'
+  },
+  '.model-tools': {
+    left: 0,
+    right: 390,
+    top: 87,
+    bottom: 125,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'auto'
+  },
+  '.model-space': {
+    left: 0,
+    right: 390,
+    top: 87,
+    bottom: 565.5,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'visible'
+  },
+  '.tree-pane': null,
+  '.inspector': {
+    left: 0,
+    right: 390,
+    top: 565.5,
+    bottom: 1339.96875,
+    scrollW: 390,
+    clientW: 390,
+    overflow: 'hidden'
+  },
+  '.pen-guide-panel': null,
+  '.command-palette': null,
+  '.palette-results': null
+}
+width 390 {"body":{"left":0,"right":390,"top":0,"bottom":825,"scrollW":390,"clientW":390,"overflow":"visible"},".app-header":{"left":0,"right":390,"top":0,"bottom":47,"scrollW":390,"clientW":390,"overflow":"visible"},".workspace-bar":{"left":0,"right":390,"top":47,"bottom":87,"scrollW":390,"clientW":390,"overflow":"auto"},".work-area":{"left":0,"right":390,"top":87,"bottom":683.53125,"scrollW":390,"clientW":390,"overflow":"auto"},".model-tools":{"left":0,"right":390,"top":-291,"bottom":-253,"scrollW":390,"clientW":390,"overflow":"auto"},".model-space":{"left":0,"right":390,"top":-291,"bottom":187.5,"scrollW":390,"clientW":390,"overflow":"visible"},".tree-pane":null,".inspector":{"left":0,"right":390,"top":187.5,"bottom":961.96875,"scrollW":390,"clientW":390,"overflow":"hidden"},".pen-guide-panel":{"left":0,"right":390,"top":711.53125,"bottom":825,"scrollW":390,"clientW":390,"overflow":"visible"},".command-palette":null,".palette-results":null} [["Show model browser",7,35],["Sketch",35,108.9375],["Revolve",115.9375,195.015625],["Extrude",195.015625,274.03125],["Finish",274.03125,341.3125],["Advanced tools",341.3125,371.3125]]
+width 320 {"body":{"left":0,"right":320,"top":0,"bottom":825,"scrollW":320,"clientW":320,"overflow":"visible"},".app-header":{"left":0,"right":320,"top":0,"bottom":47,"scrollW":320,"clientW":320,"overflow":"visible"},".workspace-bar":{"left":0,"right":320,"top":47,"bottom":87,"scrollW":361,"clientW":320,"overflow":"auto"},".work-area":{"left":0,"right":320,"top":87,"bottom":683.53125,"scrollW":320,"clientW":320,"overflow":"auto"},".model-tools":{"left":0,"right":320,"top":87,"bottom":125,"scrollW":378,"clientW":320,"overflow":"auto"},".model-space":{"left":0,"right":320,"top":87,"bottom":565.5,"scrollW":320,"clientW":320,"overflow":"visible"},".tree-pane":null,".inspector":{"left":0,"right":320,"top":565.5,"bottom":1339.96875,"scrollW":320,"clientW":320,"overflow":"hidden"},".pen-guide-panel":{"left":0,"right":320,"top":711.53125,"bottom":825,"scrollW":320,"clientW":320,"overflow":"visible"},".command-palette":null,".palette-results":null} [["Show model browser",7,35],["Sketch",35,108.9375],["Revolve",115.9375,195.015625],["Extrude",195.015625,274.03125],["Finish",274.03125,341.3125],["Advanced tools",341.3125,371.3125]]
+width 650 {"body":{"left":0,"right":650,"top":0,"bottom":825,"scrollW":650,"clientW":650,"overflow":"visible"},".app-header":{"left":0,"right":650,"top":0,"bottom":61,"scrollW":650,"clientW":650,"overflow":"visible"},".workspace-bar":{"left":0,"right":650,"top":61,"bottom":108,"scrollW":650,"clientW":650,"overflow":"auto"},".work-area":{"left":0,"right":650,"top":108,"bottom":742.3125,"scrollW":650,"clientW":650,"overflow":"visible"},".model-tools":{"left":0,"right":460,"top":108,"bottom":156,"scrollW":460,"clientW":460,"overflow":"auto"},".model-space":{"left":0,"right":460,"top":108,"bottom":742.3125,"scrollW":460,"clientW":460,"overflow":"visible"},".tree-pane":null,".inspector":{"left":460,"right":650,"top":108,"bottom":742.3125,"scrollW":189,"clientW":189,"overflow":"hidden"},".pen-guide-panel":{"left":0,"right":650,"top":770.3125,"bottom":825,"scrollW":650,"clientW":650,"overflow":"visible"},".command-palette":null,".palette-results":null} [["Show model browser",7,35],["Sketch",35,108.9375],["Revolve",115.9375,195.015625],["Extrude",195.015625,274.03125],["Finish",274.03125,341.3125],["Advanced tools",341.3125,371.3125]]
+PASS model browser toggle, sketch/feature selection, inspector restore, editing guided dimension, barrel creation, searchable command execution and contained tools at phone and tablet widths

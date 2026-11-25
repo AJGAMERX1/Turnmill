@@ -1,0 +1,42 @@
+[ui-click-pen-click-study.3mf]
+size_x = 32.000000
+size_y = 10.000000
+size_z = 9.998023
+min_x = -16.000000
+min_y = -5.000000
+min_z = -4.999012
+max_x = 16.000000
+max_y = 5.000000
+max_z = 4.999012
+number_of_facets = 1264
+manifold = yes
+number_of_parts =  1
+volume = 1281.431763
+[ui-click-pen-click-study.3mf]
+size_x = 7.000000
+size_y = 6.400000
+size_z = 6.398735
+min_x = -3.500000
+min_y = -3.200000
+min_z = -3.199368
+max_x = 3.500000
+max_y = 3.200000
+max_z = 3.199368
+number_of_facets = 1264
+manifold = yes
+number_of_parts =  1
+volume = 145.762955
+[ui-click-pen-click-study.3mf]
+size_x = 26.000000
+size_y = 3.000000
+size_z = 2.999407
+min_x = -13.000000
+min_y = -1.500000
+min_z = -1.499704
+max_x = 13.000000
+max_y = 1.500000
+max_z = 1.499704
+number_of_facets = 628
+manifold = yes
+number_of_parts =  1
+volume = 183.734604

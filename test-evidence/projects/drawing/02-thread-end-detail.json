@@ -1,0 +1,219 @@
+{
+  "time": "2026-11-25T17:45:03.023Z",
+  "stage": "02-thread-end-detail",
+  "mode": "Drawing",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n4 bodies\nSaved locally\nmm",
+  "projectName": "Twist pen assembly",
+  "parameters": {
+    "barrel_length": 92,
+    "outer_diameter": 12,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75,
+    "thread_major": 9.7,
+    "cap_length": 24,
+    "cap_start": 84.375,
+    "refill_diameter": 6
+  },
+  "features": [
+    {
+      "name": "Barrel",
+      "id": "barrel-revolve",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "83cfdabd-2ca6-474c-8451-9bbbd1bba693",
+          "name": "Barrel thread",
+          "kind": "thread",
+          "end": "end",
+          "side": "external",
+          "mode": "modeled",
+          "diameter": "thread_major",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        },
+        {
+          "id": "c6e4b1fe-46e6-422c-a8e1-c7f4e3b53e40",
+          "name": "Knurl",
+          "end": "start",
+          "kind": "knurl",
+          "style": "straight",
+          "diameter": "outer_diameter",
+          "length": "8 mm",
+          "depth": "0.12 mm",
+          "offset": "16 mm",
+          "count": "8",
+          "angle": "30 deg"
+        },
+        {
+          "id": "f06fb06e-acca-40a4-92c7-709004507007",
+          "name": "Surface mark",
+          "end": "start",
+          "kind": "mark",
+          "content": "text",
+          "text": "ANA",
+          "method": "engrave",
+          "height": "1.8 mm",
+          "depth": "0.12 mm",
+          "offset": "34 mm",
+          "rotation": "0 deg"
+        }
+      ]
+    },
+    {
+      "name": "Threaded cap",
+      "id": "pen-cap",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "f1d1197c-c420-4f7f-bb14-396a953b97f6",
+          "name": "Cap thread",
+          "kind": "thread",
+          "end": "start",
+          "side": "internal",
+          "mode": "modeled",
+          "diameter": "thread_major + 0.20 mm",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Refill",
+      "id": "pen-refill",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Pocket clip",
+      "id": "pen-clip",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 61.690528486234065,
+  "centerOfMass": [
+    46.81115490567097,
+    0.050504901846259775,
+    0.004711169173954514
+  ],
+  "volume": 10087.019718422805,
+  "area": 9577.418084526662,
+  "bodies": [
+    {
+      "name": "Barrel",
+      "volume": 6430.324147784153,
+      "center": [
+        43.526853416004606,
+        0.0003067028100281377,
+        -0.0005199230924593564
+      ],
+      "area": 5711.389398940191,
+      "bbox": [
+        [
+          0,
+          -6,
+          -6
+        ],
+        [
+          92.0000001,
+          6,
+          6
+        ]
+      ],
+      "faces": 103,
+      "edges": 260,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Threaded cap",
+      "volume": 1187.9484305955523,
+      "center": [
+        97.00763049231271,
+        0.0022777048434750972,
+        0.0013151471151750433
+      ],
+      "area": 2010.695835410889,
+      "bbox": [
+        [
+          84.37499989605277,
+          -6.2,
+          -6.2
+        ],
+        [
+          108.375,
+          6.2,
+          6.2
+        ]
+      ],
+      "faces": 23,
+      "edges": 55,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Refill",
+      "volume": 2415.2721400431005,
+      "center": [
+        47.278966220302934,
+        -3.294899364992928e-16,
+        -7.853705317606294e-17
+      ],
+      "area": 1669.3962916561586,
+      "bbox": [
+        [
+          -1.5,
+          -3,
+          -3
+        ],
+        [
+          90,
+          3,
+          3
+        ]
+      ],
+      "faces": 5,
+      "edges": 9,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Pocket clip",
+      "volume": 53.475000000000016,
+      "center": [
+        87.10898784478725,
+        7.364843384759233,
+        0.7500000000000001
+      ],
+      "area": 185.93655851942225,
+      "bbox": [
+        [
+          68.375,
+          6.1,
+          0
+        ],
+        [
+          105.375,
+          8.1,
+          1.5
+        ]
+      ],
+      "faces": 10,
+      "edges": 24,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": null,
+  "console": []
+}

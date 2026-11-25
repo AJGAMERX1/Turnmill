@@ -1,0 +1,38 @@
+{
+  "two-blocks": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 711,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "unsaved-quarter-turn": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 711,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "upper-part": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 359,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "local-parts": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 711,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  }
+}

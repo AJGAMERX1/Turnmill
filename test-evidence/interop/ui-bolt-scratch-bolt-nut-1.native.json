@@ -1,0 +1,36 @@
+{
+  "model": "ui-bolt-scratch-bolt-nut",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Hand-built shank",
+      "volume": 336.8440290758374,
+      "area": 363.33996209994643,
+      "bbox": [
+        [
+          -4.61880215,
+          -4,
+          -8.000000102502746
+        ],
+        [
+          4.61880215,
+          4,
+          3.5
+        ]
+      ],
+      "center": [
+        -2.1628230387539197e-7,
+        -0.000003200617604096072,
+        -0.6040904310803944
+      ],
+      "faces": 19,
+      "edges": 48,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:43:28.444Z",
+  "stage": "02-library-nut",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n2 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {
+    "screw_d7714_diameter": 5,
+    "screw_d7714_pitch": 0.8,
+    "screw_d7714_across_flats": 8,
+    "screw_d7714_height": 3.5,
+    "screw_d7714_length": 12,
+    "nut_c98a0_diameter": 5,
+    "nut_c98a0_pitch": 0.8,
+    "nut_c98a0_across_flats": 8,
+    "nut_c98a0_height": 4
+  },
+  "features": [
+    {
+      "name": "M5 hex screw · 12 mm",
+      "id": "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "kind": "thread",
+          "id": "0146c85e-a51e-4950-af4f-00ac4cfa2d82",
+          "name": "M5 × 0.8",
+          "side": "external",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "screw_d7714_diameter",
+          "pitch": "screw_d7714_pitch",
+          "length": "screw_d7714_length",
+          "end": "start"
+        }
+      ]
+    },
+    {
+      "name": "Hex head",
+      "id": "0ae293e4-7de4-49aa-b2b6-2f29efbd72ec",
+      "suppressed": false,
+      "operation": "add",
+      "finishes": []
+    },
+    {
+      "name": "M5 hex nut",
+      "id": "7c1aeacc-5d96-4cdc-be98-80b1e328f7b8",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "kind": "hole",
+          "id": "4868bf5f-bf16-4e30-88f7-16b4b0968244",
+          "name": "Pilot bore",
+          "end": "start",
+          "diameter": "nut_c98a0_diameter - nut_c98a0_pitch * 1.08253175473",
+          "length": "nut_c98a0_height"
+        },
+        {
+          "kind": "thread",
+          "id": "f3ae2e77-ded4-4b65-9608-3796851cfa6a",
+          "name": "M5 × 0.8",
+          "side": "internal",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "nut_c98a0_diameter",
+          "pitch": "nut_c98a0_pitch",
+          "length": "nut_c98a0_height",
+          "end": "start"
+        }
+      ]
+    }
+  ],
+  "mass": 4.27294683108882,
+  "centerOfMass": [
+    3.66571458215513e-7,
+    0.0000013823395948794194,
+    -0.9248789963804182
+  ],
+  "volume": 544.3244370813784,
+  "area": 768.0430066356594,
+  "bodies": [
+    {
+      "name": "M5 hex screw · 12 mm",
+      "volume": 386.9376904932548,
+      "center": [
+        5.13965221431192e-7,
+        0.0000019594483129812213,
+        -2.114572280244403
+      ],
+      "area": 485.8353791222121,
+      "bbox": [
+        [
+          -4.618802253517008,
+          -4.0000001,
+          -12.000000102777424
+        ],
+        [
+          4.618802253517008,
+          4.0000001,
+          3.5
+        ]
+      ],
+      "faces": 27,
+      "edges": 72,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "M5 hex nut",
+      "volume": 157.38674658812351,
+      "center": [
+        4.201668076600864e-9,
+        -3.6490893625543726e-8,
+        1.9999998872167843
+      ],
+      "area": 282.2076275134472,
+      "bbox": [
+        [
+          -4.618802253517008,
+          -4.0000001,
+          -1.0243277291532799e-7
+        ],
+        [
+          4.618802253517008,
+          4.0000001,
+          4.000000102432924
+        ]
+      ],
+      "faces": 18,
+      "edges": 48,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMeasure\nAll bodies\nSelected body\nMass\n4.27 g\nBalance along X\n0 mm\nCenter of mass",
+  "console": []
+}

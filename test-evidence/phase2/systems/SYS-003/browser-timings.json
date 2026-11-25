@@ -1,0 +1,10 @@
+{
+  "durations": [
+    1290.300000011921,
+    172.69999998807907,
+    164.30000001192093
+  ],
+  "unit": "ms",
+  "start": "Immediately before Playwright clicks Apply",
+  "end": "First Ready transition after rebuilding"
+}

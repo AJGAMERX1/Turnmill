@@ -1,0 +1,349 @@
+{
+  "id": "95b9b5f7-4267-4a50-8744-35b0a2d6561b",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "010d13c5-3e74-432b-8370-74ec3a135817",
+      "name": "Sketch 1",
+      "points": [
+        {
+          "x": "0",
+          "y": "1.7"
+        },
+        {
+          "x": "8",
+          "y": "1.7"
+        },
+        {
+          "x": "8",
+          "y": "2.5"
+        },
+        {
+          "x": "0",
+          "y": "2.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "e379c8b8-eb8b-4547-97cd-f4ae2f0e426b",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "94c79e1b-9dd8-476a-af1b-f67d521c848a",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "c2da6f88-ab74-4ea4-b65b-75c41698e137",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "1e47b055-90a3-46c7-bf87-8bb74f8410c4",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "29a56e91-a101-4077-aeb5-98080b60cc5a",
+      "name": "Sketch 2",
+      "points": [
+        {
+          "x": "0",
+          "y": "-2"
+        },
+        {
+          "x": "8",
+          "y": "-2"
+        },
+        {
+          "x": "8",
+          "y": "-12"
+        },
+        {
+          "x": "0",
+          "y": "-12"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "70cfe8ea-a7c6-49bb-994b-f78703737718",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "d86a1e2e-574c-47de-8cf8-9e7614493874",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "8c246d46-f586-4486-8c1e-8b3be0dcb7f0",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "df73ad80-0ae4-4f3f-81aa-761fea743c26",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "057b1f1b-7e32-4e1e-9b6e-8cd4d6a14708",
+      "name": "Sketch 3",
+      "points": [
+        {
+          "x": "9",
+          "y": "1.7"
+        },
+        {
+          "x": "17",
+          "y": "1.7"
+        },
+        {
+          "x": "17",
+          "y": "2.5"
+        },
+        {
+          "x": "9",
+          "y": "2.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "a46d3f84-2cd5-4833-abdc-c256a019d5f5",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "8b975ccd-eedd-4530-97a1-f53ed3c2e6bb",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "dcc72ccd-21fa-4469-993f-a2552855a87c",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "bf7d0314-746a-4ca5-a529-20c92931f0dc",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "72202cdd-11a7-4ef4-af7c-9268a860914e",
+      "name": "Sketch 4",
+      "points": [
+        {
+          "x": "9",
+          "y": "2"
+        },
+        {
+          "x": "17",
+          "y": "2"
+        },
+        {
+          "x": "17",
+          "y": "12"
+        },
+        {
+          "x": "9",
+          "y": "12"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "f3713487-d719-43fa-b574-2bf9082fefd0",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "5695438d-505e-452a-a91f-c7dcc3a49e76",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "5f54c19f-fd10-4bbb-8365-8b1596ad24dc",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "41ea09ad-6aa3-44df-a98f-8b8cb6275d82",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d1d0ad03-1e61-422f-ab14-eb12c286d511",
+      "name": "Sketch 5",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "17",
+          "y": "0"
+        },
+        {
+          "x": "17",
+          "y": "1.5"
+        },
+        {
+          "x": "0",
+          "y": "1.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "91cd3215-0c04-4e9d-b69b-0f518d2711ce",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "e66c2674-99ad-4982-94b1-90299fe086c5",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "0b8503a7-d109-4cc0-b962-6aee2161de6a",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "54b8de74-ad5e-4e75-a754-450feab3a7bf",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "8b2d34f6-7b23-4ed6-9729-d44c7e5df136",
+      "name": "Fixed leaf",
+      "kind": "revolve",
+      "sketchId": "010d13c5-3e74-432b-8370-74ec3a135817",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    },
+    {
+      "id": "c8d07155-fbf3-4af8-aa6c-b35dfd8ff418",
+      "name": "Fixed leaf web",
+      "kind": "extrude",
+      "sketchId": "29a56e91-a101-4077-aeb5-98080b60cc5a",
+      "amount": "1 mm",
+      "operation": "add",
+      "suppressed": false,
+      "bodyId": "8b2d34f6-7b23-4ed6-9729-d44c7e5df136"
+    },
+    {
+      "id": "b71e74ed-7331-4ad2-9d79-051018795677",
+      "name": "Moving leaf",
+      "kind": "revolve",
+      "sketchId": "057b1f1b-7e32-4e1e-9b6e-8cd4d6a14708",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    },
+    {
+      "id": "b5313494-8db7-4e36-9b2b-a2b28053b8cc",
+      "name": "Moving leaf web",
+      "kind": "extrude",
+      "sketchId": "72202cdd-11a7-4ef4-af7c-9268a860914e",
+      "amount": "1 mm",
+      "operation": "add",
+      "suppressed": false,
+      "bodyId": "b71e74ed-7331-4ad2-9d79-051018795677"
+    },
+    {
+      "id": "86bb72b6-4974-498f-b163-d1b9fb7d44dd",
+      "name": "Hinge pin",
+      "kind": "revolve",
+      "sketchId": "d1d0ad03-1e61-422f-ab14-eb12c286d511",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "assemblyItems": {
+      "8b2d34f6-7b23-4ed6-9729-d44c7e5df136": 1,
+      "b71e74ed-7331-4ad2-9d79-051018795677": 2,
+      "86bb72b6-4974-498f-b163-d1b9fb7d44dd": 3
+    },
+    "joints": {
+      "b71e74ed-7331-4ad2-9d79-051018795677": {
+        "kind": "revolute",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "180 deg",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1
+      }
+    },
+    "assemblyClearance": {
+      "requiredGap": "0.1 mm"
+    }
+  }
+}

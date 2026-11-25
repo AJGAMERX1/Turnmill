@@ -2,7 +2,11 @@
 
 Turnmill is a local parametric CAD workbench for turned and machined parts. Its editable writing-pen example includes a hollow barrel, a threaded cap, a pocket clip, and a refill. The model uses OpenCascade boundary-representation solids. The app uses Three.js to display them and PlaneGCS to solve 2D sketch constraints.
 
+The QA branch includes the Phase 1 findings, independent FreeCAD measurements and replay commands. [QA report and evidence](QA.md)
+
 ## Run the app
+
+[Open Turnmill CAD on GitHub Pages](https://ajgamerx1.github.io/Turnmill/). Projects and undo history are saved in this browser. Use **Save project file** to keep a portable copy or move a project to another device.
 
 On this Mac, double-click **Launch Turnmill.command**. Keep its Terminal window open while you use Turnmill. The launcher serves the included production build on your own computer and opens the browser. Node.js 22.12 or newer is required. The included build runs without downloading dependencies.
 
@@ -15,6 +19,8 @@ npm start
 Open [Turnmill on this computer](http://127.0.0.1:4179/). Using the same browser and address preserves access to local autosaves and undo history. The production app caches its geometry engines and assets for offline use. Choose the project name in the header and **Save project file** for a portable copy containing the sketches, formulas, feature history, assembly settings, and embedded imports. **Open project** restores a saved file. Local browser storage is subject to the browser's available space and retention policy.
 
 ## Try the pen
+
+[Example M10 pen project and drawings](test-evidence/phase2/m10-acceptance/README.md)
 
 - Choose **Pen walkthrough → Start a new guided pen**, or **New project → Guided twist pen**. The guide starts with an editable barrel profile. Set the barrel length, revolve it, choose a thread pitch, and add the cap, refill and clip. The last three steps use the assembly and drawing tools to turn the cap, check the clearance through its travel and export the dimensioned barrel. Pause at any step and choose **Pen walkthrough** to resume. Opening the guide from an existing design creates a separate project in the undo history.
 - For the completed example, choose the project name, **New project**, then **Twist pen assembly**. The same design is included in [the native sample](examples/twist-pen.turnmill).

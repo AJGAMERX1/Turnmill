@@ -1,0 +1,47 @@
+name: Publish Turnmill to GitHub Pages
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: turnmill-pages
+  cancel-in-progress: false
+jobs:
+  verify:
+    uses: ./.github/workflows/qa.yml
+  package:
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/configure-pages@v5
+      - run: npm ci
+      - name: Build the offline-capable public release
+        env:
+          VITE_CAD_QA: '0'
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+  deploy:
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the tested release
+        id: deployment
+        uses: actions/deploy-pages@v4

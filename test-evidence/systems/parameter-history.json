@@ -1,0 +1,73 @@
+[
+  {
+    "name": "driving length edited and restored exactly",
+    "outcome": "Pass",
+    "measured": [
+      503.99999999999994,
+      376,
+      503.99999999999994
+    ]
+  },
+  {
+    "name": "suppression/deletion and restore",
+    "outcome": "Pass",
+    "measured": 511.9999999999999
+  },
+  {
+    "name": "wrong upstream order or suppressed stock gives error",
+    "outcome": "Pass",
+    "measured": "rejected both"
+  },
+  {
+    "name": "names and nongeometric metadata survive portable round-trip",
+    "outcome": "Pass",
+    "measured": 319
+  },
+  {
+    "name": "reject cyclical expression and mixed angles/lengths",
+    "outcome": "Pass",
+    "measured": "rejected both"
+  },
+  {
+    "name": "independent published ISO pitch and common fit cases",
+    "outcome": "Pass",
+    "measured": {
+      "sources": [
+        "https://www.guhring.com.tw/upload/Cb%2B_coating_taps.pdf",
+        "https://www.guhring.com.mx/pdf/download?path=%2Fsite%2Fgenerals%2Fcat_technical.pdf",
+        "https://www.schaeffler.it/remotemedien/media/_shared_media/08_media_library/01_publications/schaeffler_2/catalogue_1/downloads_6/hg_1_de_en.pdf"
+      ],
+      "parts": [
+        {
+          "diameter": 5,
+          "pitch": 0.8,
+          "travelPerTurn": 0.8
+        },
+        {
+          "diameter": 10,
+          "pitch": 0.75,
+          "travelPerTurn": 0.75
+        }
+      ],
+      "fit": {
+        "holeMin": 10,
+        "holeMax": 10.015,
+        "shaftMin": 9.986,
+        "shaftMax": 9.995,
+        "min": 0.005,
+        "max": 0.029,
+        "kind": "Clearance fit"
+      }
+    }
+  },
+  {
+    "name": "oversized text rejected",
+    "outcome": "Pass",
+    "measured": "rejected"
+  },
+  {
+    "name": "through-cut A leaves an unsupported island",
+    "outcome": "Pass",
+    "measured": "Rejected separate island in letter A"
+  }
+]

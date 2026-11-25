@@ -1,0 +1,79 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:43:41.257Z",
+  "stage": "02-handmade-head",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Hand-built shank",
+      "id": "61f6151f-a551-420d-bc6d-3b36288df4ae",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "072100a9-ad98-405e-aab6-a9eedfb9d628",
+          "name": "Thread",
+          "end": "start",
+          "kind": "thread",
+          "side": "external",
+          "hand": "right",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "pitch": "0.8 mm",
+          "length": "8 mm",
+          "diameter": "5 mm"
+        }
+      ]
+    },
+    {
+      "name": "Hex head",
+      "id": "3fb3128c-fff7-45cf-a82a-e6e1c7704977",
+      "suppressed": false,
+      "operation": "add"
+    }
+  ],
+  "mass": 2.7426305063442014,
+  "centerOfMass": [
+    -0.0001676033633140206,
+    0.000038143429167948206,
+    -0.5429086790817262
+  ],
+  "volume": 322.6624125110825,
+  "area": 393.21632845381566,
+  "bodies": [
+    {
+      "name": "Hand-built shank",
+      "volume": 322.6624125110825,
+      "center": [
+        -0.0001676033633140206,
+        0.000038143429167948206,
+        -0.5429086790817262
+      ],
+      "area": 393.21632845381566,
+      "bbox": [
+        [
+          -4.61880225,
+          -4.0000001,
+          -8.000000102496957
+        ],
+        [
+          4.61880225,
+          4.0000001,
+          3.5
+        ]
+      ],
+      "faces": 22,
+      "edges": 57,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n2.74 g\nBalance along X\n-0 mm\nCenter of mass",
+  "console": []
+}

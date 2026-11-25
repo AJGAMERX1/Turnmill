@@ -1,0 +1,14 @@
+[SYS-002.stl]
+size_x = 10.000000
+size_y = 4.000000
+size_z = 2.000000
+min_x = 0.000000
+min_y = 0.000000
+min_z = 0.000000
+max_x = 10.000000
+max_y = 4.000000
+max_z = 2.000000
+number_of_facets = 28
+manifold = yes
+number_of_parts =  1
+volume = 78.400009

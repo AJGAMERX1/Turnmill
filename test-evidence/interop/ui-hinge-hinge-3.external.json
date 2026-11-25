@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 127,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 120.134529,
+    "bbox": [
+      [
+        0.0,
+        -1.5,
+        -1.499704
+      ],
+      [
+        17.0,
+        1.5,
+        1.499704
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 137
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -1.5,
+            -1.4997035264968872
+          ],
+          [
+            17.0,
+            1.5,
+            1.4997035264968872
+          ]
+        ],
+        "volume": 120.1342506258232,
+        "closed": true,
+        "triangles": 628
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Hinge pin"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 120.134521,
+        "manifold": true
+      }
+    ]
+  }
+}

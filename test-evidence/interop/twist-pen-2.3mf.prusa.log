@@ -1,0 +1,14 @@
+[twist-pen-2.3mf]
+size_x = 24.000000
+size_y = 12.400000
+size_z = 12.397549
+min_x = -12.000000
+min_y = -6.200000
+min_z = -6.198774
+max_x = 12.000000
+max_y = 6.200000
+max_z = 6.198774
+number_of_facets = 19544
+manifold = yes
+number_of_parts =  1
+volume = 1187.529663

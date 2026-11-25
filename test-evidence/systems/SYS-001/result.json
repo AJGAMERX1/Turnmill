@@ -1,0 +1,6 @@
+{
+  "id": "SYS-001",
+  "title": "Browser named-angle clearance",
+  "outcome": "XFAIL",
+  "message": "Expected 6 mm, displayed Expected a angle value."
+}

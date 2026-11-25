@@ -1,0 +1,11 @@
+XFAIL INTEROP-005 Actual workflow boundary spacing 0.9625000000000057
+XFAIL INTEROP-002 Refill STL must be closed and manifold with no collapsed facets. {'facets': 6477, 'degenerate': 1, 'nonTwoEdgeIncidences': 2} FreeCAD {'volume': 2414.607666015625, 'area': 1669.26318359375, 'bbox': [[-1.5, -3.0, -2.9994070529937744], [90.0, 3.0, 2.9994070529937744]], 'closed': False, 'nonManifold': True, 'selfIntersections': False, 'points': 3240, 'triangles': 6477, 'components': 2}
+XFAIL INTEROP-003 FreeCAD Mesh reports self-intersection in graduated ruler: True
+XFAIL INTEROP-006 The independent FreeCAD Mesh check should find no self-intersections on the analytic M5 rod STL. Actual True
+XFAIL ASM-001 ui-bolt-library-bolt-nut assembled STEP overlap 137.71340042862997 mm³, STL closed False, self-intersections True
+XFAIL ASM-001 ui-bolt-scratch-bolt-nut assembled STEP overlap 137.71340042089844 mm³, STL closed False, self-intersections True
+XFAIL INTEROP-005 Final full-size graduation at 155 mm must be centered within ±0.01 mm. Actual DXF/SVG contour center 154.9625
+XFAIL INTEROP-007 Stock spring is a valid closed exact solid; standalone STL and 3MF have identical triangles and should be free of self-intersections. FreeCAD reports 131 intersecting facet pairs.
+XFAIL ASM-001 Four-body click STEP exports stock spring along Z at origin through three components; applying its saved X=10 mm and 90-degree Y-axis seating removes all three overlaps. [1.1582229516266933, 1.2587247340759777, 0.30467735484649877]
+XFAIL INTEROP-004 STEP import should retain source component labels Spacer and Stop block. Imported: ['fc-two-parts · 1', 'fc-two-parts · 2']
+42 outward solid cases and 46 reverse STEP profiles verified.

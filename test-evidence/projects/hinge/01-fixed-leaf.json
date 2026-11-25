@@ -1,0 +1,84 @@
+{
+  "time": "2026-11-25T17:42:29.285Z",
+  "stage": "01-fixed-leaf",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Fixed leaf",
+      "id": "8b2d34f6-7b23-4ed6-9729-d44c7e5df136",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Fixed leaf web",
+      "id": "c8d07155-fbf3-4af8-aa6c-b35dfd8ff418",
+      "suppressed": false,
+      "operation": "add"
+    }
+  ],
+  "mass": 1.3684399728886034,
+  "centerOfMass": [
+    4.000000000000022,
+    -3.4307923082830585,
+    0.2385903610327999
+  ],
+  "volume": 160.99293798689453,
+  "area": 404.80262111678456,
+  "bodies": [
+    {
+      "name": "Fixed leaf",
+      "volume": 160.99293798689453,
+      "center": [
+        4.000000000000022,
+        -3.4307923082830585,
+        0.2385903610327999
+      ],
+      "area": 404.80262111678456,
+      "bbox": [
+        [
+          0,
+          -12,
+          -2.5
+        ],
+        [
+          8,
+          2.500000000000001,
+          2.5000000000000004
+        ]
+      ],
+      "faces": 7,
+      "edges": 15,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n1.37 g\nBalance along X\n4 mm\nCenter of mass",
+  "console": [
+    {
+      "time": "2026-11-25T17:42:19.101Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c00840e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:42:19.102Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c00840e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:42:19.102Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c00840e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:42:19.102Z",
+      "type": "warning",
+      "value": "[.WebGL-0x12c00840e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

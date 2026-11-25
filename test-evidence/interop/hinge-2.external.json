@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 445,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 205.01741,
+    "bbox": [
+      [
+        8.1,
+        -9.5,
+        -3.199373
+      ],
+      [
+        16.0,
+        3.2,
+        3.199383
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 580
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            8.100000381469727,
+            -9.5,
+            -3.1993725299835205
+          ],
+          [
+            16.0,
+            3.200000047683716,
+            3.199383020401001
+          ]
+        ],
+        "volume": 205.018213426969,
+        "closed": true,
+        "triangles": 1244
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Hinge leaf B"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 205.018219,
+        "manifold": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "model": "hinge",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Hinge pin",
+      "volume": 203.08040310967817,
+      "area": 232.1794050635536,
+      "bbox": [
+        [
+          -0.5,
+          -1.95,
+          -1.95
+        ],
+        [
+          16.5,
+          1.95,
+          1.95
+        ]
+      ],
+      "center": [
+        8,
+        8.74706181492504e-17,
+        1.3183012840988606e-17
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

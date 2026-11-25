@@ -1,0 +1,36 @@
+{
+  "model": "ui-hinge-hinge",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Hinge pin",
+      "volume": 120.16591899980958,
+      "area": 174.35839227423352,
+      "bbox": [
+        [
+          0,
+          -1.5,
+          -1.5
+        ],
+        [
+          17,
+          1.5,
+          1.5
+        ]
+      ],
+      "center": [
+        8.500000000000002,
+        -3.399982927461363e-16,
+        -3.145745283723956e-17
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

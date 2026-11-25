@@ -1,0 +1,40 @@
+{
+  "time": "2026-11-25T17:38:06.441Z",
+  "stage": "01-two-scales",
+  "mode": "Scales",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n0 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [],
+  "mass": 0,
+  "centerOfMass": null,
+  "volume": 0,
+  "area": 0,
+  "bodies": [],
+  "joints": null,
+  "inspector": null,
+  "console": [
+    {
+      "time": "2026-11-25T17:37:59.925Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c00838400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:37:59.929Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c00838400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:37:59.929Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c00838400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:37:59.929Z",
+      "type": "warning",
+      "value": "[.WebGL-0x13c00838400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

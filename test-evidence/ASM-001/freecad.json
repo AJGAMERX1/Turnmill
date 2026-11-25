@@ -1,0 +1,6 @@
+{
+  "zSpanMm": 5.0,
+  "overlapMm3": 999.9999999999998,
+  "solids": 2,
+  "result": "XFAIL ASM-001"
+}

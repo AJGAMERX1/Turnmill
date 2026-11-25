@@ -1,0 +1,36 @@
+{
+  "model": "ui-pen-twist-pen",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Refill",
+      "volume": 2415.2721400431005,
+      "area": 1669.3962916561586,
+      "bbox": [
+        [
+          -1.5,
+          -3,
+          -3
+        ],
+        [
+          90,
+          3,
+          3
+        ]
+      ],
+      "center": [
+        47.278966220302934,
+        -3.294899364992928e-16,
+        -7.853705317606294e-17
+      ],
+      "faces": 5,
+      "edges": 9,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

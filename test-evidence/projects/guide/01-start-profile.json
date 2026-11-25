@@ -1,0 +1,46 @@
+{
+  "time": "2026-11-25T17:41:34.714Z",
+  "stage": "01-start-profile",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n0 bodies\nSaved locally\nmm",
+  "projectName": "My twist pen",
+  "parameters": {
+    "barrel_length": 92,
+    "outer_diameter": 12,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75
+  },
+  "features": [],
+  "mass": 0,
+  "centerOfMass": null,
+  "volume": 0,
+  "area": 0,
+  "bodies": [],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n— g\nBalance along X\n— mm\nCenter of mass",
+  "console": [
+    {
+      "time": "2026-11-25T17:41:31.175Z",
+      "type": "warning",
+      "value": "[.WebGL-0x104008c8a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:41:31.176Z",
+      "type": "warning",
+      "value": "[.WebGL-0x104008c8a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:41:31.176Z",
+      "type": "warning",
+      "value": "[.WebGL-0x104008c8a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:41:31.176Z",
+      "type": "warning",
+      "value": "[.WebGL-0x104008c8a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

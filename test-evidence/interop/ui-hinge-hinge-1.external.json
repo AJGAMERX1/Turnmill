@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 445,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 160.972992,
+    "bbox": [
+      [
+        0.0,
+        -12.0,
+        -2.499788
+      ],
+      [
+        8.0,
+        2.499758,
+        2.499999
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 379
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -12.0,
+            -2.499788522720337
+          ],
+          [
+            8.0,
+            2.4997575283050537,
+            2.4999990463256836
+          ]
+        ],
+        "volume": 160.97305043434295,
+        "closed": true,
+        "triangles": 1232
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Fixed leaf"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 160.972992,
+        "manifold": true
+      }
+    ]
+  }
+}

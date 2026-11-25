@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 359,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 6216.0,
+    "bbox": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        155.399994,
+        20.0,
+        2.0
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 3712
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            155.39999389648438,
+            20.0,
+            2.0
+          ]
+        ],
+        "volume": 6215.999755859374,
+        "closed": true,
+        "triangles": 12
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Aluminum ruler stock"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 6216.0,
+        "manifold": true
+      }
+    ]
+  }
+}

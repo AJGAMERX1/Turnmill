@@ -122,10 +122,11 @@ export default function Drawing(
             features: source,
             joints: drawingJoints,
             values: props.values,
+            parameters: props.project.parameters,
             modeled,
           }
         : null,
-    [props.rebuilding, scope, source, drawingJoints, props.values, modeled],
+    [props.rebuilding, scope, source, drawingJoints, props.values, props.project.parameters, modeled],
   );
   const projected = useDrawingProjection(
     drawingSource,

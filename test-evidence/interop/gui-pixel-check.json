@@ -1,0 +1,278 @@
+{
+  "SYS-002": {
+    "app-iso": 470877,
+    "freecad-iso": 52941,
+    "freecad-front": 27400,
+    "freecad-detail": 117178
+  },
+  "block": {
+    "app-iso": 471086,
+    "freecad-iso": 62452,
+    "freecad-front": 31680,
+    "freecad-detail": 137684
+  },
+  "cylinder": {
+    "app-iso": 470438,
+    "freecad-iso": 13588,
+    "freecad-front": 15920,
+    "freecad-detail": 30158
+  },
+  "fc-filleted-block": {
+    "app-iso": 467350,
+    "freecad-iso": 65642,
+    "freecad-front": 39948,
+    "freecad-detail": 144832
+  },
+  "fc-straight-knurl": {
+    "app-iso": 470517,
+    "freecad-iso": 68068,
+    "freecad-front": 53768,
+    "freecad-detail": 135322
+  },
+  "fc-threaded-rod": {
+    "app-iso": 466281,
+    "freecad-iso": 62354,
+    "freecad-front": 56101,
+    "freecad-detail": 112040
+  },
+  "fc-two-parts": {
+    "app-iso": 470774,
+    "freecad-iso": 31157,
+    "freecad-front": 22330,
+    "freecad-detail": 69015
+  },
+  "hinge": {
+    "app-iso": 471014,
+    "freecad-iso": 37179,
+    "freecad-front": 24872,
+    "freecad-detail": 82279
+  },
+  "hinge-1": {
+    "app-iso": 470997,
+    "freecad-iso": 55643,
+    "freecad-front": 30968,
+    "freecad-detail": 122597
+  },
+  "hinge-2": {
+    "app-iso": 470929,
+    "freecad-iso": 53152,
+    "freecad-front": 30968,
+    "freecad-detail": 117069
+  },
+  "hinge-3": {
+    "app-iso": 470921,
+    "freecad-iso": 30726,
+    "freecad-front": 33616,
+    "freecad-detail": 68245
+  },
+  "m5-cosmetic": {
+    "app-iso": 470711,
+    "freecad-iso": 42004,
+    "freecad-front": 38170,
+    "freecad-detail": 76152
+  },
+  "m5-nut": {
+    "app-iso": 469638,
+    "freecad-iso": 60062,
+    "freecad-front": 36540,
+    "freecad-detail": 132932
+  },
+  "ruler": {
+    "app-iso": 471272,
+    "freecad-iso": 13656,
+    "freecad-front": 3184,
+    "freecad-detail": 29916
+  },
+  "ruler-blank": {
+    "app-iso": 470783,
+    "freecad-iso": 13656,
+    "freecad-front": 3184,
+    "freecad-detail": 29916
+  },
+  "threaded-rod": {
+    "app-iso": 470611,
+    "freecad-iso": 61426,
+    "freecad-front": 53957,
+    "freecad-detail": 133731
+  },
+  "twist-pen": {
+    "app-iso": 470435,
+    "freecad-iso": 14808,
+    "freecad-front": 17148,
+    "freecad-detail": 32785
+  },
+  "twist-pen-1": {
+    "app-iso": 470610,
+    "freecad-iso": 17091,
+    "freecad-front": 20131,
+    "freecad-detail": 74930
+  },
+  "twist-pen-2": {
+    "app-iso": 469588,
+    "freecad-iso": 55364,
+    "freecad-front": 53976,
+    "freecad-detail": 33359
+  },
+  "twist-pen-3": {
+    "app-iso": 470808,
+    "freecad-iso": 8263,
+    "freecad-front": 9828,
+    "freecad-detail": 18326
+  },
+  "twist-pen-4": {
+    "app-iso": 470806,
+    "freecad-iso": 6814,
+    "freecad-front": 7236,
+    "freecad-detail": 14715
+  },
+  "ui-bolt-library-bolt-nut": {
+    "app-iso": 470388,
+    "freecad-iso": 41933,
+    "freecad-front": 38576,
+    "freecad-detail": 75505
+  },
+  "ui-bolt-library-bolt-nut-1": {
+    "app-iso": 470185,
+    "freecad-iso": 42004,
+    "freecad-front": 38170,
+    "freecad-detail": 76152
+  },
+  "ui-bolt-library-bolt-nut-2": {
+    "app-iso": 468922,
+    "freecad-iso": 60062,
+    "freecad-front": 36540,
+    "freecad-detail": 132932
+  },
+  "ui-bolt-scratch-bolt-nut": {
+    "app-iso": 469220,
+    "freecad-iso": 48453,
+    "freecad-front": 41454,
+    "freecad-detail": 94116
+  },
+  "ui-bolt-scratch-bolt-nut-1": {
+    "app-iso": 469005,
+    "freecad-iso": 48347,
+    "freecad-front": 40663,
+    "freecad-detail": 94883
+  },
+  "ui-bolt-scratch-bolt-nut-2": {
+    "app-iso": 468776,
+    "freecad-iso": 60062,
+    "freecad-front": 36540,
+    "freecad-detail": 132932
+  },
+  "ui-click-coil-click-with-coil": {
+    "app-iso": 469984,
+    "freecad-iso": 35160,
+    "freecad-front": 36900,
+    "freecad-detail": 77898
+  },
+  "ui-click-coil-click-with-coil-1": {
+    "app-iso": 469972,
+    "freecad-iso": 40322,
+    "freecad-front": 41952,
+    "freecad-detail": 89526
+  },
+  "ui-click-coil-click-with-coil-2": {
+    "app-iso": 469970,
+    "freecad-iso": 67903,
+    "freecad-front": 55104,
+    "freecad-detail": 145968
+  },
+  "ui-click-coil-click-with-coil-3": {
+    "app-iso": 469670,
+    "freecad-iso": 15695,
+    "freecad-front": 18216,
+    "freecad-detail": 34847
+  },
+  "ui-click-coil-click-with-coil-4": {
+    "app-iso": 466751,
+    "freecad-iso": 33098,
+    "freecad-front": 31083,
+    "freecad-detail": 68379
+  },
+  "ui-click-pen-click-study": {
+    "app-iso": 470160,
+    "freecad-iso": 40322,
+    "freecad-front": 41952,
+    "freecad-detail": 89526
+  },
+  "ui-click-pen-click-study-1": {
+    "app-iso": 470046,
+    "freecad-iso": 40322,
+    "freecad-front": 41952,
+    "freecad-detail": 69748
+  },
+  "ui-click-pen-click-study-2": {
+    "app-iso": 470042,
+    "freecad-iso": 67903,
+    "freecad-front": 55104,
+    "freecad-detail": 44084
+  },
+  "ui-click-pen-click-study-3": {
+    "app-iso": 469763,
+    "freecad-iso": 15695,
+    "freecad-front": 18216,
+    "freecad-detail": 34847
+  },
+  "ui-hinge-hinge": {
+    "app-iso": 470539,
+    "freecad-iso": 32104,
+    "freecad-front": 14868,
+    "freecad-detail": 70442
+  },
+  "ui-hinge-hinge-1": {
+    "app-iso": 470526,
+    "freecad-iso": 48238,
+    "freecad-front": 21808,
+    "freecad-detail": 106776
+  },
+  "ui-hinge-hinge-2": {
+    "app-iso": 470468,
+    "freecad-iso": 50565,
+    "freecad-front": 21808,
+    "freecad-detail": 111947
+  },
+  "ui-hinge-hinge-3": {
+    "app-iso": 470448,
+    "freecad-iso": 23970,
+    "freecad-front": 26520,
+    "freecad-detail": 53240
+  },
+  "ui-pen-twist-pen": {
+    "app-iso": 470168,
+    "freecad-iso": 14884,
+    "freecad-front": 17218,
+    "freecad-detail": 32923
+  },
+  "ui-pen-twist-pen-1": {
+    "app-iso": 470271,
+    "freecad-iso": 17194,
+    "freecad-front": 20221,
+    "freecad-detail": 74932
+  },
+  "ui-pen-twist-pen-2": {
+    "app-iso": 469320,
+    "freecad-iso": 55364,
+    "freecad-front": 53976,
+    "freecad-detail": 28764
+  },
+  "ui-pen-twist-pen-3": {
+    "app-iso": 470483,
+    "freecad-iso": 8263,
+    "freecad-front": 9828,
+    "freecad-detail": 18326
+  },
+  "ui-pen-twist-pen-4": {
+    "app-iso": 470519,
+    "freecad-iso": 6814,
+    "freecad-front": 7236,
+    "freecad-detail": 14715
+  },
+  "ui-ruler-graduated-ruler": {
+    "app-iso": 470457,
+    "freecad-iso": 14898,
+    "freecad-front": 3184,
+    "freecad-detail": 32622
+  }
+}

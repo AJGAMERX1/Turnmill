@@ -320,17 +320,24 @@ export function tickContour(
       );
     from = [a[0] + ux * inset, a[1] + uy * inset];
   }
-  let polygon: XY[] = [
+  return [
     [from[0] - uy * half, from[1] + ux * half],
     [from[0] + uy * half, from[1] - ux * half],
     [b[0] + uy * half, b[1] - ux * half],
     [b[0] - uy * half, b[1] + ux * half],
   ];
-  if (c.layout === "linear")
-    polygon = polygon.map(([x, y]) => [Math.max(0, Math.min(c.length, x)), y]);
-  else {
+}
+
+// Only the part of a boundary graduation lying on the designed blank requires
+// support. The cutter and the manufacturing outline keep their full width.
+export function supportedTick(polygon: XY[], c: ScaleLayout): XY[] {
+  if (c.layout === "linear") {
+    if (polygon.every(([x]) => x >= 0 && x <= c.length)) return polygon;
+    return polygon.map(([x, y]) => [Math.max(0, Math.min(c.length, x)), y]);
+  } else {
     const baseline = c.length / 2,
       clipped: XY[] = [];
+    if (polygon.every(([, y]) => y <= baseline)) return polygon;
     for (let i = 0; i < polygon.length; i++) {
       const p = polygon[i],
         q = polygon[(i + 1) % polygon.length];
@@ -343,20 +350,33 @@ export function tickContour(
         clipped.push([p[0] + (q[0] - p[0]) * t, baseline]);
       }
     }
-    polygon = clipped;
+    return clipped;
   }
-  return polygon;
 }
 export function outlinedGraduations(sheet: Sheet, layout: ScaleLayout): Sheet {
+  let minX = 0,
+    minY = 0,
+    maxX = sheet.width,
+    maxY = sheet.height;
+  const marks = sheet.marks.map((m) => {
+    if (m.type !== "path" || m.layer !== "Graduations") return m;
+    const polygon = tickContour(m, layout);
+    for (const [x, y] of polygon) {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+    return { ...path(polygon, "Graduation_outlines", 0, true), fill: true };
+  });
+  const overhang =
+    minX < -1e-9 ||
+    minY < -1e-9 ||
+    maxX > sheet.width + 1e-9 ||
+    maxY > sheet.height + 1e-9;
   return {
     ...sheet,
-    marks: sheet.marks.map((m) =>
-      m.type === "path" && m.layer === "Graduations"
-        ? {
-            ...path(tickContour(m, layout), "Graduation_outlines", 0, true),
-            fill: true,
-          }
-        : m,
-    ),
+    marks,
+    svgBounds: overhang ? [minX, minY, maxX, maxY] : undefined,
   };
 }

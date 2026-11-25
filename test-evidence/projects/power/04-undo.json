@@ -1,0 +1,193 @@
+{
+  "time": "2026-11-25T17:45:48.420Z",
+  "stage": "04-undo",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n4 bodies\nSaved locally\nmm",
+  "projectName": "Twist pen assembly",
+  "parameters": {
+    "barrel_length": 92,
+    "outer_diameter": 12,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75,
+    "thread_major": 9.7,
+    "cap_length": 24,
+    "cap_start": 84.375,
+    "refill_diameter": 5.75
+  },
+  "features": [
+    {
+      "name": "Barrel",
+      "id": "barrel-revolve",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "c099ff16-1ea4-4cc7-a821-0e41d0b31114",
+          "name": "Barrel thread",
+          "kind": "thread",
+          "end": "end",
+          "side": "external",
+          "mode": "modeled",
+          "diameter": "thread_major",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Threaded cap",
+      "id": "pen-cap",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "68c5f4ce-df23-4c28-bc35-0a7873d65f9d",
+          "name": "Cap thread",
+          "kind": "thread",
+          "end": "start",
+          "side": "internal",
+          "mode": "modeled",
+          "diameter": "thread_major + 0.20 mm",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Keyboard refill",
+      "id": "pen-refill",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Pocket clip",
+      "id": "pen-clip",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 61.42463976271498,
+  "centerOfMass": [
+    46.8043702297497,
+    0.050722775772559785,
+    0.00504421144064627
+  ],
+  "volume": 9891.93550831954,
+  "area": 9496.86063516132,
+  "bodies": [
+    {
+      "name": "Barrel",
+      "volume": 6431.618930961377,
+      "center": [
+        43.52306070447218,
+        0.00030580226076015607,
+        -0.00016853271386472394
+      ],
+      "area": 5701.436248385852,
+      "bbox": [
+        [
+          0,
+          -6,
+          -6
+        ],
+        [
+          92.0000001,
+          6,
+          6
+        ]
+      ],
+      "faces": 34,
+      "edges": 79,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Threaded cap",
+      "volume": 1187.9484305955523,
+      "center": [
+        97.00763049231271,
+        0.0022777048434750972,
+        0.0013151471151750433
+      ],
+      "area": 2010.695835410889,
+      "bbox": [
+        [
+          84.37499989605277,
+          -6.2,
+          -6.2
+        ],
+        [
+          108.375,
+          6.2,
+          6.2
+        ]
+      ],
+      "faces": 23,
+      "edges": 55,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Keyboard refill",
+      "volume": 2218.893146762611,
+      "center": [
+        47.264991066948774,
+        -4.611224929814115e-16,
+        3.955914937490771e-17
+      ],
+      "area": 1598.7919928451552,
+      "bbox": [
+        [
+          -1.5,
+          -2.875,
+          -2.875
+        ],
+        [
+          90,
+          2.875,
+          2.875
+        ]
+      ],
+      "faces": 5,
+      "edges": 9,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Pocket clip",
+      "volume": 53.475000000000016,
+      "center": [
+        87.10898784478725,
+        7.364843384759233,
+        0.7500000000000001
+      ],
+      "area": 185.93655851942225,
+      "bbox": [
+        [
+          68.375,
+          6.1,
+          0
+        ],
+        [
+          105.375,
+          8.1,
+          1.5
+        ]
+      ],
+      "faces": 10,
+      "edges": 24,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMeasure\nAll bodies\nSelected body\nMass\n61.42 g\nBalance along X\n46.8 mm\nCenter of mass",
+  "console": []
+}

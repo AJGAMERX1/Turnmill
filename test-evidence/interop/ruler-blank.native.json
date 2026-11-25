@@ -1,0 +1,56 @@
+{
+  "model": "ruler-blank",
+  "expected": {
+    "formula": "155.4 × 20 × 2",
+    "volume": 6216,
+    "bbox": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        155.4,
+        20,
+        2
+      ]
+    ],
+    "center": [
+      77.7,
+      10,
+      1
+    ]
+  },
+  "parts": [
+    {
+      "name": "Aluminum ruler stock",
+      "volume": 6216,
+      "area": 6917.5999999999985,
+      "bbox": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          155.4,
+          20,
+          2
+        ]
+      ],
+      "center": [
+        77.7,
+        10,
+        1
+      ],
+      "faces": 6,
+      "edges": 12,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

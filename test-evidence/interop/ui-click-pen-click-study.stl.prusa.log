@@ -1,0 +1,14 @@
+[ui-click-pen-click-study.stl]
+size_x = 32.000000
+size_y = 10.000000
+size_z = 9.998023
+min_x = 0.000000
+min_y = -5.000000
+min_z = -4.999012
+max_x = 32.000000
+max_y = 5.000000
+max_z = 4.999012
+number_of_facets = 3156
+manifold = yes
+number_of_parts =  3
+volume = 1610.922729

@@ -1,0 +1,31 @@
+{
+  "length": 153.4,
+  "width": 18,
+  "offset": 0.5,
+  "major": 3.7,
+  "mid": 2.5,
+  "minor": 1.4,
+  "weight": 0.1,
+  "fontSize": 1.9,
+  "rotation": 0,
+  "frequency": 1,
+  "customStep": 1,
+  "customRatio": 50,
+  "labelGap": 0.75,
+  "angleStep": 1,
+  "angleSpan": 180,
+  "architectureRatio": 50,
+  "majorWeight": 0.2,
+  "midWeight": 0.14,
+  "bottomLabels": {
+    "font": "Helvetiker Bold CAD",
+    "fontSize": 2,
+    "labelGap": 0.9,
+    "rotation": 0,
+    "frequency": 1
+  },
+  "layout": "linear",
+  "top": "mm",
+  "bottom": "in16",
+  "font": "Helvetiker CAD"
+}

@@ -1,0 +1,10 @@
+XFAIL INTEROP-007 • Century Spring B18-127CS • STEP valid and closed, standalone STL and 3MF self-intersect
+Original project: ../projects/click-coil/click-with-coil.turnmill
+Independent checks: FreeCAD 1.1.4 (Part and Mesh), PrusaSlicer 2.9.7.
+Tessellation: 0.005 mm linear, 0.08 radians angular.
+FreeCAD exact volume 12.179100636 mm³; STL volume 12.147086143 mm³.
+STL triangles 255114; closed True; non-manifold False; intersecting facet pairs 131.
+Prusa reports manifold yes; slice exit 0, 196 XY extrusion moves.
+First intersecting pair from FreeCAD, including 3D intersection segment endpoints:
+(106544, 254946, Vector (1.8248417377471924, 0.020664602518081665, 0.04097752273082733), Vector (1.831961989402771, 0.021191805601119995, 0.03622636944055557))
+Independent 3MF XML reader compared all 255,114 faces in the single build item to STL. Every vertex coordinate was exactly representable as an STL float32. Neither format contained any geometric triangle missing from the other. Both have the 131 intersections. See spring-mesh-formats.json.

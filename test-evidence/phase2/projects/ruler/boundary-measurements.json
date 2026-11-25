@@ -1,0 +1,24 @@
+{
+  "nominalMm": 155,
+  "centerMm": 155.0,
+  "precedingSpacingMm": 1.0,
+  "vectorXmm": [
+    154.925,
+    155.075
+  ],
+  "dxFSvgMaxErrorMm": 0,
+  "actualSTEP": {
+    "valid": true,
+    "solids": 1,
+    "stockEnd": 155.0000001,
+    "top": 2.0000001,
+    "wallX": [
+      154.925
+    ],
+    "floorZ": [
+      1.8
+    ]
+  },
+  "inStockWidthMm": 0.075,
+  "depthMm": 0.2
+}

@@ -1,0 +1,36 @@
+{
+  "model": "ui-pen-twist-pen",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Pocket clip",
+      "volume": 53.475000000000016,
+      "area": 185.93655851942225,
+      "bbox": [
+        [
+          68.375,
+          6.1,
+          0
+        ],
+        [
+          105.375,
+          8.1,
+          1.5
+        ]
+      ],
+      "center": [
+        87.10898784478725,
+        7.364843384759233,
+        0.7500000000000001
+      ],
+      "faces": 10,
+      "edges": 24,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

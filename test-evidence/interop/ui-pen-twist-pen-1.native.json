@@ -1,0 +1,36 @@
+{
+  "model": "ui-pen-twist-pen",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Barrel",
+      "volume": 6430.324147784153,
+      "area": 5711.389398940191,
+      "bbox": [
+        [
+          0,
+          -6,
+          -6
+        ],
+        [
+          92.0000001,
+          6,
+          6
+        ]
+      ],
+      "center": [
+        43.526853416004606,
+        0.0003067028100281377,
+        -0.0005199230924593564
+      ],
+      "faces": 103,
+      "edges": 260,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

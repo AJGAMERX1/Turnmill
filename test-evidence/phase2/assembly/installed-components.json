@@ -1,0 +1,126 @@
+{
+  "ui-bolt-library-bolt-nut": {
+    "parts": [
+      {
+        "name": "M5 hex screw \u00b7 12 mm",
+        "centroidErrorMm": 4.39648317751562e-14,
+        "threeMfBoundErrorMm": 8.290057884607904e-08
+      },
+      {
+        "name": "M5 hex nut",
+        "centroidErrorMm": 7.913146229504053e-11,
+        "threeMfBoundErrorMm": 2.9316761995801244e-07
+      }
+    ],
+    "stlBoundErrorMm": 1.8290057823833195e-07,
+    "overlapsMm3": [
+      {
+        "parts": [
+          1,
+          2
+        ],
+        "volume": 0.5338541625325696
+      }
+    ],
+    "stepUnits": "mm",
+    "stlSlicerExit": 0,
+    "threeMfSlicerExit": 0
+  },
+  "ui-bolt-scratch-bolt-nut": {
+    "parts": [
+      {
+        "name": "Hand-built shank",
+        "centroidErrorMm": 6.113059058954207e-09,
+        "threeMfBoundErrorMm": 1.0000017880429368e-07
+      },
+      {
+        "name": "Hand-built nut",
+        "centroidErrorMm": 7.924897808195067e-11,
+        "threeMfBoundErrorMm": 2.9316762439890454e-07
+      }
+    ],
+    "stlBoundErrorMm": 1.7938395835415122e-07,
+    "overlapsMm3": [
+      {
+        "parts": [
+          1,
+          2
+        ],
+        "volume": 0
+      }
+    ],
+    "stepUnits": "mm",
+    "stlSlicerExit": 0,
+    "threeMfSlicerExit": 0
+  },
+  "ui-click-coil-click-with-coil": {
+    "parts": [
+      {
+        "name": "Guide tube",
+        "centroidErrorMm": 2.7517687910736102e-14,
+        "threeMfBoundErrorMm": 0.0009884834289550781
+      },
+      {
+        "name": "Cam ring",
+        "centroidErrorMm": 2.514655313765006e-14,
+        "threeMfBoundErrorMm": 0.0006324768066408026
+      },
+      {
+        "name": "Plunger",
+        "centroidErrorMm": 3.552713678800501e-15,
+        "threeMfBoundErrorMm": 0.00029647350311279297
+      },
+      {
+        "name": "Century Spring B18-127CS",
+        "centroidErrorMm": 1.014234678179722e-13,
+        "threeMfBoundErrorMm": 1.0590417540257135e-05
+      }
+    ],
+    "stlBoundErrorMm": 0.0009884834289550781,
+    "overlapsMm3": [
+      {
+        "parts": [
+          1,
+          2
+        ],
+        "volume": 0
+      },
+      {
+        "parts": [
+          1,
+          3
+        ],
+        "volume": 0
+      },
+      {
+        "parts": [
+          2,
+          3
+        ],
+        "volume": 0
+      },
+      {
+        "parts": [
+          1,
+          4
+        ],
+        "volume": 0
+      },
+      {
+        "parts": [
+          3,
+          4
+        ],
+        "volume": 0
+      }
+    ],
+    "stepUnits": "mm",
+    "stlSlicerExit": 0,
+    "threeMfSlicerExit": 0,
+    "springOverlapMm3": [
+      0,
+      0,
+      0
+    ]
+  }
+}

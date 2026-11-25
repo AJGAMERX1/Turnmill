@@ -1,0 +1,58 @@
+"""Render exact imported STEP views in a separate FreeCAD GUI process."""
+import os,traceback,json
+from pathlib import Path
+import FreeCAD as A, FreeCADGui as G, Import, Part
+from PySide import QtCore
+from pivy import coin
+out=Path(os.environ['QA_OUT'])
+results=json.loads((out/'gui.json').read_text()) if (out/'gui.json').exists() else {}
+
+def wait(ms):
+    loop=QtCore.QEventLoop()
+    QtCore.QTimer.singleShot(ms,loop.quit)
+    loop.exec()
+
+def frame(view,world_target,height):
+    camera=view.getCameraNode()
+    pos=camera.position.getValue()
+    direction=camera.orientation.getValue().multVec(coin.SbVec3f(0,0,-1))
+    focus=pos+direction*camera.focalDistance.getValue()
+    camera.position=pos+coin.SbVec3f(*world_target)-focus
+    camera.height.setValue(height)
+
+def render(name):
+    doc=A.newDocument('QAView')
+    try:
+        path=str(out/(name+'.step'))
+        Import.insert(path,doc.Name)
+        doc.recompute()
+        view=G.activeDocument().activeView()
+        labels=['iso','front','detail']
+        if name=='ui-pen-twist-pen-1':labels+=['engraving','knurl']
+        if 'ruler' in name and 'blank' not in name:labels+=['graduations']
+        for label in labels:
+            if label=='front':view.viewFront()
+            elif label in ['engraving','knurl','graduations']:view.viewTop()
+            elif label=='detail' and name.endswith('pen-2'):view.viewLeft()
+            else:view.viewIsometric()
+            # FreeCAD animates changes of direction. Image capture must wait for the camera.
+            wait(450);view.fitAll();wait(120)
+            if label=='detail':
+                if name.endswith('pen-1'):
+                    box=Part.read(path).optimalBoundingBox(False,False)
+                    frame(view,(box.XMax-4,0,0),23)
+                else:view.zoomIn();view.zoomIn()
+            elif label=='engraving':frame(view,(36.2,0,6),5)
+            elif label=='knurl':frame(view,(20,0,6),16)
+            elif label=='graduations':frame(view,(12,15,2),15)
+            wait(350);G.updateGui()
+            view.saveImage(str(out/(name+'.freecad-'+label+'.png')),560,400,'White')
+        results[name]='rendered'
+    except Exception:results[name]=traceback.format_exc()
+    finally:A.closeDocument(doc.Name)
+
+def run():
+    for name in json.loads(os.environ['QA_GUI_CASES']):render(name)
+    (out/'gui.json').write_text(json.dumps(results,indent=2))
+    G.getMainWindow().close()
+QtCore.QTimer.singleShot(300,run)

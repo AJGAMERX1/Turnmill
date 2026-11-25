@@ -1,0 +1,36 @@
+{
+  "model": "ui-ruler-graduated-ruler",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Engraved ruler",
+      "volume": 6794.453373627474,
+      "area": 7837.529827746406,
+      "bbox": [
+        [
+          -1e-7,
+          -1e-7,
+          0
+        ],
+        [
+          155.0000001,
+          22.0000001,
+          2.0000001
+        ]
+      ],
+      "center": [
+        77.49059728618376,
+        10.99069151559508,
+        0.9966160687774611
+      ],
+      "faces": 1800,
+      "edges": 5184,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

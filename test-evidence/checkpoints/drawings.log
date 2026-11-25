@@ -1,0 +1,15 @@
+{
+  part: [
+    '1 · Views and section',
+    '2 · Section detail',
+    '3 · Dimensions 1',
+    '4 · Dimensions 2'
+  ],
+  assembly: [
+    '1 · Assembly views',
+    '2 · Assembly section A–A',
+    '3 · Exploded assembly',
+    '4 · Bill of materials'
+  ],
+  errors: []
+}

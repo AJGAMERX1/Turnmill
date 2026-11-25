@@ -1,0 +1,15 @@
+{
+  "workload": "100-feature body, edit its final additive feature",
+  "durations": [
+    1178.6000000238419,
+    546.6999999880791,
+    544.5
+  ],
+  "median": 546.6999999880791,
+  "budgetMs": 500,
+  "outcome": "XFAIL",
+  "id": "SYS-003",
+  "cause": "98 unchanged additive booleans were repeated before the changed final addition",
+  "issue": "SYS-003",
+  "title": "Apply to Ready for a final-feature edit"
+}

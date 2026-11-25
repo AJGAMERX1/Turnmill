@@ -1,0 +1,38 @@
+{
+  "controls": [
+    {
+      "name": "below despite full history replay",
+      "input": [
+        650,
+        440,
+        460
+      ],
+      "expected": "PASS"
+    },
+    {
+      "name": "at threshold",
+      "input": [
+        500,
+        530,
+        490
+      ],
+      "expected": "PASS"
+    },
+    {
+      "name": "over with measured known cause",
+      "input": [
+        430,
+        505,
+        520
+      ],
+      "expected": "XFAIL"
+    }
+  ],
+  "unexpectedCases": [
+    "slow unrelated path",
+    "slow without full replay",
+    "invalid readings",
+    "incomplete readings"
+  ],
+  "outcome": "PASS"
+}

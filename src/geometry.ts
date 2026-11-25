@@ -7,7 +7,6 @@ import {
   exportSTEP,
   getOC,
   isShape3D,
-  makeCompound,
   makeFace,
   makeLine,
   makePolygon,
@@ -20,6 +19,7 @@ import {
   type Edge,
   type Shape3D,
 } from "replicad";
+import { binarySTL, printableMesh } from "./printMesh";
 import { export3MF } from "./exchangeSolids";
 import { applyFinish } from "./finishing";
 import type { EvaluatedFeature } from "./types";
@@ -34,6 +34,18 @@ export type Body = {
   guides?: Float32Array[];
   threadFrames?: import("./threadMates").ThreadFrame[];
 };
+/** Exact solid previously built by a finish-preview worker. Projects never store this cache. */
+export type PreviewSolid = {
+  brep: string;
+  volume: number;
+  guides?: Body["guides"];
+  threadFrames?: Body["threadFrames"];
+};
+export type FinishBodySnapshot = PreviewSolid & {
+  bodyId: string;
+  history: string;
+};
+
 export type RenderBody = {
   vertices: Float32Array;
   normals: Float32Array;
@@ -42,6 +54,15 @@ export type RenderBody = {
   guides?: Float32Array;
   faces: { start: number; count: number; faceId: number }[];
 };
+
+export function cloneBody(body: Body): Body {
+  return {
+    ...body,
+    shape: body.shape.clone(),
+    guides: body.guides?.slice(),
+    threadFrames: body.threadFrames?.slice(),
+  };
+}
 
 export function releaseBodies(bodies: Body[]) {
   bodies.forEach(({ shape }) => shape.delete());
@@ -166,16 +187,52 @@ function checkSolid(shape: Shape3D) {
   } finally {
     solids.forEach((solid) => solid.delete());
   }
-  if (!(volume(shape) > 0))
+  const measured = volume(shape);
+  if (!(measured > 0))
     throw new Error(
       "The result has no volume. Give the profile an enclosed area and a nonzero depth.",
     );
+  return measured;
+}
+
+/** Revalidate the serialized solid before promoting it into the editable kernel. */
+export function restoreFinishBody(
+  snapshot: PreviewSolid,
+  name: string,
+): Body | undefined {
+  let shape: AnyShape | undefined;
+  try {
+    shape = deserializeShape(snapshot.brep);
+    if (!isShape3D(shape)) return;
+    const measured = checkSolid(shape);
+    if (
+      !Number.isFinite(snapshot.volume) ||
+      Math.abs(measured - snapshot.volume) > 1e-8 * Math.max(1, measured)
+    )
+      return;
+    const body = {
+      name,
+      shape,
+      guides: snapshot.guides,
+      threadFrames: snapshot.threadFrames,
+    };
+    shape = undefined;
+    return body;
+  } catch {
+    // The caller rebuilds the original history when the snapshot is unreadable.
+    return;
+  } finally {
+    shape?.delete();
+  }
 }
 
 /** New starts a body. An Add or Cut acts on the most recently started body. */
-export function buildBodies(features: EvaluatedFeature[]): Body[] {
-  const bodies: Body[] = [];
-  let bodyId = "";
+export function buildBodies(
+  features: EvaluatedFeature[],
+  prefix?: { id: string; body: Body },
+): Body[] {
+  const bodies: Body[] = prefix ? [cloneBody(prefix.body)] : [];
+  let bodyId = prefix?.id ?? "";
   try {
     for (const feature of features) {
       let tool: Shape3D | undefined, result: Shape3D | undefined;
@@ -356,14 +413,5 @@ export function exportBodies(
   if (format === "3mf") return export3MF(bodies);
   if (format === "step")
     return exportSTEP(bodies, { modelUnit: "MM", unit: "MM" });
-  const stlOptions = { binary: true, tolerance: 0.005, angularTolerance: 0.08 };
-  if (bodies.length === 1) return bodies[0].shape.blobSTL(stlOptions);
-  // makeCompound takes ownership of its arguments. Keep the editable bodies alive.
-  const compound = makeCompound(bodies.map(({ shape }) => shape.clone()));
-  try {
-    if (!isShape3D(compound)) throw new Error("The export contains no solids.");
-    return compound.blobSTL(stlOptions);
-  } finally {
-    compound.delete();
-  }
+  return binarySTL(bodies.map(({ shape }) => printableMesh(shape)));
 }

@@ -1,0 +1,73 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:43:38.458Z",
+  "stage": "full-length-handmade",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Hand-built shank",
+      "id": "61f6151f-a551-420d-bc6d-3b36288df4ae",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "072100a9-ad98-405e-aab6-a9eedfb9d628",
+          "name": "Thread",
+          "end": "start",
+          "kind": "thread",
+          "side": "external",
+          "hand": "right",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "pitch": "0.8 mm",
+          "length": "8 mm",
+          "diameter": "5 mm"
+        }
+      ]
+    }
+  ],
+  "mass": 1.0936488977798582,
+  "centerOfMass": [
+    -0.0002244169758933286,
+    0.00007919628546126803,
+    -3.9998628518944157
+  ],
+  "volume": 128.66457620939508,
+  "area": 217.5280535652139,
+  "bodies": [
+    {
+      "name": "Hand-built shank",
+      "volume": 128.66457620939508,
+      "center": [
+        -0.00022441697589332862,
+        0.00007919628546126803,
+        -3.999862851894416
+      ],
+      "area": 217.5280535652139,
+      "bbox": [
+        [
+          -2.500000129763892,
+          -2.500000100000002,
+          -8.000000102496957
+        ],
+        [
+          2.500000116580049,
+          2.5000001162214476,
+          1.0249649144098338e-7
+        ]
+      ],
+      "faces": 16,
+      "edges": 42,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n1.09 g\nBalance along X\n-0 mm\nCenter of mass",
+  "console": []
+}

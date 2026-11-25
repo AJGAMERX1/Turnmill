@@ -1,0 +1,14 @@
+[ui-hinge-hinge.stl]
+size_x = 17.000000
+size_y = 24.000000
+size_z = 4.999787
+min_x = 0.000000
+min_y = -12.000000
+min_z = -2.499788
+max_x = 17.000000
+max_y = 12.000000
+max_z = 2.499999
+number_of_facets = 3092
+manifold = yes
+number_of_parts =  3
+volume = 442.080231

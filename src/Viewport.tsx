@@ -1,6 +1,7 @@
+import { observeGeometry } from "../tests/hook/observe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createStudio, type View } from "./studio";
-import type { RenderBody } from "./geometry";
+import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
 
@@ -14,6 +15,7 @@ export type KernelStatus = {
   center?: [number, number, number];
 };
 export type ExportRequest = {
+  assembly?: import("./assemblyExport").AssemblyExport;
   bodyIndex?: number;
   id: number;
   format: "step" | "stl" | "3mf";
@@ -27,10 +29,11 @@ type Props = {
   exportRequest: ExportRequest | null;
   appearances?: number[];
   onStatus: (status: KernelStatus) => void;
+  takeFinishBody?: () => FinishBodySnapshot | undefined;
 };
 export type KernelReply = { revision: number } & (
   | ((
-      | { type: "built"; meshes: RenderBody[] }
+      | { type: "built"; meshes: RenderBody[]; previewBody?: PreviewSolid }
       | { type: "updated"; keys: number[]; changes: MeshChange[] }
     ) & {
       volume: number;
@@ -66,6 +69,7 @@ export function Viewport({
   fitToken,
   exportRequest,
   onStatus,
+  takeFinishBody,
   appearances = [],
 }: Props) {
   const node = useRef<HTMLDivElement>(null);
@@ -94,6 +98,7 @@ export function Viewport({
   const pendingBuild = useRef<{
     revision: number;
     features: EvaluatedFeature[];
+    finishBody?: FinishBodySnapshot;
   } | null>(null);
   function dispatchBuild() {
     if (activeBuild.current || !pendingBuild.current || !engine.current) return;
@@ -125,6 +130,7 @@ export function Viewport({
       name: "turnmill-solid-modeler",
     });
     engine.current = worker;
+    if(import.meta.env.VITE_CAD_QA==="1") observeGeometry(worker,()=>revision.current);
     worker.onmessage = ({ data }: MessageEvent<KernelReply>) => {
       const buildReply =
         data.type === "updated" ||
@@ -196,6 +202,7 @@ export function Viewport({
       });
     };
     return () => {
+      if(import.meta.env.VITE_CAD_QA==="1") observeGeometry();
       worker.terminate();
       engine.current = undefined;
       retained.current.clear();
@@ -208,7 +215,11 @@ export function Viewport({
   useEffect(() => {
     const current = ++revision.current;
     publish({ signature, busy: true, error: "" });
-    pendingBuild.current = { revision: current, features };
+    pendingBuild.current = {
+      revision: current,
+      features,
+      finishBody: takeFinishBody?.(),
+    };
     dispatchBuild();
   }, [signature]);
   useEffect(() => {

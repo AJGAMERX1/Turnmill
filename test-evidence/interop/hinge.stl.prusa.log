@@ -1,0 +1,14 @@
+[hinge.stl]
+size_x = 17.000000
+size_y = 19.000000
+size_z = 6.398756
+min_x = -0.500000
+min_y = -9.500000
+min_z = -3.199373
+max_x = 16.500000
+max_y = 9.500000
+max_z = 3.199383
+number_of_facets = 3116
+manifold = yes
+number_of_parts =  3
+volume = 613.061951

@@ -258,6 +258,13 @@ export default function Scale(
             ? "Tick paths carry the specified line widths."
             : "Closed tick outlines include the specified widths."}
         </p>
+        {preview?.svgBounds && (
+          <p className="tm-work-note">
+            An end tick crosses the blank edge. Its center stays on the scale
+            division. Only the in-stock portion is engraved. Leave at least half
+            the tick width on both sides for a full-width mark.
+          </p>
+        )}
         {notice && <p className="tm-inline-error">{notice}</p>}
       </main>
       <aside className="tm-inspector">

@@ -1,0 +1,130 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 19448,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 10085.412109,
+    "bbox": [
+      [
+        -1.5,
+        -6.2,
+        -6.198774
+      ],
+      [
+        108.375,
+        8.1,
+        6.198774
+      ]
+    ],
+    "parts": "4",
+    "sliceExit": 0,
+    "extrusionMoves": 30431
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -6.0,
+            -5.998814105987549
+          ],
+          [
+            92.0,
+            6.0,
+            5.998814105987549
+          ]
+        ],
+        "volume": 6429.839216835696,
+        "closed": true,
+        "triangles": 24344
+      },
+      {
+        "bbox": [
+          [
+            84.375,
+            -6.199999809265137,
+            -6.198774337768555
+          ],
+          [
+            108.375,
+            6.199999809265137,
+            6.198774337768555
+          ]
+        ],
+        "volume": 1187.5369504534526,
+        "closed": true,
+        "triangles": 19544
+      },
+      {
+        "bbox": [
+          [
+            -1.5,
+            -3.0,
+            -2.9994070529937744
+          ],
+          [
+            90.0,
+            3.0,
+            2.9994070529937744
+          ]
+        ],
+        "volume": 2414.610564658142,
+        "closed": true,
+        "triangles": 6476
+      },
+      {
+        "bbox": [
+          [
+            68.375,
+            6.099999904632568,
+            0.0
+          ],
+          [
+            105.375,
+            8.100000381469727,
+            1.5
+          ]
+        ],
+        "volume": 53.47501051425934,
+        "closed": true,
+        "triangles": 28
+      }
+    ],
+    "buildItems": 4,
+    "names": [
+      "Barrel",
+      "Threaded cap",
+      "Refill",
+      "Pocket clip"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 6429.818848,
+        "manifold": true
+      },
+      {
+        "volume": 1187.529663,
+        "manifold": true
+      },
+      {
+        "volume": 2414.607178,
+        "manifold": true
+      },
+      {
+        "volume": 53.475006,
+        "manifold": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "rows": [
+    {
+      "name": "small",
+      "volume": 0.006,
+      "displayedFace": "Body 1 · Face 2",
+      "canvas": {
+        "w": 1576,
+        "css": 788,
+        "dpr": 2
+      },
+      "frame": "d72c8aa51e7cddd4bc0240436aba60c13a3f374249f4b2ed7b36c8edd4bffe12"
+    },
+    {
+      "name": "large",
+      "volume": 999999999999.9999,
+      "displayedFace": "Body 1 · Face 6",
+      "canvas": {
+        "w": 1576,
+        "css": 788,
+        "dpr": 2
+      },
+      "frame": "aea9b183ba5ed742d6c19aee84867c0f7f9cbbe256ee5193439ec8b1e09449b1"
+    },
+    {
+      "name": "normal",
+      "volume": 99.99999999999997,
+      "displayedFace": "Body 1 · Face 6",
+      "canvas": {
+        "w": 1576,
+        "css": 788,
+        "dpr": 2
+      },
+      "frame": "4fcec1360fb1f5417948125c73daee76c4c9998a0cc8bdaa5084e11b4197c810"
+    },
+    {
+      "cameraActions": [
+        {
+          "action": "orbit",
+          "hash": "7cfbfd08781670461ba0a258f6f6415fd7c51e17ef17bbef90d1c03eed8692e5"
+        },
+        {
+          "action": "pan",
+          "hash": "1cac81564f7053963d6fcb5a9859ef4f3d47e6c304d1583a28bf3d35af5208a6"
+        },
+        {
+          "action": "zoom",
+          "hash": "ee4d07410e999e8009f41003779fea45377b52c128942773ecaa9b20390a03b0"
+        }
+      ]
+    },
+    {
+      "sketch": {
+        "before": [
+          "Vertex P1 · 0, 0 mm",
+          "Vertex P2 · 12, 0 mm",
+          "Vertex P3 · 12, 5 mm",
+          "Vertex P4 · 0, 5 mm"
+        ],
+        "after": [
+          "Vertex P1 · 0, 0 mm",
+          "Vertex P2 · 12, 0 mm",
+          "Vertex P3 · 12, 5.4268 mm",
+          "Vertex P4 · 0, 5.4268 mm"
+        ],
+        "triangleVolume": 24
+      }
+    }
+  ],
+  "errors": []
+}

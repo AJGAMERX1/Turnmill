@@ -1,25 +1,37 @@
+import { inspectBodies } from "../tests/hook/metrics";
 import initOC from "replicad-opencascadejs";
 import wasmUrl from "replicad-opencascadejs/wasm?url";
 import { setOC } from "replicad";
-import { exportBodies, type RenderBody } from "./geometry";
+import {
+  exportBodies,
+  type FinishBodySnapshot,
+  type PreviewSolid,
+  type RenderBody,
+} from "./geometry";
+import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
 
 const worker = self as unknown as DedicatedWorkerGlobalScope;
 const ready = initOC({ locateFile: () => wasmUrl }).then(setOC);
 const model = new ModelBodies();
+const MIN_PREVIEW_SNAPSHOT_MS = 1000;
 let currentRevision = -1;
 
 type Request =
+  | {type:"inspect-qa";revision:number;port:MessagePort}
   | {
       type: "build";
       revision: number;
       features: EvaluatedFeature[];
       retainedMeshes?: number[];
+      previewBodyIndex?: number;
+      finishBody?: FinishBodySnapshot;
     }
   | {
       type: "export";
       bodyIndex?: number;
+      assembly?: import("./assemblyExport").AssemblyExport;
       revision: number;
       id: number;
       format: "step" | "stl" | "3mf";
@@ -38,11 +50,23 @@ const buffers = (m: RenderBody) =>
 worker.onmessage = async ({ data }: MessageEvent<Request>) => {
   try {
     await ready;
+    if (data.type === "inspect-qa") {
+      if (import.meta.env.VITE_CAD_QA === "1") {
+        try {
+          if (currentRevision!==data.revision || currentRevision<0) throw Error("The exact model is still rebuilding.");
+          data.port.postMessage({bodies:inspectBodies(model.bodies)});
+        } catch (e) {data.port.postMessage({error:String(e)});} finally {data.port.close();}
+      }
+      return;
+    }
+
     if (data.type === "build") {
       currentRevision = -1;
+      const started = performance.now();
       const { changes, keys, ...properties } = model.build(
         data.features,
         data.retainedMeshes,
+        data.finishBody,
       );
       const meshes = changes.map((change) => change.mesh);
       // One-shot preview workers receive the complete mesh list, as before.
@@ -50,8 +74,29 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         data.retainedMeshes === undefined
           ? { type: "built", meshes }
           : { type: "updated", keys, changes };
+      // Only finish preview workers return editable geometry. Ordinary viewport
+      // rebuilds, exports and inexpensive previews avoid serializing another copy.
+      let previewBody: PreviewSolid | undefined;
+      if (
+        data.previewBodyIndex !== undefined &&
+        performance.now() - started >= MIN_PREVIEW_SNAPSHOT_MS
+      ) {
+        const body = model.bodies[data.previewBodyIndex];
+        if (body) {
+          try {
+            previewBody = {
+              brep: body.shape.serialize(),
+              volume: properties.bodyProperties[data.previewBodyIndex].volume,
+              guides: body.guides,
+              threadFrames: body.threadFrames,
+            };
+          } catch {
+            // A successful preview can still be applied by a normal history rebuild.
+          }
+        }
+      }
       worker.postMessage(
-        { ...output, revision: data.revision, ...properties },
+        { ...output, revision: data.revision, previewBody, ...properties },
         meshes.flatMap(buffers),
       );
       currentRevision = data.revision;
@@ -64,7 +109,9 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       data.bodyIndex === undefined
         ? bodies
         : bodies.slice(data.bodyIndex, data.bodyIndex + 1);
-    const blob = exportBodies(selected, data.format);
+    const blob = data.assembly
+      ? exportAssemblyBodies(selected, data.format, data.assembly)
+      : exportBodies(selected, data.format);
     if (!blob.size)
       throw new Error(
         "The export produced an empty file. Check the model and try again.",

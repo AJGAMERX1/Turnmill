@@ -1,3 +1,4 @@
+import { observeModel } from "../tests/hook/observe";
 import PenGuidePanel, { GuideProfile } from "./PenGuidePanel";
 import {
   addGuideParts,
@@ -17,6 +18,7 @@ import {
   type PaletteContext,
 } from "./commands";
 import CommandPalette from "./CommandPalette";
+import type { LiveAssembly } from "./Mechanisms";
 import HardwareDialog from "./HardwareDialog";
 import { finishLabels, type FinishKind } from "./finishingTypes";
 import { advancedLabels, type Advanced } from "./advancedTypes";
@@ -264,6 +266,7 @@ export default function App() {
   }, []);
   const treeVisible = compact ? compactTree : showTree;
   const toggleTree = compact ? setCompactTree : setShowTree;
+  const liveAssembly = useRef<LiveAssembly | null>(null);
   const [exportScope, setExportScope] = useState<"all" | "selected">("all");
   const [exportRequest, setExportRequest] = useState<ExportRequest | null>(
       null,
@@ -410,6 +413,13 @@ export default function App() {
     (valid ? kernel.bodyProperties || [] : []).filter(inScope),
     solidFeatures.filter(inScope).map((f) => densityOf(f.id)),
   );
+  useEffect(()=>{
+    if(import.meta.env.VITE_CAD_QA==="1") observeModel(()=>{
+      const total=massProperties(valid ? kernel.bodyProperties || [] : [],solidFeatures.map((f)=>densityOf(f.id)));
+      return {project, features:project.features,parameters:project.parameters,values:model.values,mode,busy,error,
+        volume:valid?kernel.volume:0,area:valid?kernel.area:0,mass:total.mass,centerOfMass:total.center,selected,saveState};
+    });
+  });
   const props = {
     project,
     values: model.values,
@@ -520,13 +530,30 @@ export default function App() {
       setNotice("Rebuild a valid solid before exporting.");
       return;
     }
-    const i = solidFeatures.findIndex((f) => f.id === bodyFor(currentF));
-    const single = exportScope === "selected" && i >= 0;
+    const inAssembly = mode === "Assembly";
+    const live = inAssembly ? liveAssembly.current : null;
+    const id = live?.selected ?? bodyFor(currentF);
+    const i = solidFeatures.findIndex((f) => f.id === id);
+    const single = exportScope === "selected" && solidFeatures.length > 1;
+    if (single && i < 0) {
+      setNotice("Select the component you want to export.");
+      return;
+    }
+    if (!single && live?.problem) {
+      setNotice(live.problem);
+      return;
+    }
     setExportRequest({
       id: Date.now(),
       format,
       bodyIndex: single ? i : undefined,
       name: single ? solidFeatures[i].name : project.name,
+      assembly: inAssembly && !single ? {
+        ids: solidFeatures.map((f) => f.id),
+        joints: project.workspaces?.joints ?? {},
+        drivers: live?.drivers ?? project.workspaces?.jointPose ?? {},
+        parameters: project.parameters,
+      } : undefined,
     });
   };
   function startGuide() {
@@ -1089,8 +1116,8 @@ export default function App() {
                       setExportScope(e.target.value as typeof exportScope)
                     }
                   >
-                    <option value="all">All bodies</option>
-                    <option value="selected">Selected body</option>
+                    <option value="all">{mode === "Assembly" ? "Assembly at current pose" : "All bodies"}</option>
+                    <option value="selected">Selected body (local coordinates)</option>
                   </select>
                 </label>
               )}
@@ -1370,6 +1397,7 @@ export default function App() {
               fitToken={fit}
               exportRequest={exportRequest}
               onStatus={setKernel}
+              takeFinishBody={finishing.takeFinishBody}
               appearances={appearances}
             />
             <div className="view-top">
@@ -1748,6 +1776,7 @@ export default function App() {
           {mode === "Assembly" && (
             <Assembly
               {...props}
+              liveAssembly={liveAssembly}
               guideAssist={guideAssist}
               onImport={() => setDialog("import")}
             />
@@ -1993,6 +2022,7 @@ export default function App() {
             finishing.preview(
               currentF,
               rows,
+              modelSignature,
               valid ? kernel.bodyProperties : undefined,
             )
           }
@@ -2007,7 +2037,7 @@ export default function App() {
             )
           }
           onSave={(finishes) => {
-            if (!finishing.isValidated(currentF, finishes)) {
+            if (!finishing.acceptValidated(currentF, finishes)) {
               setNotice(
                 "The part changed. Open its finishes again to rebuild the preview.",
               );

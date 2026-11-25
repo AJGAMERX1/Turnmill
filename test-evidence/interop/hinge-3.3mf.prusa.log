@@ -1,0 +1,14 @@
+[hinge-3.3mf]
+size_x = 17.000000
+size_y = 3.900000
+size_z = 3.899229
+min_x = -8.500000
+min_y = -1.950000
+min_z = -1.949615
+max_x = 8.500000
+max_y = 1.950000
+max_z = 1.949615
+number_of_facets = 628
+manifold = yes
+number_of_parts =  1
+volume = 203.026566

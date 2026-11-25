@@ -1,0 +1,116 @@
+{
+  "name": "M10 twist pen",
+  "components": [
+    "Barrel",
+    "Threaded cap",
+    "Refill",
+    "Pocket clip"
+  ],
+  "clearance": "Clear throughout this joint travel · conservative nominal gap ≥ 0.04442 mm. Verified with a continuous helical separating surface. Smallest sampled gap 0.04997 mm at 720.000°.",
+  "minimumBoundMm": 0.04442,
+  "travelDeg": [
+    0,
+    720
+  ],
+  "steps": [
+    {
+      "stage": "M10-barrel",
+      "mode": "Part",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "01-threaded-pen",
+      "mode": "Part",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "02-knurled-grip",
+      "mode": "Part",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "03-engraved-name",
+      "mode": "Part",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "04-mated",
+      "mode": "Assembly",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "05-travel",
+      "mode": "Assembly",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "01-front-section",
+      "mode": "Drawing",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "02-thread-end-detail",
+      "mode": "Drawing",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "03-dimensions",
+      "mode": "Drawing",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "04-exploded",
+      "mode": "Drawing",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    },
+    {
+      "stage": "05-bom",
+      "mode": "Drawing",
+      "project": "M10 twist pen",
+      "threadId": "8242e47b-7223-44cc-9f05-980adfc826d5",
+      "threadMajorMm": 10,
+      "pitchMm": 0.75,
+      "solids": 4
+    }
+  ]
+}

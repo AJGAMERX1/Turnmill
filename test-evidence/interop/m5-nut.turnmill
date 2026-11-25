@@ -1,0 +1,122 @@
+{
+  "id": "fa77748b-321d-4794-ac03-4256562e1d26",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [
+    {
+      "name": "nut_337ce_diameter",
+      "expression": "5 mm",
+      "label": "Hex nut diameter"
+    },
+    {
+      "name": "nut_337ce_pitch",
+      "expression": "0.8 mm",
+      "label": "Hex nut pitch"
+    },
+    {
+      "name": "nut_337ce_across_flats",
+      "expression": "8 mm",
+      "label": "Hex nut across flats"
+    },
+    {
+      "name": "nut_337ce_height",
+      "expression": "4 mm",
+      "label": "Hex nut height"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "7d6e1984-9016-4433-b567-a361b2036efc",
+      "name": "M5 hex nut profile",
+      "points": [
+        {
+          "x": "nut_337ce_across_flats * 0.577350269189626",
+          "y": "nut_337ce_across_flats * 0"
+        },
+        {
+          "x": "nut_337ce_across_flats * 0.288675134594813",
+          "y": "nut_337ce_across_flats * 0.5"
+        },
+        {
+          "x": "nut_337ce_across_flats * -0.288675134594813",
+          "y": "nut_337ce_across_flats * 0.5"
+        },
+        {
+          "x": "nut_337ce_across_flats * -0.577350269189626",
+          "y": "nut_337ce_across_flats * 0"
+        },
+        {
+          "x": "nut_337ce_across_flats * -0.288675134594813",
+          "y": "nut_337ce_across_flats * -0.5"
+        },
+        {
+          "x": "nut_337ce_across_flats * 0.288675134594813",
+          "y": "nut_337ce_across_flats * -0.5"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "9cb5290b-d470-4b94-bfb0-d68f504064ca",
+      "name": "M5 hex nut",
+      "kind": "extrude",
+      "amount": "nut_337ce_height",
+      "sketchId": "7d6e1984-9016-4433-b567-a361b2036efc",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "kind": "hole",
+          "id": "facef139-bff0-42cc-b50d-59c828de15b5",
+          "name": "Pilot bore",
+          "end": "start",
+          "diameter": "nut_337ce_diameter - nut_337ce_pitch * 1.08253175473",
+          "length": "nut_337ce_height"
+        },
+        {
+          "kind": "thread",
+          "id": "05911bf6-0914-4425-9b23-a3385c307d85",
+          "name": "M5 × 0.8",
+          "side": "internal",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "nut_337ce_diameter",
+          "pitch": "nut_337ce_pitch",
+          "length": "nut_337ce_height",
+          "end": "start"
+        }
+      ]
+    }
+  ],
+  "workspaces": {
+    "bodyMaterials": {
+      "9cb5290b-d470-4b94-bfb0-d68f504064ca": "Steel"
+    },
+    "hardwareComponents": {
+      "9cb5290b-d470-4b94-bfb0-d68f504064ca": {
+        "source": "Hex nut",
+        "dimensions": [
+          {
+            "label": "diameter",
+            "parameter": "nut_337ce_diameter"
+          },
+          {
+            "label": "pitch",
+            "parameter": "nut_337ce_pitch"
+          },
+          {
+            "label": "across flats",
+            "parameter": "nut_337ce_across_flats"
+          },
+          {
+            "label": "height",
+            "parameter": "nut_337ce_height"
+          }
+        ]
+      }
+    }
+  }
+}

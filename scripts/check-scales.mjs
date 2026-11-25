@@ -210,6 +210,93 @@ try {
       placement: { face: "top", angle: 0, u: 0, v: 0 },
     },
   };
+  // A full-width cutter can straddle a layout boundary. On a matching blank
+  // only half its width cuts stock; additional stock receives the full groove.
+  const edgeProject = {
+    ...p,
+    workspaces: {
+      ...p.workspaces,
+      scale: {
+        ...cfg,
+        length: "20 mm",
+        width: "18 mm",
+        offset: "0 mm",
+        bottom: "off",
+        majorWeight: "0.4 mm",
+        major: "3 mm",
+        depth: "0.2 mm",
+        attachment: {
+          ...cfg.attachment,
+          face: "top",
+          u: "0 mm",
+          v: "0 mm",
+          angle: "0 deg",
+        },
+      },
+    },
+  };
+  const edgeLayout = getScaleLayout(edgeProject.workspaces.scale, values);
+  const edgeSheet = outlinedGraduations(
+    makeScale(edgeLayout).geometry,
+    edgeLayout,
+  );
+  const edgePaths = edgeSheet.marks.filter(
+    (m) => m.layer === "Graduation_outlines",
+  );
+  assert.equal(edgePaths.length, 21);
+  assert.deepEqual(edgeSheet.svgBounds, [-0.2, 0, 20.2, 18]);
+  for (let i = 0; i <= 20; i++) {
+    const xs = edgePaths[i].pts.map(([x]) => x);
+    close((Math.max(...xs) + Math.min(...xs)) / 2, i);
+  }
+  const edgeFeature = evaluateScaleStock(edgeProject, values, p.features[1]);
+  for (const [stockLength, offset, halfMarks] of [
+    [20, 0, 2],
+    [22, 1, 0],
+  ]) {
+    const edgeStock = {
+      ...stock,
+      amount: 2,
+      points: [
+        [0, 0],
+        [stockLength, 0],
+        [stockLength, 18],
+        [0, 18],
+      ],
+    };
+    const cut = {
+      ...edgeFeature,
+      ruler: {
+        ...edgeFeature.ruler,
+        placement: {
+          ...edgeFeature.ruler.placement,
+          u: offset,
+        },
+      },
+    };
+    const built = buildBodies([edgeStock, cut]);
+    try {
+      const ink =
+        cut.ruler.ticks.reduce((v, tick) => v + polygonArea(tick), 0) +
+        cut.ruler.labels.reduce(
+          (v, glyph) =>
+            v +
+            polygonArea(flattenInk(glyph.outer, 0.00001)) -
+            glyph.holes.reduce(
+              (a, hole) => a + polygonArea(flattenInk(hole, 0.00001)),
+              0,
+            ),
+          0,
+        );
+      close(
+        stockLength * 18 * 2 - measureVolume(built[0].shape),
+        (ink - halfMarks * 0.2 * 3) * cut.ruler.depth,
+        0.0003,
+      );
+    } finally {
+      releaseBodies(built);
+    }
+  }
   const cube = {
     ...stock,
     points: [

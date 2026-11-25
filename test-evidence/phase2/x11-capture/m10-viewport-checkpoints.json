@@ -1,0 +1,128 @@
+{
+  "platform": "Ubuntu 24.04.5 LTS arm64, Playwright Chromium 159.0.8154.6, Xvfb 1920\u00d71200\u00d724",
+  "checks": [
+    {
+      "file": "M10-barrel.png",
+      "sha256": "1c91d4a5a197ff4e54c132ed1115ab9a0a45d2eeec57d713eb9c0a2fb25393d6",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Part"
+    },
+    {
+      "file": "01-threaded-pen.png",
+      "sha256": "be9e6f101280694b07102ba2422c4d2f09c1aef41f002ec7f251c24b79871c86",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Part"
+    },
+    {
+      "file": "02-knurled-grip.png",
+      "sha256": "d4bc74d13f967ad2a33a79758d077806712e82d5c18756ab8d33b59effe39863",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Part"
+    },
+    {
+      "file": "03-engraved-name.png",
+      "sha256": "ec4b5fabc97c7663e86e699c3a7a31093980a7a5ed46fa42db46129767b322f6",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Part"
+    },
+    {
+      "file": "04-mated.png",
+      "sha256": "199de0ad176ac7f87edc7648e268cc2c8e4e0434851938d42d03344f702f15a0",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Assembly"
+    },
+    {
+      "file": "05-travel.png",
+      "sha256": "40e3ae56ec652039c2b0e01da9780076139f9955a3a8e4e50c2a503d769f50d3",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Assembly"
+    },
+    {
+      "file": "01-front-section.png",
+      "sha256": "7101b177225cd0e3cc895f79fe1e42e4ffdd1fe1a2c2c3ec10941397e02221b8",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Drawing"
+    },
+    {
+      "file": "02-thread-end-detail.png",
+      "sha256": "60dc366adfb78032f5ed3137eabca4b05ab949e50b02dca45e901e88c2066ceb",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Drawing"
+    },
+    {
+      "file": "03-dimensions.png",
+      "sha256": "415b9827e4520128e0424111ae5a9c6f365e72eaf17bfa95ab1350f8f153a1cb",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Drawing"
+    },
+    {
+      "file": "04-exploded.png",
+      "sha256": "4978f9d3433a218d04861a9cfbdcb2968404b5bea88e3347b7970ecc4ef98edc",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Drawing"
+    },
+    {
+      "file": "05-bom.png",
+      "sha256": "c77c15938bd7f8e6c6c5149fdd5d7f8f4ec31071f87d4a959e0cb902803c844b",
+      "size": [
+        1440,
+        930
+      ],
+      "modelStatus": "Ready",
+      "project": "M10 twist pen",
+      "mode": "Drawing"
+    }
+  ],
+  "result": "PASS",
+  "diagnostics": []
+}

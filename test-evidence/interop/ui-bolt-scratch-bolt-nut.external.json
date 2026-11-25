@@ -1,0 +1,86 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 10562,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 494.213593,
+    "bbox": [
+      [
+        -4.618802,
+        -4.0,
+        -8.0
+      ],
+      [
+        4.618802,
+        4.0,
+        4.0
+      ]
+    ],
+    "parts": "2",
+    "sliceExit": 0,
+    "extrusionMoves": 2938
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            -4.618802070617676,
+            -4.0,
+            -8.0
+          ],
+          [
+            4.618802070617676,
+            4.0,
+            3.5
+          ]
+        ],
+        "volume": 336.81415804589653,
+        "closed": true,
+        "triangles": 8014
+      },
+      {
+        "bbox": [
+          [
+            -4.618802070617676,
+            -4.0,
+            -7.979727989493313e-17
+          ],
+          [
+            4.618802070617676,
+            4.0,
+            4.0
+          ]
+        ],
+        "volume": 157.3994016264083,
+        "closed": true,
+        "triangles": 7366
+      }
+    ],
+    "buildItems": 2,
+    "names": [
+      "Hand-built shank",
+      "Hand-built nut"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 336.814453,
+        "manifold": true
+      },
+      {
+        "volume": 157.399536,
+        "manifold": true
+      }
+    ]
+  }
+}

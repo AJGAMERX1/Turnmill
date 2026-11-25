@@ -1,0 +1,90 @@
+[
+  {
+    "suite": "sketch",
+    "outcome": "Pass",
+    "durationMs": 313,
+    "timeoutMs": 20000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "geometry",
+    "outcome": "Pass",
+    "durationMs": 2483,
+    "timeoutMs": 150000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "motion",
+    "outcome": "Pass",
+    "durationMs": 785,
+    "timeoutMs": 90000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "findings",
+    "outcome": "Pass",
+    "durationMs": 540,
+    "timeoutMs": 90000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "parameters-history",
+    "outcome": "Pass",
+    "durationMs": 583,
+    "timeoutMs": 60000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "performance",
+    "outcome": "Pass",
+    "durationMs": 31862,
+    "timeoutMs": 180000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "fuzz",
+    "outcome": "Pass",
+    "durationMs": 35458,
+    "timeoutMs": 155000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "browser",
+    "outcome": "Pass",
+    "durationMs": 13385,
+    "timeoutMs": 150000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "performance-browser",
+    "outcome": "Pass",
+    "durationMs": 6284,
+    "timeoutMs": 160000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "sketch-undo-browser",
+    "outcome": "Pass",
+    "durationMs": 21254,
+    "timeoutMs": 160000,
+    "code": 0,
+    "timedOut": false
+  },
+  {
+    "suite": "editor-browser",
+    "outcome": "Pass",
+    "durationMs": 13570,
+    "timeoutMs": 160000,
+    "code": 0,
+    "timedOut": false
+  }
+]

@@ -1,0 +1,112 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T18:43:17.420Z",
+  "stage": "01-library-bolt",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {
+    "screw_d7714_diameter": 5,
+    "screw_d7714_pitch": 0.8,
+    "screw_d7714_across_flats": 8,
+    "screw_d7714_height": 3.5,
+    "screw_d7714_length": 12
+  },
+  "features": [
+    {
+      "name": "M5 hex screw · 12 mm",
+      "id": "4f2c9695-3b9a-4280-9bba-8ff31e83f6ed",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "kind": "thread",
+          "id": "0146c85e-a51e-4950-af4f-00ac4cfa2d82",
+          "name": "M5 × 0.8",
+          "side": "external",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "screw_d7714_diameter",
+          "pitch": "screw_d7714_pitch",
+          "length": "screw_d7714_length",
+          "end": "start"
+        }
+      ]
+    },
+    {
+      "name": "Hex head",
+      "id": "0ae293e4-7de4-49aa-b2b6-2f29efbd72ec",
+      "suppressed": false,
+      "operation": "add",
+      "finishes": []
+    }
+  ],
+  "mass": 3.0374608703720503,
+  "centerOfMass": [
+    5.13965221431192e-7,
+    0.0000019594483129812213,
+    -2.114572280244403
+  ],
+  "volume": 386.9376904932548,
+  "area": 485.8353791222121,
+  "bodies": [
+    {
+      "name": "M5 hex screw · 12 mm",
+      "volume": 386.9376904932548,
+      "center": [
+        5.13965221431192e-7,
+        0.0000019594483129812213,
+        -2.114572280244403
+      ],
+      "area": 485.8353791222121,
+      "bbox": [
+        [
+          -4.618802253517008,
+          -4.0000001,
+          -12.000000102777424
+        ],
+        [
+          4.618802253517008,
+          4.0000001,
+          3.5
+        ]
+      ],
+      "faces": 27,
+      "edges": 72,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n3.04 g\nBalance along X\n0 mm\nCenter of mass",
+  "console": [
+    {
+      "time": "2026-11-25T18:42:37.261Z",
+      "type": "error",
+      "value": "The script has an unsupported MIME type ('text/html')."
+    },
+    {
+      "time": "2026-11-25T18:42:39.530Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1240083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:42:39.530Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1240083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:42:39.530Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1240083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T18:42:39.530Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1240083f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

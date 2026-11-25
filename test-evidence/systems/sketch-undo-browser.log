@@ -1,0 +1,4 @@
+XFAIL SYS-004 Sketch editor discards its earliest undo actions after 80 edits Expected to undo 82 edits, ran out after 80
+
+80 !== 82
+

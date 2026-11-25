@@ -1,0 +1,6 @@
+{
+  "id": "SYS-002",
+  "title": "Browser engraving volume",
+  "outcome": "XFAIL",
+  "message": "Volume for complete graphic: expected 77.6 ± 0.0024; measured 78.4"
+}

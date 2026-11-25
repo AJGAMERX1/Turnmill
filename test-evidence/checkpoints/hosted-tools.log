@@ -1,0 +1,6 @@
+verify	Measure a solid in FreeCAD and check its STEP and STL	2026-11-25T18:03:54.3616970Z >>> FREECAD_ANALYTIC_OK 23.999999999999996
+verify	Measure a solid in FreeCAD and check its STEP and STL	2026-11-25T18:03:54.3748119Z >>> >>> FREECAD_ANALYTIC_OK 23.999999999999996
+verify	Measure a solid in FreeCAD and check its STEP and STL	2026-11-25T18:03:54.4024993Z SECOND PASS complete:  359 instances valid.
+verify	Measure a solid in FreeCAD and check its STEP and STL	2026-11-25T18:03:54.4799576Z manifold = yes
+verify	Measure a solid in FreeCAD and check its STEP and STL	2026-11-25T18:03:54.4800195Z volume = 1000.000061
+verify	Measure a solid in FreeCAD and check its STEP and STL	2026-11-25T18:03:56.8877589Z 1.4.5

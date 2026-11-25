@@ -1,0 +1,229 @@
+{
+  "time": "2026-11-25T17:42:42.627Z",
+  "stage": "04-rotation-0-requested-0",
+  "mode": "Assembly",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n3 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Fixed leaf",
+      "id": "8b2d34f6-7b23-4ed6-9729-d44c7e5df136",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Fixed leaf web",
+      "id": "c8d07155-fbf3-4af8-aa6c-b35dfd8ff418",
+      "suppressed": false,
+      "operation": "add"
+    },
+    {
+      "name": "Moving leaf",
+      "id": "b71e74ed-7331-4ad2-9d79-051018795677",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Moving leaf web",
+      "id": "b5313494-8db7-4e36-9b2b-a2b28053b8cc",
+      "suppressed": false,
+      "operation": "add"
+    },
+    {
+      "name": "Hinge pin",
+      "id": "86bb72b6-4974-498f-b163-d1b9fb7d44dd",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 3.7582902572755907,
+  "centerOfMass": [
+    8.50000000000001,
+    1.0778552685142579e-14,
+    0.1737474036504494
+  ],
+  "volume": 442.15179497359895,
+  "area": 983.9636345078029,
+  "bodies": [
+    {
+      "name": "Fixed leaf",
+      "volume": 160.99293798689453,
+      "center": [
+        4.000000000000022,
+        -3.4307923082830585,
+        0.2385903610327999
+      ],
+      "area": 404.80262111678456,
+      "bbox": [
+        [
+          0,
+          -12,
+          -2.5
+        ],
+        [
+          8,
+          2.500000000000001,
+          2.5000000000000004
+        ]
+      ],
+      "faces": 7,
+      "edges": 15,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Moving leaf",
+      "volume": 160.9929379868948,
+      "center": [
+        13.000000000000002,
+        3.4307923082830825,
+        0.23859036103279935
+      ],
+      "area": 404.8026211167848,
+      "bbox": [
+        [
+          9,
+          -2.5,
+          -2.5
+        ],
+        [
+          17,
+          12,
+          2.5
+        ]
+      ],
+      "faces": 7,
+      "edges": 15,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Hinge pin",
+      "volume": 120.16591899980958,
+      "center": [
+        8.500000000000002,
+        -3.399982927461363e-16,
+        -3.145745283723956e-17
+      ],
+      "area": 174.35839227423352,
+      "bbox": [
+        [
+          0,
+          -1.5,
+          -1.5
+        ],
+        [
+          17,
+          1.5,
+          1.5
+        ]
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": {
+    "ids": [
+      "8b2d34f6-7b23-4ed6-9729-d44c7e5df136",
+      "b71e74ed-7331-4ad2-9d79-051018795677",
+      "86bb72b6-4974-498f-b163-d1b9fb7d44dd"
+    ],
+    "selected": "b71e74ed-7331-4ad2-9d79-051018795677",
+    "poses": {
+      "b71e74ed-7331-4ad2-9d79-051018795677": [
+        0
+      ]
+    },
+    "matrices": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    ],
+    "config": {
+      "b71e74ed-7331-4ad2-9d79-051018795677": {
+        "kind": "revolute",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "180 deg",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1
+      }
+    },
+    "min": 0,
+    "max": 180,
+    "current": 0,
+    "lead": 0,
+    "readings": [],
+    "problem": ""
+  },
+  "inspector": null,
+  "console": []
+}

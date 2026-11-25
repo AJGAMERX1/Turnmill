@@ -1,0 +1,56 @@
+{
+  "model": "cylinder",
+  "expected": {
+    "formula": "π × 5² × 100",
+    "volume": 7853.981633974483,
+    "bbox": [
+      [
+        0,
+        -5,
+        -5
+      ],
+      [
+        100,
+        5,
+        5
+      ]
+    ],
+    "center": [
+      50,
+      0,
+      0
+    ]
+  },
+  "parts": [
+    {
+      "name": "Analytic cylinder",
+      "volume": 7853.981633974484,
+      "area": 3298.672286269283,
+      "bbox": [
+        [
+          0,
+          -5,
+          -5
+        ],
+        [
+          100,
+          5,
+          5
+        ]
+      ],
+      "center": [
+        50,
+        8.10603234017084e-16,
+        -2.1649348980190657e-18
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

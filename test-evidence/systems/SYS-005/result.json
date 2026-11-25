@@ -1,0 +1,6 @@
+{
+  "id": "SYS-005",
+  "title": "Flat engraving labels the longitudinal start/end offset as the Z axis",
+  "outcome": "XFAIL",
+  "message": "Actual options: Start · minimum Z / End · maximum Z; offset moves along X."
+}

@@ -1,0 +1,80 @@
+{
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v26.5.0"
+  },
+  "scope": "Native worker path, excludes browser paint. 500 ms interactive target also recorded for all declared common actions.",
+  "samples": [
+    {
+      "name": "Cold four-part twist pen, evaluation, exact solids and display meshes",
+      "ms": 20942.5815,
+      "budgetMs": 90000,
+      "exceedsBudget": false,
+      "common": false,
+      "above500ms": true
+    },
+    {
+      "name": "Warm refill-only edit, four-part pen",
+      "ms": 22.878042000000278,
+      "budgetMs": 500,
+      "exceedsBudget": false,
+      "common": true,
+      "above500ms": false
+    },
+    {
+      "name": "Cold 100-feature history, one solid",
+      "ms": 596.6206659999989,
+      "budgetMs": 60000,
+      "exceedsBudget": false,
+      "common": false,
+      "above500ms": true
+    },
+    {
+      "name": "Edit final additive feature to 0.75 mm in 100-feature solid",
+      "ms": 534.1026249999995,
+      "budgetMs": 500,
+      "exceedsBudget": true,
+      "common": true,
+      "above500ms": true,
+      "scope": "Native diagnostic for an end-to-end budget",
+      "booleanFuses": 99
+    },
+    {
+      "name": "Edit final additive feature to 0.5 mm in 100-feature solid",
+      "ms": 509.57837500000096,
+      "budgetMs": 500,
+      "exceedsBudget": true,
+      "common": true,
+      "above500ms": true,
+      "scope": "Native diagnostic for an end-to-end budget",
+      "booleanFuses": 99
+    },
+    {
+      "name": "Edit final additive feature to 0.625 mm in 100-feature solid",
+      "ms": 506.19474999999875,
+      "budgetMs": 500,
+      "exceedsBudget": true,
+      "common": true,
+      "above500ms": true,
+      "scope": "Native diagnostic for an end-to-end budget",
+      "booleanFuses": 99
+    },
+    {
+      "name": "Cold 50-part assembly geometry",
+      "ms": 52.44145899999785,
+      "budgetMs": 15000,
+      "exceedsBudget": false,
+      "common": false,
+      "above500ms": false
+    },
+    {
+      "name": "50-component parent chain, one pose",
+      "ms": 1.1768750000010186,
+      "budgetMs": 500,
+      "exceedsBudget": false,
+      "common": true,
+      "above500ms": false
+    }
+  ]
+}

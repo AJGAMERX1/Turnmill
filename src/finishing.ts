@@ -1,4 +1,5 @@
 import {
+  getOC,
   genericSweep,
   makeCylinder,
   makeHelix,
@@ -93,6 +94,25 @@ function finishEdges(
     : shape.chamfer(f.size, (finder) => finder.inList(selected));
 }
 
+function validThreadResult(shape: Shape3D, before: number, toolVolume: number) {
+  const solids = shape.solids;
+  try {
+    if (solids.length !== 1) return false;
+    const volume = measureVolume(shape);
+    const removed = before - volume;
+    if (!(volume > 0 && removed > 1e-8 && removed <= toolVolume * 1.001 + 1e-7))
+      return false;
+    const check = new (getOC().BRepCheck_Analyzer)(shape.wrapped, true);
+    try {
+      return check.IsValid();
+    } finally {
+      check.delete();
+    }
+  } finally {
+    solids.forEach((s) => s.delete());
+  }
+}
+
 function applyThread(
   shape: Shape3D,
   f: Thread,
@@ -182,27 +202,39 @@ function applyThread(
   ]);
   const section = face.outerWire();
   face.delete();
-  const helix = makeHelix(
-    p,
-    h + p,
-    (wide + narrow) / 2,
-    [0, 0, 0],
-    [0, 0, 1],
-    f.hand === "left",
-  );
-  let cutter: Shape3D | undefined,
-    band: Shape3D | undefined,
-    prepared: Shape3D | undefined,
-    sweep: Shape3D | undefined;
+  const band = cylinder(Math.max(r, p) + clearance * 3, h, z, center, axis);
+  function grooveTool(extensionTurns: number) {
+    // Starting a sweep earlier changes its angle at the band entrance.
+    // Rotate by that exact phase so both tools describe the same thread.
+    const helix = makeHelix(
+      p,
+      h + p * (1 + 2 * extensionTurns),
+      (wide + narrow) / 2,
+      [0, 0, 0],
+      [0, 0, 1],
+      f.hand === "left",
+    );
+    let sweep: Shape3D | undefined;
+    try {
+      sweep = genericSweep(section, helix, { frenet: true });
+      sweep = sweep.translate([0, 0, -p * (0.5 + extensionTurns)]);
+      if (extensionTurns) {
+        const phase = extensionTurns * 360 * (f.hand === "left" ? 1 : -1);
+        sweep = sweep.rotate(phase, [0, 0, 0], [0, 0, 1]);
+      }
+      if (axis === 0) sweep = sweep.rotate(90, [0, 0, 0], [0, 1, 0]);
+      const offset: Vec = [...center];
+      offset[axis] = z;
+      sweep = sweep.translate(offset);
+      return sweep.intersect(band);
+    } finally {
+      sweep?.delete();
+      helix.delete();
+    }
+  }
+  let cutter: Shape3D | undefined, prepared: Shape3D | undefined;
   try {
-    sweep = genericSweep(section, helix, { frenet: true });
-    sweep = sweep.translate([0, 0, -p / 2]);
-    if (axis === 0) sweep = sweep.rotate(90, [0, 0, 0], [0, 1, 0]);
-    const offset: Vec = [...center];
-    offset[axis] = z;
-    sweep = sweep.translate(offset);
-    band = cylinder(Math.max(r, p) + clearance * 3, h, z, center, axis);
-    cutter = sweep.intersect(band);
+    cutter = grooveTool(0);
     if (internal) {
       const pilot = cylinder(minor, h, z, center, axis);
       try {
@@ -229,12 +261,24 @@ function applyThread(
       }
     }
     const before = measureVolume(prepared),
-      minChange = 1e-8;
+      minChange = 1e-8,
+      toolVolume = measureVolume(cutter);
     let result = prepared.cut(cutter);
-    if (before - measureVolume(result) > minChange) return { shape: result };
+    if (validThreadResult(result, before, toolVolume)) return { shape: result };
+    result.delete();
+    // OCCT may misclassify a periodic seam as an empty or disconnected cut.
+    // Reparameterize the sweep outside the working band before splitting turns.
+    const alternate = grooveTool(0.5);
+    try {
+      result = prepared.cut(alternate);
+      if (validThreadResult(result, before, measureVolume(alternate)))
+        return { shape: result };
+      result.delete();
+    } finally {
+      alternate.delete();
+    }
     // Periodic faces can defeat OCCT's classification of a long tool. Partition the
     // same helix at pitch boundaries, keeping its phase, depth and axial limits.
-    result.delete();
     result = prepared.clone();
     try {
       for (let i = 0; i < Math.ceil(h / p); i++) {
@@ -264,9 +308,9 @@ function applyThread(
           section?.delete();
         }
       }
-      if (before - measureVolume(result) <= minChange)
+      if (!validThreadResult(result, before, toolVolume))
         throw Error(
-          "The helix misses the material. Check the nominal diameter and the selected end.",
+          "The helix could not form one valid threaded body. Check the stock diameter, thread length and selected end.",
         );
       return { shape: result };
     } catch (error) {
@@ -275,9 +319,7 @@ function applyThread(
     }
   } finally {
     section.delete();
-    helix.delete();
-    sweep?.delete();
-    band?.delete();
+    band.delete();
     cutter?.delete();
     prepared?.delete();
   }

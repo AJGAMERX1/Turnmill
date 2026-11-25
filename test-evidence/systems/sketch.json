@@ -1,0 +1,120 @@
+[
+  {
+    "name": "underconstrained",
+    "result": "solved",
+    "dof": 8,
+    "redundant": [],
+    "ms": 0.8935000000000173
+  },
+  {
+    "name": "fully constrained expressions",
+    "result": "solved",
+    "dof": 0,
+    "redundant": [],
+    "ms": 9.517000000000024
+  },
+  {
+    "name": "redundant horizontal on locked endpoints",
+    "result": "solved",
+    "dof": 0,
+    "redundant": [
+      "Horizontal (1)"
+    ],
+    "ms": 0.9105830000000026
+  },
+  {
+    "name": "contradictory X dims",
+    "result": "rejected",
+    "message": "Conflicting dimensions or constraints — Fix X coordinate (1).",
+    "ms": 0.40712500000000773
+  },
+  {
+    "name": "horizontal + vertical",
+    "result": "solved",
+    "dof": 6,
+    "redundant": [],
+    "ms": 0.15508400000001643
+  },
+  {
+    "name": "parallel",
+    "result": "solved",
+    "dof": 7,
+    "redundant": [],
+    "ms": 0.21441599999999994
+  },
+  {
+    "name": "equal",
+    "result": "solved",
+    "dof": 7,
+    "redundant": [],
+    "ms": 0.16249999999999432
+  },
+  {
+    "name": "coincident",
+    "result": "solved",
+    "dof": 6,
+    "redundant": [],
+    "ms": 0.10195799999999622
+  },
+  {
+    "name": "symmetric about X",
+    "result": "solved",
+    "dof": 6,
+    "redundant": [],
+    "ms": 0.18583300000000236
+  },
+  {
+    "name": "symmetric about Y",
+    "result": "solved",
+    "dof": 6,
+    "redundant": [],
+    "ms": 0.07720900000001052
+  },
+  {
+    "name": "symmetric about edge",
+    "result": "solved",
+    "dof": 6,
+    "redundant": [],
+    "ms": 0.11991699999998673
+  },
+  {
+    "name": "point distance",
+    "result": "solved",
+    "dof": 7,
+    "redundant": [],
+    "ms": 0.11491699999999128
+  },
+  {
+    "name": "edge length",
+    "result": "solved",
+    "dof": 7,
+    "redundant": [],
+    "ms": 0.05924999999999159
+  },
+  {
+    "name": "X and Y dimensions",
+    "result": "solved",
+    "dof": 6,
+    "redundant": [],
+    "ms": 0.06274999999999409
+  },
+  {
+    "name": "arc radius and tangent",
+    "result": "solved",
+    "dof": 7,
+    "redundant": [],
+    "ms": 0.3194169999999872
+  },
+  {
+    "name": "invalid arc radius",
+    "result": "rejected",
+    "message": "Arc radius must be at least 3.500 mm for these endpoints.",
+    "ms": 0.07050000000000978
+  },
+  {
+    "name": "removed constraint reference",
+    "result": "rejected",
+    "message": "Edge length refers to a missing vertex or edge.",
+    "ms": 0.03395800000001259
+  }
+]

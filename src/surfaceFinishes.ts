@@ -164,7 +164,7 @@ export function applyMark(
   const [lo, hi] = extent(shape),
     w = f.artwork.width * f.height;
   const x = f.end === "start" ? lo[0] + f.offset : hi[0] - f.offset - w;
-  if (x < lo[0] - 1e-5 || x + w > hi[0] + 1e-5)
+  if (kind === "revolve" && (x < lo[0] - 1e-5 || x + w > hi[0] + 1e-5))
     throw Error(
       "Reduce artwork height or move its start so its width fits on the body.",
     );
@@ -178,8 +178,6 @@ export function applyMark(
   const baseY = wrapped ? 0 : (lo[1] + hi[1]) / 2;
   const z = wrapped ? 0 : emboss ? hi[2] - 0.002 : hi[2] - f.depth;
   const height = wrapped ? r + f.depth + 0.02 : f.depth + 0.002;
-  if (!wrapped && f.height > hi[1] - lo[1] + 1e-6)
-    throw Error("Reduce mark height to fit the top face.");
   const vector = new Vector([0, 0, height]);
   const tools: Shape3D[] = [];
   let tool: Shape3D | undefined;
@@ -229,8 +227,27 @@ export function applyMark(
         band.delete();
       }
       if (f.rotation) tool = tool.rotate(f.rotation, [0, 0, 0], [1, 0, 0]);
-    } else if (f.rotation) {
-      tool = tool.rotate(f.rotation, [x + w / 2, baseY, hi[2]], [0, 0, 1]);
+    } else {
+      if (f.rotation)
+        tool = tool.rotate(f.rotation, [x + w / 2, baseY, hi[2]], [0, 0, 1]);
+      // Intersect the actual rotated outline with a thin layer of surface material.
+      // Its holes remain holes, including on a face already containing pockets.
+      const layer = Math.min(0.01, height / 2, (hi[2] - lo[2]) / 2);
+      const probe = tool.clone().translate([0, 0, hi[2] - layer - z]);
+      try {
+        const support = shape.intersect(probe);
+        try {
+          const expected = (measureVolume(tool) * layer) / height;
+          if (measureVolume(support) < expected * (1 - 0.001) - 1e-10)
+            throw Error(
+              "The artwork extends outside the flat face. Reduce its height, change its rotation, or move it onto the stock.",
+            );
+        } finally {
+          support.delete();
+        }
+      } finally {
+        probe.delete();
+      }
     }
     const result = emboss ? shape.fuse(tool) : shape.cut(tool);
     if (Math.abs(measureVolume(result) - measureVolume(shape)) < 1e-8) {

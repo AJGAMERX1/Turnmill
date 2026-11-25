@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "id": "qa-model",
+  "name": "QA model",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "stock",
+      "name": "stock",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "10",
+          "y": "0"
+        },
+        {
+          "x": "10",
+          "y": "4"
+        },
+        {
+          "x": "0",
+          "y": "4"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "plate",
+      "name": "plate",
+      "kind": "extrude",
+      "sketchId": "stock",
+      "amount": "2",
+      "operation": "new",
+      "suppressed": false
+    }
+  ]
+}

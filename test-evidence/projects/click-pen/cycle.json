@@ -1,0 +1,37 @@
+{
+  "samples": [
+    {
+      "a": 0,
+      "text": "Follower · Plunger\nSlider position\n0.000 mm\nClosing spring\n0.600 N\nCam phase\nRise\nContact\nPrescribed"
+    },
+    {
+      "a": 16,
+      "text": "Follower · Plunger\nSlider position\n0.600 mm\nClosing spring\n1.020 N\nCam phase\nRise\nContact\nPrescribed"
+    },
+    {
+      "a": 32,
+      "text": "Follower · Plunger\nSlider position\n1.200 mm\nClosing spring\n1.440 N\nCam phase\nHigh dwell\nContact\nPrescribed"
+    },
+    {
+      "a": 60,
+      "text": "Follower · Plunger\nSlider position\n0.600 mm\nClosing spring\n1.020 N\nCam phase\nReturn\nContact\nPrescribed"
+    },
+    {
+      "a": 90,
+      "text": "Follower · Plunger\nSlider position\n0.000 mm\nClosing spring\n0.600 N\nCam phase\nRise\nContact\nPrescribed"
+    },
+    {
+      "a": 180,
+      "text": "Follower · Plunger\nSlider position\n0.000 mm\nClosing spring\n0.600 N\nCam phase\nRise\nContact\nPrescribed"
+    },
+    {
+      "a": 270,
+      "text": "Follower · Plunger\nSlider position\n0.000 mm\nClosing spring\n0.600 N\nCam phase\nRise\nContact\nPrescribed"
+    },
+    {
+      "a": 360,
+      "text": "Follower · Plunger\nSlider position\n0.000 mm\nClosing spring\n0.600 N\nCam phase\nRise\nContact\nPrescribed"
+    }
+  ],
+  "report": "Guide tube — Clear throughout this joint travel · conservative nominal gap ≥ 0.07784 mm. Smallest sampled gap 0.30000 mm at 236.250°.\nPlunger — Clear throughout this joint travel · conservative nominal gap ≥ 0.20608 mm. Smallest sampled gap 0.40000 mm at 247.500°."
+}

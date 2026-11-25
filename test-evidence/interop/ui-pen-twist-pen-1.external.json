@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 12261,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 6428.516113,
+    "bbox": [
+      [
+        0.0,
+        -6.0,
+        -5.999869
+      ],
+      [
+        92.0,
+        6.0,
+        6.0
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 16796
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -6.0,
+            -5.999869346618652
+          ],
+          [
+            92.0,
+            6.0,
+            6.0
+          ]
+        ],
+        "volume": 6428.524151728133,
+        "closed": true,
+        "triangles": 25008
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Barrel"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 6428.510254,
+        "manifold": true
+      }
+    ]
+  }
+}

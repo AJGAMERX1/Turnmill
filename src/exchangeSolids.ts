@@ -3,10 +3,12 @@ import {
   getOC,
   measureVolume,
   type Shape3D,
-  type ShapeMesh,
   type Solid,
 } from "replicad";
+import { componentNames } from "./stepNames";
 import { strToU8, zipSync } from "three/examples/jsm/libs/fflate.module.js";
+import { printableMesh } from "./printMesh";
+import type { PrintMesh } from "./meshGeometry";
 import type { Body } from "./geometry";
 
 function checkImportedSolid(shape: Shape3D) {
@@ -22,7 +24,7 @@ function checkImportedSolid(shape: Shape3D) {
   }
 }
 
-function readStep(path: string): Shape3D[] {
+function readStep(path: string, text: string) {
   const oc = getOC();
   const reader = new oc.STEPControl_Reader();
   try {
@@ -55,7 +57,12 @@ function readStep(path: string): Shape3D[] {
         const solids = shape.solids;
         if (!solids.length)
           throw new Error("The STEP file contains no closed solids.");
-        return solids;
+        try {
+          return { shapes: solids, names: componentNames(reader, text, solids) };
+        } catch (error) {
+          solids.forEach(solid => solid.delete());
+          throw error;
+        }
       } finally {
         shape.delete();
       }
@@ -203,9 +210,12 @@ export async function importSolidFile(
 ): Promise<Body[]> {
   const oc = getOC();
   const path = "/import-" + crypto.randomUUID() + "." + format;
-  oc.FS.writeFile(path, new Uint8Array(await file.arrayBuffer()));
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  oc.FS.writeFile(path, bytes);
   try {
-    const shapes = format === "step" ? readStep(path) : readStl(path);
+    const { shapes, names } = format === "step"
+      ? readStep(path, new TextDecoder().decode(bytes))
+      : { shapes: readStl(path), names: [] };
     try {
       for (let i = 0; i < shapes.length; i++) {
         if (format === "stl" && stlUnit === "in")
@@ -214,7 +224,7 @@ export async function importSolidFile(
       }
       return shapes.map((shape, index) => ({
         shape,
-        name: shapes.length === 1 ? name : name + " · " + (index + 1),
+        name: names[index] ?? (shapes.length === 1 ? name : name + " · " + (index + 1)),
       }));
     } catch (error) {
       shapes.forEach((shape) => shape.delete());
@@ -253,51 +263,16 @@ function xmlName(name: string) {
     .replace(/>/g, "&gt;");
 }
 
-/** OC triangulates each face separately. Weld the matching face-boundary vertices into a 3MF object mesh. */
-function meshXml(mesh: ShapeMesh) {
-  const vertexIds = new Map<string, number>();
-  const vertexXml: string[] = [],
-    triangleXml: string[] = [];
-  const index = new Uint32Array(mesh.vertices.length / 3);
-  for (let i = 0; i < index.length; i++) {
-    const xyz = mesh.vertices.slice(3 * i, 3 * i + 3);
-    if (!xyz.every(Number.isFinite))
-      throw new Error("A mesh has invalid vertex coordinates.");
-    const key = xyz.map((v) => Math.round(v * 1e7)).join(",");
-    let id = vertexIds.get(key);
-    if (id === undefined) {
-      id = vertexXml.length;
-      vertexIds.set(key, id);
-      vertexXml.push(
-        '<vertex x="' + xyz[0] + '" y="' + xyz[1] + '" z="' + xyz[2] + '"/>',
-      );
-    }
-    index[i] = id;
-  }
-  for (let i = 0; i < mesh.triangles.length; i += 3) {
-    const a = index[mesh.triangles[i]],
-      b = index[mesh.triangles[i + 1]],
-      c = index[mesh.triangles[i + 2]];
-    if (a !== b && b !== c && c !== a)
-      triangleXml.push(
-        '<triangle v1="' + a + '" v2="' + b + '" v3="' + c + '"/>',
-      );
-  }
-  if (!triangleXml.length)
-    throw new Error("A body has no printable triangles.");
-  return (
-    "<mesh><vertices>" +
-    vertexXml.join("") +
-    "</vertices><triangles>" +
-    triangleXml.join("") +
-    "</triangles></mesh>"
-  );
+function meshXml(mesh: PrintMesh) {
+  const vertices=mesh.vertices.map(([x,y,z]) => '<vertex x="'+x+'" y="'+y+'" z="'+z+'"/>').join("");
+  const triangles=mesh.triangles.map(([a,b,c]) => '<triangle v1="'+a+'" v2="'+b+'" v3="'+c+'"/>').join("");
+  return "<mesh><vertices>"+vertices+"</vertices><triangles>"+triangles+"</triangles></mesh>";
 }
 
 export function export3MF(bodies: Body[]): Blob {
   if (!bodies.length) throw new Error("Add a solid feature before exporting.");
   const objects = bodies.map(({ name, shape }, index) => {
-    const mesh = shape.mesh({ tolerance: 0.005, angularTolerance: 0.08 });
+    const mesh = printableMesh(shape);
     return (
       '<object id="' +
       (index + 1) +

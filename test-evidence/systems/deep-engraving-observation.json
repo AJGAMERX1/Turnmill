@@ -1,0 +1,8 @@
+{
+  "stockThickness": 2,
+  "requested": 3,
+  "valid": true,
+  "cutRemoved": 1.097729516288254,
+  "observed": "Letter I through-cut accepted on 2 mm stock; the model stores the requested cutter travel, depth 3 mm. No warning in geometry response.",
+  "classification": "Record behavior; no contract requiring all-purpose engraving to reject a through-cut."
+}

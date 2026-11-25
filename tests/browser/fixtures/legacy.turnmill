@@ -1,0 +1,140 @@
+{
+  "id": "0ac09e1d-d9a1-48c9-a206-e054f00b56fe",
+  "version": 1,
+  "name": "Twist pen barrel",
+  "parameters": [
+    {
+      "name": "barrel_length",
+      "label": "Barrel length",
+      "expression": "116 mm"
+    },
+    {
+      "name": "outer_diameter",
+      "label": "Outside diameter",
+      "expression": "12 mm"
+    },
+    {
+      "name": "bore_diameter",
+      "label": "Bore diameter",
+      "expression": "7 mm"
+    },
+    {
+      "name": "shoulder_length",
+      "label": "Shoulder length",
+      "expression": "8 mm"
+    },
+    {
+      "name": "thread_pitch",
+      "label": "Thread pitch",
+      "expression": "0.75 mm"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "barrel-profile",
+      "name": "Barrel profile",
+      "points": [
+        {
+          "x": "0",
+          "y": "bore_diameter/2"
+        },
+        {
+          "x": "0",
+          "y": "outer_diameter/2 - 1.1"
+        },
+        {
+          "x": "1.1",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 10",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 9",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 8.7",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 8.3",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 8",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 7",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 6.7",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 6.3",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 6",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 5",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 4.7",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 4.3",
+          "y": "outer_diameter/2 - 0.4"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 4",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length - 1",
+          "y": "outer_diameter/2"
+        },
+        {
+          "x": "barrel_length - shoulder_length",
+          "y": "outer_diameter/2 - 0.65"
+        },
+        {
+          "x": "barrel_length - shoulder_length",
+          "y": "outer_diameter/2 - 1.15"
+        },
+        {
+          "x": "barrel_length - 0.5",
+          "y": "outer_diameter/2 - 1.15"
+        },
+        {
+          "x": "barrel_length",
+          "y": "outer_diameter/2 - 1.65"
+        },
+        {
+          "x": "barrel_length",
+          "y": "bore_diameter/2"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "barrel-revolve",
+      "kind": "revolve",
+      "name": "Barrel revolve",
+      "sketchId": "barrel-profile",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    }
+  ]
+}

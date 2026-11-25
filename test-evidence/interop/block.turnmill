@@ -1,0 +1,42 @@
+{
+  "id": "8e54bc9a-adfe-44de-9276-ea3ff99eda7b",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "b-profile",
+      "name": "Analytic block profile",
+      "points": [
+        {
+          "x": "0 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "20 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "20 mm",
+          "y": "10 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "10 mm"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "b",
+      "name": "Analytic block",
+      "kind": "extrude",
+      "operation": "new",
+      "sketchId": "b-profile",
+      "amount": "5 mm",
+      "suppressed": false
+    }
+  ]
+}
