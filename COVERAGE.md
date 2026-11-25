@@ -27,7 +27,7 @@ A status describes the exercised examples in that cell. “Fail” takes precede
 | Live Part viewport cutting plane | Not built yet | Not built yet | Not built yet | Not built yet | Drawing sections tested separately. |
 | Performance under load | Pass | Fail | Fail | Not covered | Cold pen, 100 features and 50 parts; SYS-003 for common edit. No general hardware guarantee. |
 | Number entry and formulas | Pass | Pass | Pass | Pass | 1/2 in, formulas, negative/zero, huge/tiny, empty, letters, infinity and divide-by-zero. Comma decimal is rejected. |
-| Command palette and shortcuts | Pass | Pass | Pass | Not covered | Search, focus restoration, tool routing, modal isolation, shortcut registry and keyboard persona. Every key in every platform layout remains untested. |
+| Command palette and shortcuts | Pass | Pass | Pass | Not covered | All assigned direct shortcuts exercised on Chromium, with 43 observed outcomes across 42 key combinations. Actual STEP/STL/3MF downloads, workspaces, camera fit, history and both Control and Meta were checked. Other OS/browser layouts remain untested. [Key-by-key evidence](test-evidence/browser/shortcuts.json) |
 | Measure, material, density, mass and balance | Pass | Pass | Pass | Pass | Individual and assembly density-weighted mass and center; UI compared within display precision. |
 | Unicode, spaces and long names | Pass | Not covered | Pass | Pass | Document serialization and rename, not every host OS filename limit. |
 | Preferences, UI labels, errors, empty state, guidance | Pass | Fail | Fail | Pass | Persisted project settings/guide, misleading finish/angle errors. Tooltip/empty-state census incomplete. |
@@ -39,7 +39,7 @@ A status describes the exercised examples in that cell. “Fail” takes precede
 | Case | Result | Measured outcome |
 |---|---|---|
 | Twist pen and new-user guide | Fail | Knurl and name engraving, four components, screw travel and drawing exercised. Exact M10 × 0.75 rebuild fails UI-001. Guided run completed with the sample thread in 145.915 s. |
-| Click pen | Pass for prescribed motion, fail for mesh export | Verified plunger return at 360°, actual swept solid checks, full study and separate physical spring. The isolated stock spring has 131 intersecting facet pairs in STL and 3MF. Alternating latch is Not built yet. |
+| Click pen | Pass for prescribed motion, fail for STEP placement and mesh export | Verified plunger return at 360°, actual swept solid checks, full study and separate physical spring. Assembly STEP loses the installed spring pose. The isolated stock spring has 131 intersecting facet pairs in STL and 3MF. Alternating latch is Not built yet. |
 | Dual ruler | Fail | Both scales exported. 150 mm spans 150 metric intervals and 152.4 mm spans 96 sixteenths. The terminal metric tick misses its center, INTEROP-005. The independent-endpoint layout is Not built yet. |
 | M5 bolt and nut | Fail | The modeled library screw fails, INTEROP-001. A scratch-made thread pair advances 0.800 mm per turn; the cosmetic library fallback exercises screw motion. |
 | Hinge | Pass for tested motion | Two leaves and pin driven through 0, 90 and 180°, clamps at both limits. The driven leaf was checked against each other component through travel. |

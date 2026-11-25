@@ -4,3 +4,6 @@ dist/
 __pycache__/
 *.pyc
 *.tsbuildinfo
+# Fresh per-run exports are retained in the CI artifact.
+test-evidence/runner/interop-*/
+test-evidence/runner/projects-*/

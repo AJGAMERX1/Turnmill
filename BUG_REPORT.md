@@ -8,7 +8,7 @@ The replayable chaos run used seed `0x50454e35` and recorded 139 actions. [Times
 
 ### ASM-001 · Assembly STEP loses the installed component position
 
-**Critical · Assembly/STEP.** Open [two-blocks.turnmill](test-evidence/ASM-001/two-blocks.turnmill), choose Assembly → 3D assembly → Upper block, then Export → All bodies → STEP solid. Import into FreeCAD. Each block is 20 × 10 × 5 mm. The upper block has a fixed Z offset of 20 mm, so the expected combined Z span is 25 mm and the air gap is 15 mm. FreeCAD reads two valid solids with a combined span of **5 mm** and **1,000 mm³ of overlap**. The placement matrix in the live assembly still translates Z by 20 mm. The AP242 checker accepts the STEP file.
+**Critical · Assembly/STEP.** Open [two-blocks.turnmill](test-evidence/ASM-001/two-blocks.turnmill), choose Assembly → 3D assembly → Upper block, then Export → All bodies → STEP solid. Import into FreeCAD. Each block is 20 × 10 × 5 mm. The upper block has a fixed Z offset of 20 mm, so the expected combined Z span is 25 mm and the air gap is 15 mm. FreeCAD reads two valid solids with a combined span of **5 mm** and **1,000 mm³ of overlap**. The placement matrix in the live assembly still translates Z by 20 mm. The AP242 checker accepts the STEP file. The installed spring and both M5 nuts also lose their positions in the tested STEP and 3MF assemblies. [Per-file coordinate and 3MF build checks](test-evidence/interop/results.md)
 
 **Expected-failing test** `ASM-001` in tests/freecad/placement_xfail.py, preceded by the browser export in tests/qa/placement.mjs. [Screenshot, native readings, STEP and FreeCAD results](test-evidence/ASM-001/)
 
@@ -20,7 +20,7 @@ The replayable chaos run used seed `0x50454e35` and recorded 139 actions. [Times
 
 ### INTEROP-003 · Engraved ruler STL has self-intersections
 
-**Critical · STL export.** Open [the 155.4 × 20 × 2 mm engraved ruler fixture](test-evidence/interop/ruler.turnmill), wait for its 0.2 mm-deep marks to build, then choose Export → All bodies → STL mesh. Expected a closed mesh with zero self-intersections. FreeCAD Mesh reports self-intersections in the 99,440-triangle test ruler. Closure and PrusaSlicer's manifold flag both pass. The longer UI-built ruler also reproduces the finding.
+**Critical · STL export.** Open [the 155.4 × 20 × 2 mm engraved ruler fixture](test-evidence/interop/ruler.turnmill), wait for its 0.2 mm-deep marks to build, then choose Export → STL mesh. Expected a closed mesh with zero self-intersections. FreeCAD Mesh reports self-intersections in the 99,440-triangle test ruler. Closure and PrusaSlicer's manifold flag both pass. The 155 mm ruler built through the UI also reproduces the finding.
 
 **Expected-failing test** `INTEROP-003` in tests/interop/known.py. [Ruler STL](test-evidence/interop/ruler.stl) · [FreeCAD Mesh findings](test-evidence/interop/ruler.freecad.json)
 

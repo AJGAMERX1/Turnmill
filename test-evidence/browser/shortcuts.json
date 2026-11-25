@@ -1,0 +1,202 @@
+{
+  "time": "2026-11-25T18:21:17.353Z",
+  "chromium": "159.0.8154.6",
+  "results": [
+    {
+      "key": "Alt+N",
+      "detail": "Created disposable turned-part template: Twist pen barrel"
+    },
+    {
+      "key": "Escape",
+      "detail": "Dismissed open project menu"
+    },
+    {
+      "key": "Alt+h",
+      "detail": "Opened Hardware library"
+    },
+    {
+      "key": "Alt+i",
+      "detail": "Opened Import geometry"
+    },
+    {
+      "key": "a",
+      "detail": "Opened Advanced operation"
+    },
+    {
+      "key": "g",
+      "detail": "Opened Finish Barrel revolve"
+    },
+    {
+      "key": "p",
+      "detail": "Opened Named parameters"
+    },
+    {
+      "key": "Shift+Slash",
+      "detail": "Opened Pen walkthrough"
+    },
+    {
+      "key": "Control+k",
+      "detail": "Opened command palette"
+    },
+    {
+      "key": "Meta+k",
+      "detail": "Opened command palette"
+    },
+    {
+      "key": "Shift+Semicolon",
+      "detail": "Opened command lookup with colon prefix"
+    },
+    {
+      "key": "s",
+      "detail": "Opened sketch editor for Sketch 2"
+    },
+    {
+      "key": "e",
+      "detail": "Opened sketch editor for Barrel profile"
+    },
+    {
+      "key": "Alt+E",
+      "detail": "Opened existing feature Barrel revolve"
+    },
+    {
+      "key": "R",
+      "detail": "Revolve editor opened with 360-degree angle"
+    },
+    {
+      "key": "X",
+      "detail": "Created independent extrusion and verified feature history"
+    },
+    {
+      "key": "Alt+ArrowUp",
+      "detail": "Moved selected feature to first position"
+    },
+    {
+      "key": "Alt+ArrowDown",
+      "detail": "Restored second position"
+    },
+    {
+      "key": "H",
+      "detail": "Suppressed and restored extrusion; 2 to 1 to 2 displayed bodies"
+    },
+    {
+      "key": "F2",
+      "detail": "Selected feature renamed in history"
+    },
+    {
+      "key": "Backspace",
+      "detail": "Removed selected extrusion only"
+    },
+    {
+      "key": "Alt+R",
+      "detail": "Project title changed to Shortcut Control"
+    },
+    {
+      "key": "Control+Z",
+      "detail": "Restored original project title"
+    },
+    {
+      "key": "Control+Shift+Z",
+      "detail": "Restored renamed project title"
+    },
+    {
+      "key": "Control+S",
+      "detail": {
+        "filename": "Shortcut Control.turnmill",
+        "bytes": 3462,
+        "name": "Shortcut Control"
+      }
+    },
+    {
+      "key": "Control+O",
+      "detail": "Reopened downloaded native file into the visible history"
+    },
+    {
+      "key": "Alt+R",
+      "detail": "Project title changed to Shortcut Meta"
+    },
+    {
+      "key": "Meta+Z",
+      "detail": "Restored original project title"
+    },
+    {
+      "key": "Meta+Shift+Z",
+      "detail": "Restored renamed project title"
+    },
+    {
+      "key": "Meta+S",
+      "detail": {
+        "filename": "Shortcut Meta.turnmill",
+        "bytes": 3459,
+        "name": "Shortcut Meta"
+      }
+    },
+    {
+      "key": "Meta+O",
+      "detail": "Reopened downloaded native file into the visible history"
+    },
+    {
+      "key": "Alt+2",
+      "detail": "Switched to visible Assembly workspace"
+    },
+    {
+      "key": "Alt+3",
+      "detail": "Switched to visible Drawing workspace"
+    },
+    {
+      "key": "Alt+4",
+      "detail": "Switched to visible Scales workspace"
+    },
+    {
+      "key": "Alt+1",
+      "detail": "Switched to visible Part workspace"
+    },
+    {
+      "key": "2",
+      "detail": "Selected Front view; SHA-256 0bb691ccfbd51e3e420bb5cfb6b2826ff503c63354b230f665a3055f478c7ad8"
+    },
+    {
+      "key": "3",
+      "detail": "Selected Top view; SHA-256 bec587964a37ca7619a8d2b014cb50239c29190b4b3747f02672bed50dc8fc1d"
+    },
+    {
+      "key": "4",
+      "detail": "Selected Right view; SHA-256 2a464075912ec1d995f21034055c9dfc10af619a26e917ff97edb9cda1aaee5d"
+    },
+    {
+      "key": "1",
+      "detail": "Selected Isometric view; SHA-256 19e1220896713302d50b94bc0f662845715ae7bde8eb5596b8aadd6a34b46a51"
+    },
+    {
+      "key": "F",
+      "detail": {
+        "zoomed": "08947fe8a92946cbb869cd00ac7c2c51271ba602937e97feccb372af2a7b0d64",
+        "fitted": "19e1220896713302d50b94bc0f662845715ae7bde8eb5596b8aadd6a34b46a51"
+      }
+    },
+    {
+      "key": "Alt+s",
+      "detail": {
+        "filename": "Twist pen barrel.step",
+        "bytes": 51943,
+        "sha256": "4178d68cc1ceccade764f5f6bc08bd9a03e940a6fad95d29de7db07d0ba4e520"
+      }
+    },
+    {
+      "key": "Alt+t",
+      "detail": {
+        "filename": "Twist pen barrel.stl",
+        "bytes": 434584,
+        "sha256": "5f742d3b633267dc4633fa94e01fa2b537eef637f882fb540f6583d39643e8c5"
+      }
+    },
+    {
+      "key": "Alt+m",
+      "detail": {
+        "filename": "Twist pen barrel.3mf",
+        "bytes": 85822,
+        "sha256": "2bcd3ba0cec40afbf70f48242ac703843db4b4ae579b8867bed3a75ae57850e2"
+      }
+    }
+  ],
+  "pageErrors": []
+}

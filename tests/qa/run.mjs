@@ -83,6 +83,7 @@ try {
   );
   for (const name of ["mobile", "palette", "history"])
     await run(name, ["node", "tests/browser/" + name + ".cjs"]);
+  await run("shortcuts", ["node", "tests/browser/shortcuts.mjs"]);
   await run("drawing-export", ["node", "tests/qa/drawings.mjs"]);
   await run("pdf-review", [env.QA_PDF_PYTHON || py, "tests/qa/pdf-review.py"]);
   if (await run("assembly-export", ["node", "tests/qa/placement.mjs"]))

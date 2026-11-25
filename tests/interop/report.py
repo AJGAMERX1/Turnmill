@@ -1,15 +1,18 @@
 from pathlib import Path
-import json, hashlib, os
-from external import out
+import json, hashlib, os, re
+from collections import Counter
+from xml.etree import ElementTree
+from zipfile import ZipFile
+from external import out, root, vectors
 
 f = out / "measurements.json"
 data = json.loads(f.read_text())
 lines = [
     "# External CAD measurements",
     "",
-    "All volumes are in mm³. A pending reference requires owner sign-off. The delta for an unapproved solid compares FreeCAD to the current native solid. All cases use millimetres.",
+    "All volumes are in mm³. A pending reference requires owner sign-off. The delta for an unapproved solid compares FreeCAD to the current native solid. The STEP coordinate column compares each exported body with its raw Part-workspace bounds. Installed assembly placement is reported separately when a saved pose was checked.",
     "",
-    "|File|Format|Expected (source)|App volume|Independent volume|Diff %|BBox ±0.01 mm|Valid in reader|Import warnings|Structure|Result|",
+    "|File|Format|Expected (source)|App volume|Independent volume|Diff %|Raw body bounds ±0.01 mm|Valid in reader|Import warnings|Structure|Result|",
     "|---|---|---|---:|---:|---:|---|---|---|---|---|",
 ]
 refs = [
@@ -22,9 +25,75 @@ refs = [
 ]
 
 
+projects = Path(os.getenv("TURNMILL_PROJECT_EVIDENCE", root / "test-evidence/projects"))
+poses = {
+    "ui-bolt-library-bolt-nut": (
+        "bolt-library/03-one-turn",
+        "bolt-library/bolt-nut.step",
+    ),
+    "ui-bolt-scratch-bolt-nut": (
+        "bolt-scratch/03-one-turn",
+        "bolt-scratch/bolt-nut.step",
+    ),
+    "ui-click-coil-click-with-coil": (
+        "click-coil/03-four-body-sweep",
+        "click-coil/click-with-coil.step",
+    ),
+}
+coil = "ui-click-coil-click-with-coil"
+
+
+def installed_centers(case, parts):
+    snapshot, source = poses[case]
+    scenario_step = (projects / source).read_bytes()
+    measured_step = (out / (case + ".step")).read_bytes()
+    same_file = scenario_step == measured_step
+    # Rebuilding the hand-made bolt changed its header timestamp only. Compare all STEP entities.
+    assert (
+        scenario_step.split(b"\nDATA;", 1)[1] == measured_step.split(b"\nDATA;", 1)[1]
+    )
+    provenance = (
+        ""
+        if same_file
+        else ". Compared to the final UI export with identical STEP DATA and a different header"
+    )
+    record = json.loads((projects / (snapshot + ".json")).read_text())
+    errors = []
+    for body, matrix, imported in zip(
+        record["bodies"], record["joints"]["matrices"], parts, strict=True
+    ):
+        assert abs(body["volume"] - imported["volume"]) <= body["volume"] * 0.001
+        local = [*body["center"], 1]
+        positioned = [
+            sum(matrix[4 * col + row] * local[col] for col in range(4))
+            for row in range(3)
+        ]
+        errors.append(
+            (
+                max(abs(a - b) for a, b in zip(positioned, imported["center"])),
+                body["name"],
+            )
+        )
+    worst, name = max(errors)
+    if worst > 0.01:
+        return f"FAIL ASM-001. {name} installed centroid differs by {worst:.3f} mm on its worst axis{provenance}"
+    return "Installed component centroids match within 0.01 mm" + provenance
+
+
+def built_meshes(path):
+    with ZipFile(path) as z:
+        doc = ElementTree.fromstring(z.read("3D/3dmodel.model"))
+    objects = {o.get("id"): o for o in doc.findall("{*}resources/{*}object")}
+    result = {}
+    for item in doc.findall("{*}build/{*}item"):
+        obj = objects[item.get("objectid")]
+        assert item.get("transform") is None, "Re-evaluate the installed assembly pose"
+        result[obj.get("name")] = obj.find("{*}mesh")
+    return result
+
+
 def row(c):
     n = c["case"]
-    w = "/"
     local = json.loads((out / (n + ".native.json")).read_text())
     vs = [r["name"] for r in local["parts"]]
     fc = json.loads((out / (n + ".freecad.json")).read_text())
@@ -38,20 +107,20 @@ def row(c):
     base = ref["volume"] if ref else c["native"]
     pct = lambda y: 100 * abs(y - base) / base
     valid = "Yes" if c["valid"] else "Fail"
-    tops = " + ".join(vs)
     isMulti = len(vs) > 1
-    struct = (
-        f"{len(vs)} named solids, flat hierarchy; see ASM-001"
-        if isMulti
-        else f"1 named solid"
-    )
+    struct = f"{len(vs)} named solids, flat hierarchy" if isMulti else f"1 named solid"
     passing = "Pass" if ref else "Transfer checked, reference pending"
+    step_status = passing
+    if n in poses:
+        step_status = installed_centers(n, fc["step"]["parts"])
+    elif isMulti:
+        step_status += ". Installed pose unverified"
     if not ref:
         refs.append(
             f"|{n}|{c['freecad']:.6f}|{c['native']:.6f}|`{hashlib.sha256((out / (n + '.step')).read_bytes()).hexdigest()}`|"
         )
     lines.append(
-        f"|[{n}.step]({n}.step)|{c['stepSchema']}|{source}|{c['native']:.6f}|{c['freecad']:.6f}|{c['pctDifference']:.6f}|{c['maxBoundError']:.6g} mm|{valid}, STEPcode exit {c['strictSchemaExit']}|{len(c['warnings'])}|{struct}|{passing}|"
+        f"|[{n}.step]({n}.step)|{c['stepSchema']}|{source}|{c['native']:.6f}|{c['freecad']:.6f}|{c['pctDifference']:.6f}|{c['maxBoundError']:.6g} mm|{valid}, STEPcode exit {c['strictSchemaExit']}|{len(c['warnings'])}|{struct}|{step_status}|"
     )
     stl = fc["stl"]
     pr = ext["stl"]
@@ -73,6 +142,30 @@ def row(c):
             if n == "ui-click-coil-click-with-coil-4"
             else "Container/mesh checked"
         )
+        if n in poses:
+            built = built_meshes(out / (n + ".3mf"))
+            assert set(built) == set(vs)
+            # The independent XML reader already checked the local bounds against each native body.
+            for geometry, body in zip(mesh["meshes"], local["parts"], strict=True):
+                assert (
+                    max(
+                        abs(a - b)
+                        for ac, bc in zip(geometry["bbox"], body["bbox"])
+                        for a, b in zip(ac, bc)
+                    )
+                    < 0.01
+                )
+            if step_status.startswith("FAIL ASM-001"):
+                mesh_status = "FAIL ASM-001. Build items have identity placement and raw body coordinates"
+        if n == coil:
+            solo = built_meshes(out / (n + "-4.3mf"))
+            title = "Century Spring B18-127CS"
+            assert ElementTree.tostring(built[title]) == ElementTree.tostring(
+                solo[title]
+            )
+            identity = json.loads((out / "spring-mesh-formats.json").read_text())
+            assert identity["onlyInStl"] == identity["onlyInThreeMf"] == 0
+            mesh_status = "FAIL ASM-001 and INTEROP-007. The built spring has its unchanged raw mesh and identity placement, and shares all triangles with the isolated spring (131 intersecting pairs)"
         lines.append(
             f"|[{n}.3mf]({n}.3mf)|3MF|{source}|{c['native']:.6f}|{v:.6f}, independent triangle integration|{pct(v):.5f}|Per-part coordinates checked|2-manifold edge counts {closed}|Prusa import exit {mesh['slicerExit']}|{mesh['buildItems']} build items|{mesh_status}|"
         )
@@ -82,14 +175,89 @@ for c in data["cases"]:
     row(c)
 lines += [
     "",
+    "## Ruler exports",
+    "",
+    "Page size is the SVG sheet size. The FreeCAD extent is the bounding box of the imported marks and text. All dimensions and coordinates are in millimetres.",
+    "",
+    "|File|Independent reader|Units|Page size|FreeCAD content extent|Ticks, top / bottom|First / last top center|Maximum DXF–SVG tick contour difference|Result|",
+    "|---|---|---|---|---|---:|---:|---:|---|",
+]
+for name in ["ruler", "ui-scale", "terminal"]:
+    if not (out / (name + ".dxf")).exists():
+        continue
+    x = vectors(out / (name + ".dxf"), out / (name + ".svg"))
+    planar_path = out / (name + ".fc-planar.json")
+    fc = json.loads(planar_path.read_text()) if planar_path.exists() else {}
+    top, bottom = x["edges"]
+    first, last = top[0][0], top[-1][0]
+    nominal = first + len(top) - 1  # All three fixtures have 1 mm top graduations.
+    discrepancy = abs(last - nominal)
+    result = (
+        f"FAIL INTEROP-005. Terminal center {discrepancy:.4f} mm from nominal {nominal:g}"
+        if discrepancy > 0.01
+        else "Graduation geometry checked"
+    )
+    size = " × ".join(f"{v:g}" for v in x["svgMm"])
+    for typ in ["dxf", "svg"]:
+        reader = (
+            f"ezdxf, {x['auditErrors']} errors and {x['auditFixes']} repairs"
+            if typ == "dxf"
+            else f"XML, {x['svgLabelGroups']} numeral groups"
+        )
+        if fc:
+            reader += f", FreeCAD {fc[typ]['objects']} objects"
+        units = (
+            "mm ($INSUNITS=4)"
+            if typ == "dxf" and x["units"] == 4
+            else "mm"
+            if typ == "svg"
+            else str(x["units"])
+        )
+        extent = (
+            " × ".join(f"{v:g}" for v in fc[typ]["extents"])
+            if fc
+            else "No FreeCAD measurement"
+        )
+        lines.append(
+            f"|[{name}.{typ}]({name}.{typ})|{reader}|{units}|{size if typ == 'svg' else '—'}|{extent}|{len(top)} / {len(bottom)}|{first:.8g} / {last:.8g}|{x['maxDeltaBetweenContours']:g}|{result}|"
+        )
+
+lines += [
+    "",
     "## FreeCAD exports read by Turnmill",
     "",
-    "|File|Schema|Solids|Maximum volume change %|STEPcode strict|Result|",
-    "|---|---|---:|---:|---:|---|",
+    "The component-name columns compare labels present in the physical STEP PRODUCT records with the names Turnmill reported after import. Assembly container names are excluded.",
+    "",
+    "|File|Schema|Solids|Maximum volume change %|STEPcode strict|Source component names|Imported component names|Result|",
+    "|---|---|---:|---:|---:|---|---|---|",
 ]
-for row in data["reverse"]:
+originals = json.loads((out / "freecad-sources.json").read_text())
+outward_names = {r["case"]: r["names"] for r in data["cases"]}
+product_names = re.compile(
+    r"\bPRODUCT\s*\(\s*'(?:[^']|'')*'\s*,\s*'((?:[^']|'')*)'", re.I
+)
+for r in data["reverse"]:
+    file = r["file"]
+    if file.endswith(".return.step"):
+        expected = outward_names[file.removesuffix(".return.step")]
+    else:
+        expected = [part["name"] for part in originals[file.removesuffix(".step")]]
+    actual_products = [
+        s.replace("''", "'") for s in product_names.findall((out / file).read_text())
+    ]
+    imported = r["names"]
+    if Counter(expected) - Counter(actual_products):
+        original = "Unverified"
+        result = "Geometry checked. Component-name transfer unverified"
+    else:
+        original = ", ".join(expected)
+        result = (
+            "Geometry and component names retained"
+            if Counter(expected) == Counter(imported)
+            else "Geometry checked. FAIL INTEROP-004, component names changed"
+        )
     lines.append(
-        f"|[{row['file']}]({row['file']})|{row['schema']}|{row['solids']}|{row['maxVolumeErrorPct']:.7f}|{row['strictExit']}|Geometry checked; source component labels lost on import (INTEROP-004)|"
+        f"|[{file}]({file})|{r['schema']}|{r['solids']}|{r['maxVolumeErrorPct']:.7f}|{r['strictExit']}|{original}|{', '.join(imported)}|{result}|"
     )
 lines += [
     "",
