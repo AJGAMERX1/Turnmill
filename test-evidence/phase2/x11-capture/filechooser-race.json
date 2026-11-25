@@ -1,0 +1,127 @@
+{
+  "environment": "Ubuntu 24.04.5 LTS, Chromium 159.0.8154.6, headed Xvfb",
+  "unarmedControl": {
+    "case": "turnmill-lazy-chooser-3",
+    "checks": 12,
+    "openChecks": [
+      "Control+O"
+    ],
+    "failure": "page.waitForEvent: Timeout 15000ms exceeded while waiting for event \"filechooser\""
+  },
+  "failedOpen": {
+    "protocol": [
+      {
+        "time": "2026-11-25T20:18:29.433Z",
+        "direction": "request",
+        "id": 386,
+        "command": "Page.setInterceptFileChooserDialog",
+        "key": null
+      },
+      {
+        "time": "2026-11-25T20:18:29.434Z",
+        "direction": "request",
+        "id": 388,
+        "command": "Input.dispatchKeyEvent",
+        "key": "o"
+      },
+      {
+        "time": "2026-11-25T20:18:29.434Z",
+        "direction": "acknowledged",
+        "id": 388,
+        "command": null,
+        "key": null
+      },
+      {
+        "time": "2026-11-25T20:18:29.435Z",
+        "direction": "acknowledged",
+        "id": 386,
+        "command": null,
+        "key": null
+      }
+    ],
+    "pageEvents": [
+      {
+        "event": "keydown",
+        "key": "o",
+        "prevented": false,
+        "target": "<button class=\"tree-item active\" title=\"Select feature \u00b7 double-click to edit\"",
+        "hasFocus": true,
+        "activeUserGesture": true
+      },
+      {
+        "event": "click",
+        "key": null,
+        "prevented": false,
+        "target": "<input aria-label=\"Open Turnmill project file\" accept=\".turnmill,.json\" hidden=\"\" type=\"file\"",
+        "hasFocus": true,
+        "activeUserGesture": true
+      },
+      {
+        "event": "keydown",
+        "key": "o",
+        "prevented": true,
+        "target": "<button class=\"tree-item active\" title=\"Select feature \u00b7 double-click to edit\"",
+        "hasFocus": true,
+        "activeUserGesture": false
+      }
+    ]
+  },
+  "armedFreshBrowsers": [
+    {
+      "case": "turnmill-armed-chooser-1",
+      "checks": 12,
+      "openChecks": [
+        "Control+O",
+        "Meta+O"
+      ],
+      "failure": null
+    },
+    {
+      "case": "turnmill-armed-chooser-2",
+      "checks": 12,
+      "openChecks": [
+        "Control+O",
+        "Meta+O"
+      ],
+      "failure": null
+    },
+    {
+      "case": "turnmill-armed-chooser-3",
+      "checks": 12,
+      "openChecks": [
+        "Control+O",
+        "Meta+O"
+      ],
+      "failure": null
+    },
+    {
+      "case": "turnmill-armed-chooser-4",
+      "checks": 12,
+      "openChecks": [
+        "Control+O",
+        "Meta+O"
+      ],
+      "failure": null
+    }
+  ],
+  "armedFullShortcutSuites": [
+    {
+      "case": "turnmill-release-shortcut-armed-1",
+      "checks": 43,
+      "openChecks": [
+        "Control+O",
+        "Meta+O"
+      ],
+      "failure": null
+    },
+    {
+      "case": "turnmill-release-shortcut-armed-2",
+      "checks": 43,
+      "openChecks": [
+        "Control+O",
+        "Meta+O"
+      ],
+      "failure": null
+    }
+  ]
+}

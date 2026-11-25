@@ -14,6 +14,10 @@ const page = await browser.newPage({
   viewport: { width: 1440, height: 930 },
   acceptDownloads: true,
 });
+// Chromium enables native picker interception on the first listener. Keep it
+// active across both genuine keyboard open actions, including the time between
+// their one-shot waiters. Otherwise a native chooser can outrun the listener.
+page.on("filechooser", () => {});
 page.setDefaultTimeout(15000);
 const results = [],
   pageErrors = [];
