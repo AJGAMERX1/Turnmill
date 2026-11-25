@@ -190,6 +190,58 @@ try {
     classification:
       "Record behavior; no contract requiring all-purpose engraving to reject a through-cut.",
   });
+  const rect = [
+    [0, -0.5],
+    [1, -0.5],
+    [1, 0.5],
+    [0, 0.5],
+  ];
+  const artwork = {
+    width: 1,
+    outlines: [
+      { outer: rect.map((v, i) => [v, rect[(i + 1) % 4]]), holes: [] },
+    ],
+  };
+  const placements = [];
+  for (const end of ["start", "end"]) {
+    const f = {
+      ...feature("plate", "stock", 2),
+      finishes: [
+        {
+          id: "graphic",
+          name: "Square",
+          kind: "mark",
+          end,
+          content: "graphic",
+          method: "engrave",
+          text: "",
+          artwork,
+          height: "2",
+          depth: "0.2",
+          offset: "1",
+          rotation: "0 deg",
+        },
+      ],
+    };
+    const doc = project([boxSketch("stock", 0, 0, 10, 4)], [f]);
+    await save("SYS-005/" + end + ".turnmill", doc);
+    const [m] = await measureProject(api, doc);
+    const baseVolume = 80,
+      removed = baseVolume - m.volume;
+    const removedCenter = [5, 2, 1].map(
+      (n, i) => (baseVolume * n - m.volume * m.center[i]) / removed,
+    );
+    near(removed, 0.8, 0.0008, "square cut");
+    near(
+      removedCenter[0],
+      end === "start" ? 2 : 8,
+      0.01,
+      "square changes along X",
+    );
+    near(removedCenter[2], 1.9, 0.01, "same top face for both end choices");
+    placements.push({ end, removed, removedCenter });
+  }
+  await save("SYS-005/measurements.json", placements);
   console.log(
     "PASS",
     grid.length,

@@ -1,0 +1,7 @@
+85 version-one snapshots opened with one payload read and one key cursor [ [ 'openKeyCursor', null ], [ 'get', 57 ] ]
+Undo and Redo through cache eviction and across reload; rapid shortcuts restore exact revision 28
+Branch replaced discarded redo snapshots and survived reload 30
+Real abort on local transaction left an editable downloadable draft; Retry autosave persisted it 
+Concurrent stale tab offered native recovery and preserved the first tab on disk 
+Disabled browser storage retained in-session undo/redo and a native download reopened into a writable journal 
+Zero page exceptions 

@@ -104,6 +104,31 @@ try {
   ]) {
     await page.getByLabel(label, { exact: true }).fill(value);
   }
+  const endOptions = await page
+    .getByLabel("End", { exact: true })
+    .locator("option")
+    .allTextContents();
+  await save("SYS-005/options.json", {
+    endOptions,
+    mode: "Extruded stock, flat surface mark",
+    offsetDirection: "X",
+  });
+  if (endOptions.some((t) => /minimum Z|maximum Z/i.test(t))) {
+    await xfail(
+      "SYS-005",
+      "Flat engraving labels the longitudinal start/end offset as the Z axis",
+      async () =>
+        assert.ok(
+          !endOptions.some((t) => /minimum Z|maximum Z/i.test(t)),
+          "Actual options: " +
+            endOptions.join(" / ") +
+            "; offset moves along X.",
+        ),
+    );
+  } else
+    throw Error(
+      "XPASS SYS-005 flat mark end labels no longer specify Z. Review this case.",
+    );
   await button("Preview").click();
   await page.locator('.finish-form[data-preview="ready"]').waitFor();
   const preview = await page.locator(".finish-preview-status").innerText();

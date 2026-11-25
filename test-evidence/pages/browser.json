@@ -1,0 +1,30 @@
+{
+  "tested": "http://127.0.0.1:62195/Turnmill/",
+  "mode": "local subpath",
+  "assets": [
+    "/Turnmill/assets/index-io2Invqw.css",
+    "/Turnmill/assets/index-BiqXlKXq.js",
+    "/Turnmill/assets/kernel-oOrK73pT.js",
+    "/Turnmill/assets/planegcs-DNpN9qS7.wasm",
+    "/Turnmill/assets/replicad_single-g5eiaENB.wasm",
+    "/Turnmill/assets/AssemblyBom-CeUdtdEs.css",
+    "/Turnmill/assets/Drawing-Bu4rjQuh.css",
+    "/Turnmill/assets/download-DRDvkpVi.js",
+    "/Turnmill/assets/AssemblyBom-CWl9cJ35.js",
+    "/Turnmill/assets/printer-DQlD4I4z.js",
+    "/Turnmill/assets/Drawing-CioZgwYh.js",
+    "/Turnmill/assets/secondaryProjectionWorker-CYp8US-p.js"
+  ],
+  "errors": [],
+  "warnings": [
+    "[.WebGL-0x13c00830e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x13c00830e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x13c00830e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x13c00830e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "scope": "http://127.0.0.1:62195/Turnmill/",
+  "crossOriginIsolated": false,
+  "cacheKeys": [
+    "turnmill-5e29eb6ec37f13"
+  ]
+}

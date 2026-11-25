@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/tests/freecad/runner.py", line 18, in <module>
-    else:run('inspect_case.py',case)
-         ~~~^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/tests/freecad/runner.py", line 14, in run
-    if 'Traceback (most recent call last)' in log.read_text(errors='replace'):raise RuntimeError(str(log))
-                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-RuntimeError: /Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/test-evidence/interop/block.freecad.log

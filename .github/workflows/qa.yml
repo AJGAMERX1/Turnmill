@@ -3,6 +3,8 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "23 7 * * *"
 permissions:
   contents: read
 concurrency:
@@ -11,7 +13,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 200
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,3 +30,23 @@ jobs:
           "$STEPCODE_AP242" -s test-evidence/interop/block.step /tmp/qa-block.stp
           xvfb-run -a "$PRUSASLICER" --info test-evidence/interop/block.stl
           "$QA_PYTHON" -c 'import ezdxf; print(ezdxf.__version__)'
+      - name: Install production browser
+        run: npx playwright-core install --with-deps chromium
+      - name: Run all Phase 1 suites against the production preview
+        env:
+          QA_FUZZ_MS: ${{ github.event_name == 'schedule' && '3660000' || '540000' }}
+          QA_SEED: ${{ github.event_name == 'schedule' && github.run_id || '539365669' }}
+        run: xvfb-run -a npm run qa
+      - name: Build uninstrumented release for the Pages subpath
+        run: npm run build
+      - name: Build a part and measure the STEP from the release
+        run: |
+          xvfb-run -a node tests/qa/pages-smoke.mjs
+          xvfb-run -a "$QA_PYTHON" tests/qa/pages-volume.py
+      - name: Preserve measured results and failing cases
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cad-qa-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-evidence/
+          retention-days: 7

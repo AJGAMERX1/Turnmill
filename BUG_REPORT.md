@@ -1,6 +1,6 @@
 # Turnmill 0.5.0 · Phase 1 findings
 
-**12 reproduced findings: 5 Critical, 2 High, 5 Medium, 0 Low.** By assigned system: solid/mesh/assembly interchange 5, ruler graduation geometry 1, hardware library 1, thread rebuilding 1, assembly/drawing parameter handling 1, engraving placement 1, rebuild performance 1, sketch undo 1. Known cases have strict expected-failure regressions, or platform-scoped timed expectations for the performance finding. A passing suite can include these known defects.
+**13 reproduced findings: 5 Critical, 2 High, 5 Medium, 1 Low.** By assigned system: solid/mesh/assembly interchange 5, ruler graduation geometry 1, hardware library 1, thread rebuilding 1, assembly/drawing parameter handling 1, engraving placement and labels 2, rebuild performance 1, sketch undo 1. Known cases have strict expected-failure regressions, or platform-scoped timed expectations for the performance finding. A passing suite can include these known defects.
 
 **First five to fix:** assembly STEP placement (ASM-001); ruler graduation position (INTEROP-005); refill STL topology (INTEROP-002); engraved-ruler STL intersections (INTEROP-003); threaded-rod STL intersections (INTEROP-006).
 
@@ -74,4 +74,10 @@
 
 **Medium · Sketch history.** Open the fixture and edit its sketch. Set P2 X successively from 10.00 to 10.82 in increments of 0.01 mm. Press sketch Undo until disabled. Expected 82 undos to restore 10.00 mm. Only 80 are available and the coordinate remains 10.02 mm. Cancel discards the entire draft; the persisted document undo journal is separate.
 
-**Expected-failing test** `SYS-004` in tests/systems/editor-browser.mjs. [82 values, screenshot of disabled Undo and fixture](test-evidence/systems/SYS-004/)
+**Expected-failing test** `SYS-004` in tests/systems/sketch-undo-browser.mjs. [82 values, screenshot of disabled Undo and fixture](test-evidence/systems/SYS-004/)
+
+### SYS-005 · Planar engraving labels the X reference as Z
+
+**Low · Surface-finish dialog.** Open a 10 mm wide extruded plate, choose a flat surface mark, and switch its End reference from Start to End. The choices say “minimum Z” and “maximum Z.” The measured center moves from X = 2 to X = 8 mm; Z remains at 1.9 mm. The selector should identify X for this placement.
+
+**Expected-failing test** `SYS-005` in tests/systems/browser.mjs. [Both projects and observed placements](test-evidence/systems/SYS-005/) · [Dialog screenshot](test-evidence/systems/SYS-002/approved-preview.png)

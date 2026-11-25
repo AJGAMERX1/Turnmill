@@ -1,8 +1,9 @@
 import { resolve, join } from "node:path";
 import { existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { writeFile, mkdir } from "node:fs/promises";
 import { run, out } from "./support.mjs";
-import { guide, pen, drawing } from "./pen.mjs";
+import { guide, pen, drawing, inscription } from "./pen.mjs";
 import { ruler } from "./ruler.mjs";
 import {
   hinge,
@@ -16,6 +17,20 @@ const file = resolve(out, "pen/twist-pen.turnmill");
 const tests = {
   guide,
   pen,
+  "pen-inscription": async (s) => {
+    await inscription(s, file);
+    execFileSync(
+      process.env.QA_PYTHON || "python3",
+      [
+        "-c",
+        "import sys; sys.path.insert(0, 'tests/freecad'); from runner import run; run('pen_finishes.py', 'surface-depths')",
+      ],
+      {
+        env: { ...process.env, QA_INTEROP_OUT: join(out, "pen") },
+        stdio: "inherit",
+      },
+    );
+  },
   ruler,
   hinge,
   "click-pen": clickPen,

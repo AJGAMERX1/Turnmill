@@ -210,3 +210,24 @@ export async function drawing(s, source) {
   );
   await native(s, "drawing-set");
 }
+
+export async function inscription(s, nativeFile) {
+  const p = s.page;
+  await field(p, "Open Turnmill project file").setInputFiles(nativeFile);
+  const mark = p
+    .locator(".tree-item.nested")
+    .filter({ hasText: "Surface mark" });
+  await mark.waitFor();
+  await ready(p);
+  await mark.click();
+  const d = p.getByRole("dialog");
+  assert.equal(await field(d, "Inscription").inputValue(), "ANA");
+  assert.equal(await field(d, "Cut depth").inputValue(), "0.12 mm");
+  assert.equal(await field(d, "Artwork height").inputValue(), "1.8 mm");
+  const model = await sample(s, "01-typed-inscription");
+  const savedMark = model.project.features
+    .find((f) => f.name === "Barrel")
+    .finishes.find((f) => f.kind === "mark");
+  assert.equal(savedMark.text, "ANA");
+  await button(d, "Cancel").click();
+}
