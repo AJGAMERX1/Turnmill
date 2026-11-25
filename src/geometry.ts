@@ -7,7 +7,6 @@ import {
   exportSTEP,
   getOC,
   isShape3D,
-  makeCompound,
   makeFace,
   makeLine,
   makePolygon,
@@ -20,6 +19,7 @@ import {
   type Edge,
   type Shape3D,
 } from "replicad";
+import { binarySTL, printableMesh } from "./printMesh";
 import { export3MF } from "./exchangeSolids";
 import { applyFinish } from "./finishing";
 import type { EvaluatedFeature } from "./types";
@@ -368,14 +368,5 @@ export function exportBodies(
   if (format === "3mf") return export3MF(bodies);
   if (format === "step")
     return exportSTEP(bodies, { modelUnit: "MM", unit: "MM" });
-  const stlOptions = { binary: true, tolerance: 0.005, angularTolerance: 0.08 };
-  if (bodies.length === 1) return bodies[0].shape.blobSTL(stlOptions);
-  // makeCompound takes ownership of its arguments. Keep the editable bodies alive.
-  const compound = makeCompound(bodies.map(({ shape }) => shape.clone()));
-  try {
-    if (!isShape3D(compound)) throw new Error("The export contains no solids.");
-    return compound.blobSTL(stlOptions);
-  } finally {
-    compound.delete();
-  }
+  return binarySTL(bodies.map(({ shape }) => printableMesh(shape)));
 }

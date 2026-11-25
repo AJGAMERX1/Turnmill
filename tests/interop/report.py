@@ -121,7 +121,10 @@ def row(c):
         mesh = ext["3mf"]
         v = sum(q["volume"] for q in mesh["meshes"])
         closed = all(q["closed"] for q in mesh["meshes"])
-        mesh_status = ", ".join(c["knownMesh"]) or "Container/mesh checked"
+        mesh_status = ", ".join(c["knownMesh"]) or "Container and topology checked"
+        identity = mesh.get("stlComparison")
+        if identity and not identity["onlyInStl"] and not identity["onlyInThreeMf"]:
+            mesh_status += f". Same {identity['stlTriangles']:,} triangles as the FreeCAD-tested STL"
         if n in poses:
             for geometry, body in zip(mesh["meshes"], local["parts"], strict=True):
                 assert max(abs(a - b) for ac, bc in zip(geometry["bbox"], body["bbox"])

@@ -1,4 +1,4 @@
-"""Strict expected failures. An unexpected pass or unrelated failure fails the run."""
+"""Manufacturing regression checks and measured contact between assembled components."""
 
 from pathlib import Path
 import os, json, collections, struct, math
@@ -10,39 +10,37 @@ out = Path(
 )
 
 
-# A known case must keep the same failure fingerprint. New symptoms and unexpected fixes both need review.
-# Signature = closed, non-manifold, self-intersects, number of extra disconnected components.
-known_meshes = {
-    "ui-click-coil-click-with-coil-4": (("INTEROP-007",), (True, False, True, 0)),
-    "ui-click-coil-click-with-coil": (
-        ("INTEROP-007", "ASM-001"),
-        (True, False, True, 0),
-    ),
-    "ruler": (("INTEROP-003",), (True, False, True, 0)),
-    "ui-ruler-graduated-ruler": (("INTEROP-003",), (True, False, True, 0)),
-    "threaded-rod": (("INTEROP-006",), (True, False, True, 0)),
-    "twist-pen-3": (("INTEROP-002",), (False, True, False, 1)),
-    "ui-pen-twist-pen-3": (("INTEROP-002",), (False, True, False, 1)),
-    "twist-pen": (("INTEROP-002", "cap–clip contact"), (False, True, True, 1)),
-    "ui-pen-twist-pen": (("INTEROP-002", "cap–clip contact"), (False, True, True, 1)),
-    "ui-bolt-library-bolt-nut": (("ASM-001",), (False, True, True, 1)),
-    "ui-bolt-scratch-bolt-nut": (("ASM-001",), (False, True, True, 1)),
+# Only these named interfaces touch in the recorded fixture poses. A self-hit
+# within any component, or a hit between a different pair, is a regression.
+contact_interfaces = {
+    "twist-pen": ((2, 4), "threaded cap touching pocket clip"),
+    "ui-pen-twist-pen": ((2, 4), "threaded cap touching pocket clip"),
+    "ui-pen-M10-pen": ((2, 4), "M10 threaded cap touching pocket clip"),
+    "ui-bolt-library-bolt-nut": ((1, 2), "mating library M5 screw/nut"),
+    "ui-bolt-scratch-bolt-nut": ((1, 2), "mating hand-built M5 screw/nut"),
 }
 
 
 def mesh_findings(name, measurement, body_count):
-    actual = (
-        measurement["closed"],
-        measurement["nonManifold"],
-        measurement["selfIntersections"],
-        measurement["components"] - body_count,
+    assert (
+        measurement["closed"]
+        and not measurement["nonManifold"]
+        and measurement["components"] == body_count
+    ), (
+        f"{name} must be closed and manifold with one mesh component per body: {measurement}"
     )
-    findings, expected = known_meshes.get(name, ((), (True, False, False, 0)))
-    if actual != expected:
-        raise AssertionError(
-            f"{name}: changed STL (closed, nonmanifold, self intersection, extra components); expected {expected}, measured {actual}. Known IDs {findings}"
+    contacts = {tuple(hit["parts"]) for hit in measurement.get("contactPairs", [])}
+    assert bool(contacts) == measurement["selfIntersections"], (
+        f"{name} has unattributed intersections"
+    )
+    if name in contact_interfaces:
+        pair, interface = contact_interfaces[name]
+        assert contacts == {pair}, (
+            f"{name} expected contact only at {interface}, measured {contacts}"
         )
-    return list(findings)
+        return [interface]
+    assert not contacts, f"{name} has intersecting facets on body pairs {contacts}"
+    return []
 
 
 def raw_stl(path):
@@ -65,62 +63,33 @@ def raw_stl(path):
     }
 
 
-def expect(bug, condition, message):
-    if condition:
-        raise AssertionError("XPASS " + bug + ": " + message)
-    print("XFAIL", bug, message)
-
-
 def run():
-    refill = json.loads((out / "twist-pen-3.freecad.json").read_text())["stl"]
-    raw = raw_stl(out / "twist-pen-3.stl")
-    expect(
-        "INTEROP-002",
-        refill["closed"] and not refill["nonManifold"] and not raw["degenerate"],
-        "Refill STL must be closed and manifold with no collapsed facets. "
-        + str(raw)
-        + " FreeCAD "
-        + str(refill),
-    )
-    for case in ["twist-pen-3", "twist-pen", "ui-pen-twist-pen-3", "ui-pen-twist-pen"]:
+    for case in ["twist-pen-3", "ui-pen-twist-pen-3", "ui-pen-M10-pen-3"]:
         path = out / (case + ".stl")
         if path.exists():
             stats = raw_stl(path)
-            assert stats["degenerate"] == 1 and stats["nonTwoEdgeIncidences"] == 2, (
-                f"{case} changed INTEROP-002 raw topology: {stats}"
+            assert stats["degenerate"] == stats["nonTwoEdgeIncidences"] == 0, (
+                f"{case} must have a closed cone apex: {stats}"
             )
     counts = json.loads((out / "ruler-detail.json").read_text())
-    for case, pairs in [
-        ("ruler", 1100),
-        ("ui-ruler-graduated-ruler", 699),
-        ("threaded-rod", 1),
-    ]:
+    for case in ["ruler", "ui-ruler-graduated-ruler", "threaded-rod"]:
         if case in counts:
-            assert counts[case]["intersectingReportedFacets"] == pairs, (
-                f"{case} changed intersection pair count: {counts[case]['intersectingReportedFacets']} (was {pairs})"
+            assert counts[case]["intersectingReportedFacets"] == 0, (
+                f"{case} should have zero intersecting facets"
             )
-    ruler = json.loads((out / "ruler.freecad.json").read_text())["stl"]
-    expect(
-        "INTEROP-003",
-        not ruler["selfIntersections"],
-        "FreeCAD Mesh reports self-intersection in graduated ruler: "
-        + str(ruler["selfIntersections"]),
-    )
-    rod = json.loads((out / "threaded-rod.freecad.json").read_text())["stl"]
-    expect(
-        "INTEROP-006",
-        not rod["selfIntersections"],
-        "The independent FreeCAD Mesh check should find no self-intersections on the analytic M5 rod STL. Actual "
-        + str(rod["selfIntersections"]),
+    print(
+        "PASS INTEROP-002, INTEROP-003 and INTEROP-006: closed refill apex and non-intersecting ruler/rod"
     )
     for kit in ["ui-bolt-library-bolt-nut", "ui-bolt-scratch-bolt-nut"]:
         if not (out / (kit + ".freecad.json")).exists():
             continue
         check = json.loads((out / (kit + ".freecad.json")).read_text())
+
         # Reassemble independently exported local solids in FreeCAD using the displayed
         # matrices. This oracle also covers the fully modeled replacement thread geometry.
         def pair_volumes(rows):
             return {tuple(row["parts"]): row["volume"] for row in rows}
+
         actual = pair_volumes(check["step"]["overlaps"])
         expected = pair_volumes(check["step"]["referenceOverlaps"])
         for pair in actual.keys() | expected.keys():
@@ -145,41 +114,43 @@ def run():
             and not spring["stl"]["nonManifold"]
         )
         detail = json.loads((out / "spring-detail.json").read_text())
-        from facet_identity import compare
-
-        facet_comparison = compare(
-            out / "ui-click-coil-click-with-coil-4.stl",
-            out / "ui-click-coil-click-with-coil-4.3mf",
+        facet_comparison = json.loads(
+            (out / "ui-click-coil-click-with-coil-4.external.json").read_text()
+        )["3mf"]["stlComparison"]
+        assert (
+            facet_comparison["stlTriangles"] > 0
+            and facet_comparison["onlyInStl"] == facet_comparison["onlyInThreeMf"] == 0
         )
-        assert facet_comparison == {
-            "stlTriangles": 255114,
-            "threeMfTriangles": 255114,
-            "onlyInStl": 0,
-            "onlyInThreeMf": 0,
-        }, f"Changed spring STL/3MF fingerprint: {facet_comparison}"
         (out / "spring-mesh-formats.json").write_text(
             json.dumps(facet_comparison, indent=2) + "\n"
         )
-        counts = {
-            case: row["intersectingFacets"] for case, row in detail["mesh"].items()
-        }
-        assert counts == {
-            "ui-click-coil-click-with-coil": 3278,
-            "ui-click-coil-click-with-coil-4": 131,
-        }, f"Changed click/spring STL self-intersection signature: {counts}"
-        expect(
-            "INTEROP-007",
-            not spring["stl"]["selfIntersections"],
-            "Stock spring is a valid closed exact solid; standalone STL and 3MF have identical triangles and should be free of self-intersections. FreeCAD reports 131 intersecting facet pairs.",
+        assert not spring["stl"]["selfIntersections"]
+        assert all(row["intersectingFacets"] == 0 for row in detail["mesh"].values()), (
+            "The installed and isolated spring meshes must be intersection free"
+        )
+        print(
+            "PASS INTEROP-007: standalone and installed spring STL/3MF are intersection free"
         )
         assert max(detail["installedOverlapWithGuideCamPlunger"]) < 1e-6
-        assert max(abs(a-b) for a,b in zip(detail["installedCentroid"], detail["positionedCentroid"])) <= 0.01
-        for actual, expected in zip(detail["installedSpringBounds"], detail["requiredSpringBounds"]):
-            assert max(abs(a-b) for a,b in zip(actual, expected)) <= 0.01
+        assert (
+            max(
+                abs(a - b)
+                for a, b in zip(
+                    detail["installedCentroid"], detail["positionedCentroid"]
+                )
+            )
+            <= 0.01
+        )
+        for actual, expected in zip(
+            detail["installedSpringBounds"], detail["requiredSpringBounds"]
+        ):
+            assert max(abs(a - b) for a, b in zip(actual, expected)) <= 0.01
     records = json.loads((out / "reverse.json").read_text())
     step = next(x for x in records if x["file"] == "fc-two-parts.step")
     labels = [part["name"] for part in step["parts"]]
-    assert labels == ["Spacer", "Stop block"], f"INTEROP-004 STEP product labels changed: {labels}"
+    assert labels == ["Spacer", "Stop block"], (
+        f"INTEROP-004 STEP product labels changed: {labels}"
+    )
     print("PASS INTEROP-004 assembly component names and order", labels)
 
 

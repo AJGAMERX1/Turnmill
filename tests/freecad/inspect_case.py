@@ -2,6 +2,10 @@
 
 import json, os, traceback
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from mesh_contacts import contacts
 import FreeCAD as App, Part, Import, Mesh
 
 out = Path(os.environ["QA_OUT"])
@@ -74,15 +78,19 @@ def step(path):
             parts = []
             for i, matrix in enumerate(metadata["installedPose"]["matrices"]):
                 part = Part.read(str(out / (case + "-" + str(i + 1) + ".step")))
-                ordered = [matrix[4*c+r] for r in range(4) for c in range(4)]
-                part.Placement = App.Placement(App.Matrix(*ordered)).multiply(part.Placement)
+                ordered = [matrix[4 * c + r] for r in range(4) for c in range(4)]
+                part.Placement = App.Placement(App.Matrix(*ordered)).multiply(
+                    part.Placement
+                )
                 parts.append(part)
             measured["referenceOverlaps"] = []
             for i, a in enumerate(parts):
                 for j, b in enumerate(parts[:i]):
                     if a.BoundBox.intersect(b.BoundBox):
                         overlap = sum(s.Volume for s in a.common(b).Solids)
-                        measured["referenceOverlaps"].append({"parts": [j+1, i+1], "volume": overlap})
+                        measured["referenceOverlaps"].append(
+                            {"parts": [j + 1, i + 1], "volume": overlap}
+                        )
         # Export the imported object tree to exercise FreeCAD's writer, preserving its root structure.
         Import.export(d.RootObjects, str(out / (case + ".return.step")))
         return measured
@@ -99,6 +107,7 @@ def mesh(path):
         "closed": m.isSolid(),
         "nonManifold": m.hasNonManifolds(),
         "selfIntersections": m.hasSelfIntersections(),
+        "contactPairs": contacts(m, path.with_suffix(".3mf")),
         "points": m.CountPoints,
         "triangles": m.CountFacets,
         "components": m.countComponents(),

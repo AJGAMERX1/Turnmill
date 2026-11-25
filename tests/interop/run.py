@@ -6,7 +6,7 @@ from external import root, out, schema, slicer, mf, vectors
 
 sys.path.insert(0, str(root / "tests/freecad"))
 from runner import run
-from known import run as xfails, mesh_findings
+from known import run as manufacturing_regressions, mesh_findings
 
 args = argparse.ArgumentParser()
 args.add_argument(
@@ -51,6 +51,10 @@ def check_one(f):
     }
     if (out / (name + ".3mf")).exists():
         data["3mf"] = mf(out / (name + ".3mf"))
+        from facet_identity import compare
+        same = compare(out / (name + ".stl"), out / (name + ".3mf"))
+        assert same["stlTriangles"] == same["threeMfTriangles"] and same["onlyInStl"] == same["onlyInThreeMf"] == 0, f"{name} STL/3MF geometry differs: {same}"
+        data["3mf"]["stlComparison"] = same
     put(name + ".external.json", data)
 
 
@@ -418,7 +422,7 @@ def report():
         "measurements.json",
         {"cases": entries, "reverse": reverse, "unexpected": issues},
     )
-    xfails()
+    manufacturing_regressions()
     if issues:
         raise SystemExit("\n".join(issues))
     print(

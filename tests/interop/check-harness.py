@@ -19,7 +19,7 @@ def invalid(name, mesh, total):
 def run():
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        for ext in ["step", "stl", "freecad.json", "return.step"]:
+        for ext in ["step", "stl", "native.json", "freecad.json", "return.step"]:
             shutil.copyfile(source / ("block." + ext), work / ("block." + ext))
         noop = work / "empty-freecad"
         noop.write_text(f"#!{sys.executable}\nimport sys\nsys.exit(0)\n")
@@ -52,7 +52,7 @@ def run():
         "components": 1,
     }
     open_refill = {**stable, "closed": False, "nonManifold": True, "components": 2}
-    assert mesh_findings("twist-pen-3", open_refill, 1) == ["INTEROP-002"]
+    invalid("twist-pen-3", open_refill, 1)
     invalid("twist-pen-2", open_refill, 1)
     invalid("ruler-blank", {**stable, "selfIntersections": True}, 1)
     invalid("twist-pen-3", {**open_refill, "selfIntersections": True}, 1)
@@ -61,9 +61,19 @@ def run():
         {**stable, "selfIntersections": True, "nonManifold": True},
         1,
     )
-    invalid("twist-pen-3", stable, 1)
+    assert mesh_findings("twist-pen-3", stable, 1) == []
+    invalid(
+        "ui-bolt-library-bolt-nut",
+        {
+            **stable,
+            "components": 2,
+            "selfIntersections": True,
+            "contactPairs": [{"parts": [1, 1]}],
+        },
+        2,
+    )
     print(
-        "PASS new defects on cap and ruler blank, changed defect signatures and unexpected repair rejected"
+        "PASS open refill, bad cap and ruler meshes, and internal screw intersections are rejected"
     )
 
 
