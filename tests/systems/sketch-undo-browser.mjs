@@ -1,3 +1,4 @@
+import { captureViewport } from "../qa/capture.mjs";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openBrowser, appUrl, measure } from "../qa/browser.mjs";
@@ -66,7 +67,7 @@ try {
     available++;
   }
   const final = Number(await x.inputValue());
-  await page.screenshot({ path: resolve(evidence, "SYS-004/undo-limit.png") });
+  await captureViewport(page, resolve(evidence, "SYS-004/undo-limit.png"));
   await save("SYS-004/history.json", {
     original,
     edits,

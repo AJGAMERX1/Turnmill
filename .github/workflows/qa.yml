@@ -21,7 +21,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Reuse the compiled AP214 and AP242 checkers
-        uses: actions/cache@v4
+        id: stepcode
+        uses: actions/cache/restore@v4
         with:
           path: |
             ${{ runner.temp }}/turnmill-cad-tools/step-build/bin
@@ -36,6 +37,14 @@ jobs:
           "$STEPCODE_AP242" -s test-evidence/interop/block.step /tmp/qa-block.stp
           xvfb-run -a "$PRUSASLICER" --info test-evidence/interop/block.stl
           "$QA_PYTHON" -c 'import ezdxf; print(ezdxf.__version__)'
+      - name: Cache the verified STEP checkers
+        if: steps.stepcode.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ runner.temp }}/turnmill-cad-tools/step-build/bin
+            ${{ runner.temp }}/turnmill-cad-tools/step-build/lib
+          key: ${{ steps.stepcode.outputs.cache-primary-key }}
       - name: Install production browser
         run: npx playwright-core install --with-deps chromium
       - name: Test the production build and all external readers

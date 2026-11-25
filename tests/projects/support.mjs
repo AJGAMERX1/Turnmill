@@ -1,3 +1,4 @@
+import { captureViewport } from "../qa/capture.mjs";
 import { chromium } from "playwright-core";
 import assert from "node:assert/strict";
 import { mkdir, writeFile, appendFile, readFile, rm } from "node:fs/promises";
@@ -45,7 +46,7 @@ export async function sample(s, name, { check = true } = {}) {
         .waitFor({ state: "hidden", timeout: 240000 });
   }
   const pic = join(dir, name + ".png");
-  await p.screenshot({ path: pic, animations: "disabled" });
+  await captureViewport(p, pic);
   const x = await snap(p).catch((e) => {
       if (check) throw e;
       return { error: e.message };
@@ -327,7 +328,7 @@ export async function run(name, fn) {
           .innerText()
           .catch(() => "")),
     );
-    await p.screenshot({ path: join(dir, "failure.png") }).catch(() => {});
+    await captureViewport(p, join(dir, "failure.png")).catch(() => {});
   } finally {
     if (status === "PASS") {
       await rm(join(dir, "failure.txt"), { force: true });
