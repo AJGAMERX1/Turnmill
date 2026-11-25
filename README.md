@@ -2,6 +2,8 @@
 
 Turnmill is a local parametric CAD workbench for turned and machined parts. Its editable writing-pen example includes a hollow barrel, a threaded cap, a pocket clip, and a refill. The model uses OpenCascade boundary-representation solids. The app uses Three.js to display them and PlaneGCS to solve 2D sketch constraints.
 
+The QA branch includes the Phase 1 findings, independent FreeCAD measurements and replay commands. [QA report and evidence](QA.md)
+
 ## Run the app
 
 On this Mac, double-click **Launch Turnmill.command**. Keep its Terminal window open while you use Turnmill. The launcher serves the included production build on your own computer and opens the browser. Node.js 22.12 or newer is required. The included build runs without downloading dependencies.

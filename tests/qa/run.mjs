@@ -72,7 +72,10 @@ try {
   await run(
     "systems",
     ["node", "tests/systems/run.mjs"],
-    { QA_SYSTEM_BROWSER: "1" },
+    {
+      QA_SYSTEM_BROWSER: "1",
+      QA_EXPORT_SYS002: resolve(env.QA_INTEROP_OUT || "test-evidence/interop"),
+    },
     Number(env.QA_FUZZ_MS || 35000) + 35 * 60000,
   );
   for (const name of ["mobile", "palette", "history"])
