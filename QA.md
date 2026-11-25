@@ -14,6 +14,8 @@ The command creates its own local HTTP server, builds the QA production app and 
 
 ## Reading the results
 
+[Clean production replay and exit codes](test-evidence/checkpoints/clean-local.md)
+
 - [Inventory](INVENTORY.md), [severity-sorted bug report](BUG_REPORT.md), [coverage matrix](COVERAGE.md) and [independent interchange table](INTEROP.md).
 - [Candidate reference volumes and file hashes](test-evidence/interop/candidate-references.md). The owner has not approved these values. On approval, record the case name, volumeMm3, approvedBy, approvedOn and sourceSHA256 in tests/qa/approved.json. Future runs compare both kernels to that immutable figure within ±0.1%. Known-defect specimens are diagnostic fixtures and should not be approved as intended manufacturing geometry.
 - [Project evidence](test-evidence/projects/RESULTS.md), [first-use notes](UX_NOTES.md) and [automated system evidence](test-evidence/systems/COVERAGE.md).

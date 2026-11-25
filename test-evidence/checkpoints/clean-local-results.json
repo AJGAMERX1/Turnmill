@@ -1,0 +1,87 @@
+[
+  {
+    "suite": "production-build",
+    "exit": 0,
+    "ms": 7213
+  },
+  {
+    "suite": "baseline",
+    "exit": 0,
+    "ms": 19070
+  },
+  {
+    "suite": "test-hook",
+    "exit": 0,
+    "ms": 2694
+  },
+  {
+    "suite": "projects",
+    "exit": 0,
+    "ms": 455301
+  },
+  {
+    "suite": "systems",
+    "exit": 0,
+    "ms": 119887
+  },
+  {
+    "suite": "mobile",
+    "exit": 0,
+    "ms": 5744
+  },
+  {
+    "suite": "palette",
+    "exit": 0,
+    "ms": 6550
+  },
+  {
+    "suite": "history",
+    "exit": 0,
+    "ms": 15593
+  },
+  {
+    "suite": "drawing-export",
+    "exit": 0,
+    "ms": 69712
+  },
+  {
+    "suite": "pdf-review",
+    "exit": 0,
+    "ms": 1389
+  },
+  {
+    "suite": "assembly-export",
+    "exit": 0,
+    "ms": 5015
+  },
+  {
+    "suite": "assembly-step",
+    "exit": 0,
+    "ms": 435
+  },
+  {
+    "suite": "interop",
+    "exit": 0,
+    "ms": 185456
+  },
+  {
+    "suite": "approved-reference-values",
+    "exit": 0,
+    "ms": 38
+  },
+  {
+    "suite": "release-build",
+    "exit": 0,
+    "ms": 8723
+  },
+  {
+    "suite": "pages-subpath",
+    "exit": 0,
+    "ms": 7786
+  },
+  {
+    "suite": "pages-step-volume",
+    "exit": 0,
+    "ms": 485
+  }
+]
