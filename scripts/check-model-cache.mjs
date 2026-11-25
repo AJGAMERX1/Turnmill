@@ -132,13 +132,47 @@ try {
   assert.match(await step.text(), /Spindle/);
   const reopened = await importSolidFile("step", step, "Check");
   try {
-    assert.equal(reopened.length, 2);
+    assert.deepEqual(
+      reopened.map((body) => body.name),
+      ["Spindle", "Stock"],
+    );
     near(
       reopened.reduce((s, p) => s + measureVolume(p.shape), 0),
       b.volume,
     );
   } finally {
     releaseBodies(reopened);
+  }
+  // File entity order is independent of assembly order. Also exercise Part 21's
+  // quoted apostrophe and Unicode escapes in the actual product name.
+  const plain = await step.text();
+  const spindle = plain.match(/#\d+\s*=\s*PRODUCT\('Spindle'[^;]*;/)?.[0];
+  const stock = plain.match(/#\d+\s*=\s*PRODUCT\('Stock'[^;]*;/)?.[0];
+  assert.ok(spindle && stock, "Both product definitions must be present");
+  const namedStock = stock.replace(
+    "'Stock','Stock'",
+    String.raw`'Stock','Maker''s \X2\00D8\X0\'`,
+  );
+  const reorderedSteps = plain
+    .replace(spindle, "#QA_TEMP")
+    .replace(stock, spindle)
+    .replace("#QA_TEMP", namedStock);
+  const renamed = await importSolidFile(
+    "step",
+    new Blob([reorderedSteps]),
+    "fallback",
+  );
+  try {
+    assert.deepEqual(
+      renamed.map((body) => body.name),
+      ["Spindle", "Maker's Ø"],
+    );
+    near(
+      measureVolume(renamed[1].shape),
+      model.bodies.map((b) => measureVolume(b.shape))[1],
+    );
+  } finally {
+    releaseBodies(renamed);
   }
   const importFeature = {
     ...tube,

@@ -179,15 +179,8 @@ def run():
     records = json.loads((out / "reverse.json").read_text())
     step = next(x for x in records if x["file"] == "fc-two-parts.step")
     labels = [part["name"] for part in step["parts"]]
-    assert labels == ["fc-two-parts · 1", "fc-two-parts · 2"], (
-        f"INTEROP-004 changed imported labels: {labels}"
-    )
-    expect(
-        "INTEROP-004",
-        sorted(labels) == ["Spacer", "Stop block"],
-        "STEP import should retain source component labels Spacer and Stop block. Imported: "
-        + str(labels),
-    )
+    assert labels == ["Spacer", "Stop block"], f"INTEROP-004 STEP product labels changed: {labels}"
+    print("PASS INTEROP-004 assembly component names and order", labels)
 
 
 if __name__ == "__main__":

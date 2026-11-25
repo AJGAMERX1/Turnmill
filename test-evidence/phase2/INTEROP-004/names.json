@@ -1,0 +1,452 @@
+[
+  {
+    "file": "SYS-002.return.step",
+    "sourceNames": [
+      "plate"
+    ],
+    "importedNames": [
+      "plate"
+    ]
+  },
+  {
+    "file": "block.return.step",
+    "sourceNames": [
+      "Analytic block"
+    ],
+    "importedNames": [
+      "Analytic block"
+    ]
+  },
+  {
+    "file": "cylinder.return.step",
+    "sourceNames": [
+      "Analytic cylinder"
+    ],
+    "importedNames": [
+      "Analytic cylinder"
+    ]
+  },
+  {
+    "file": "fc-filleted-block.step",
+    "sourceNames": [
+      "Filleted block"
+    ],
+    "importedNames": [
+      "Filleted block"
+    ]
+  },
+  {
+    "file": "fc-straight-knurl.step",
+    "sourceNames": [
+      "Straight knurl"
+    ],
+    "importedNames": [
+      "Straight knurl"
+    ]
+  },
+  {
+    "file": "fc-threaded-rod.step",
+    "sourceNames": [
+      "Helical grooved rod"
+    ],
+    "importedNames": [
+      "Helical grooved rod"
+    ]
+  },
+  {
+    "file": "fc-two-parts.step",
+    "sourceNames": [
+      "Spacer",
+      "Stop block"
+    ],
+    "importedNames": [
+      "Spacer",
+      "Stop block"
+    ]
+  },
+  {
+    "file": "hinge-1.return.step",
+    "sourceNames": [
+      "Hinge leaf A"
+    ],
+    "importedNames": [
+      "Hinge leaf A"
+    ]
+  },
+  {
+    "file": "hinge-2.return.step",
+    "sourceNames": [
+      "Hinge leaf B"
+    ],
+    "importedNames": [
+      "Hinge leaf B"
+    ]
+  },
+  {
+    "file": "hinge-3.return.step",
+    "sourceNames": [
+      "Hinge pin"
+    ],
+    "importedNames": [
+      "Hinge pin"
+    ]
+  },
+  {
+    "file": "hinge.return.step",
+    "sourceNames": [
+      "Hinge leaf A",
+      "Hinge leaf B",
+      "Hinge pin"
+    ],
+    "importedNames": [
+      "Hinge leaf A",
+      "Hinge leaf B",
+      "Hinge pin"
+    ]
+  },
+  {
+    "file": "m5-cosmetic.return.step",
+    "sourceNames": [
+      "M5 hex screw · 12 mm"
+    ],
+    "importedNames": [
+      "M5 hex screw · 12 mm"
+    ]
+  },
+  {
+    "file": "m5-nut.return.step",
+    "sourceNames": [
+      "M5 hex nut"
+    ],
+    "importedNames": [
+      "M5 hex nut"
+    ]
+  },
+  {
+    "file": "ruler-blank.return.step",
+    "sourceNames": [
+      "Aluminum ruler stock"
+    ],
+    "importedNames": [
+      "Aluminum ruler stock"
+    ]
+  },
+  {
+    "file": "ruler.return.step",
+    "sourceNames": [
+      "Aluminum blank"
+    ],
+    "importedNames": [
+      "Aluminum blank"
+    ]
+  },
+  {
+    "file": "threaded-rod.return.step",
+    "sourceNames": [
+      "Plain threaded rod"
+    ],
+    "importedNames": [
+      "Plain threaded rod"
+    ]
+  },
+  {
+    "file": "twist-pen-1.return.step",
+    "sourceNames": [
+      "Barrel"
+    ],
+    "importedNames": [
+      "Barrel"
+    ]
+  },
+  {
+    "file": "twist-pen-2.return.step",
+    "sourceNames": [
+      "Threaded cap"
+    ],
+    "importedNames": [
+      "Threaded cap"
+    ]
+  },
+  {
+    "file": "twist-pen-3.return.step",
+    "sourceNames": [
+      "Refill"
+    ],
+    "importedNames": [
+      "Refill"
+    ]
+  },
+  {
+    "file": "twist-pen-4.return.step",
+    "sourceNames": [
+      "Pocket clip"
+    ],
+    "importedNames": [
+      "Pocket clip"
+    ]
+  },
+  {
+    "file": "twist-pen.return.step",
+    "sourceNames": [
+      "Barrel",
+      "Threaded cap",
+      "Refill",
+      "Pocket clip"
+    ],
+    "importedNames": [
+      "Barrel",
+      "Threaded cap",
+      "Refill",
+      "Pocket clip"
+    ]
+  },
+  {
+    "file": "ui-bolt-library-bolt-nut-1.return.step",
+    "sourceNames": [
+      "M5 hex screw · 12 mm"
+    ],
+    "importedNames": [
+      "M5 hex screw · 12 mm"
+    ]
+  },
+  {
+    "file": "ui-bolt-library-bolt-nut-2.return.step",
+    "sourceNames": [
+      "M5 hex nut"
+    ],
+    "importedNames": [
+      "M5 hex nut"
+    ]
+  },
+  {
+    "file": "ui-bolt-library-bolt-nut.return.step",
+    "sourceNames": [
+      "M5 hex screw · 12 mm",
+      "M5 hex nut"
+    ],
+    "importedNames": [
+      "M5 hex screw · 12 mm",
+      "M5 hex nut"
+    ]
+  },
+  {
+    "file": "ui-bolt-scratch-bolt-nut-1.return.step",
+    "sourceNames": [
+      "Hand-built shank"
+    ],
+    "importedNames": [
+      "Hand-built shank"
+    ]
+  },
+  {
+    "file": "ui-bolt-scratch-bolt-nut-2.return.step",
+    "sourceNames": [
+      "Hand-built nut"
+    ],
+    "importedNames": [
+      "Hand-built nut"
+    ]
+  },
+  {
+    "file": "ui-bolt-scratch-bolt-nut.return.step",
+    "sourceNames": [
+      "Hand-built shank",
+      "Hand-built nut"
+    ],
+    "importedNames": [
+      "Hand-built shank",
+      "Hand-built nut"
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-1.return.step",
+    "sourceNames": [
+      "Guide tube"
+    ],
+    "importedNames": [
+      "Guide tube"
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-2.return.step",
+    "sourceNames": [
+      "Cam ring"
+    ],
+    "importedNames": [
+      "Cam ring"
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-3.return.step",
+    "sourceNames": [
+      "Plunger"
+    ],
+    "importedNames": [
+      "Plunger"
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-4.return.step",
+    "sourceNames": [
+      "Century Spring B18-127CS"
+    ],
+    "importedNames": [
+      "Century Spring B18-127CS"
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil.return.step",
+    "sourceNames": [
+      "Guide tube",
+      "Cam ring",
+      "Plunger",
+      "Century Spring B18-127CS"
+    ],
+    "importedNames": [
+      "Guide tube",
+      "Cam ring",
+      "Plunger",
+      "Century Spring B18-127CS"
+    ]
+  },
+  {
+    "file": "ui-click-pen-click-study-1.return.step",
+    "sourceNames": [
+      "Guide tube"
+    ],
+    "importedNames": [
+      "Guide tube"
+    ]
+  },
+  {
+    "file": "ui-click-pen-click-study-2.return.step",
+    "sourceNames": [
+      "Cam ring"
+    ],
+    "importedNames": [
+      "Cam ring"
+    ]
+  },
+  {
+    "file": "ui-click-pen-click-study-3.return.step",
+    "sourceNames": [
+      "Plunger"
+    ],
+    "importedNames": [
+      "Plunger"
+    ]
+  },
+  {
+    "file": "ui-click-pen-click-study.return.step",
+    "sourceNames": [
+      "Guide tube",
+      "Cam ring",
+      "Plunger"
+    ],
+    "importedNames": [
+      "Guide tube",
+      "Cam ring",
+      "Plunger"
+    ]
+  },
+  {
+    "file": "ui-hinge-hinge-1.return.step",
+    "sourceNames": [
+      "Fixed leaf"
+    ],
+    "importedNames": [
+      "Fixed leaf"
+    ]
+  },
+  {
+    "file": "ui-hinge-hinge-2.return.step",
+    "sourceNames": [
+      "Moving leaf"
+    ],
+    "importedNames": [
+      "Moving leaf"
+    ]
+  },
+  {
+    "file": "ui-hinge-hinge-3.return.step",
+    "sourceNames": [
+      "Hinge pin"
+    ],
+    "importedNames": [
+      "Hinge pin"
+    ]
+  },
+  {
+    "file": "ui-hinge-hinge.return.step",
+    "sourceNames": [
+      "Fixed leaf",
+      "Moving leaf",
+      "Hinge pin"
+    ],
+    "importedNames": [
+      "Fixed leaf",
+      "Moving leaf",
+      "Hinge pin"
+    ]
+  },
+  {
+    "file": "ui-pen-twist-pen-1.return.step",
+    "sourceNames": [
+      "Barrel"
+    ],
+    "importedNames": [
+      "Barrel"
+    ]
+  },
+  {
+    "file": "ui-pen-twist-pen-2.return.step",
+    "sourceNames": [
+      "Threaded cap"
+    ],
+    "importedNames": [
+      "Threaded cap"
+    ]
+  },
+  {
+    "file": "ui-pen-twist-pen-3.return.step",
+    "sourceNames": [
+      "Refill"
+    ],
+    "importedNames": [
+      "Refill"
+    ]
+  },
+  {
+    "file": "ui-pen-twist-pen-4.return.step",
+    "sourceNames": [
+      "Pocket clip"
+    ],
+    "importedNames": [
+      "Pocket clip"
+    ]
+  },
+  {
+    "file": "ui-pen-twist-pen.return.step",
+    "sourceNames": [
+      "Barrel",
+      "Threaded cap",
+      "Refill",
+      "Pocket clip"
+    ],
+    "importedNames": [
+      "Barrel",
+      "Threaded cap",
+      "Refill",
+      "Pocket clip"
+    ]
+  },
+  {
+    "file": "ui-ruler-graduated-ruler.return.step",
+    "sourceNames": [
+      "Engraved ruler"
+    ],
+    "importedNames": [
+      "Engraved ruler"
+    ]
+  }
+]

@@ -225,6 +225,12 @@ def reverse_checks():
         check(
             len(want) == len(got), f + " reverse solids: " + str(row.get("error", ""))
         )
+        named_parts = (
+            json.loads((out / (stem + ".native.json")).read_text())["parts"]
+            if f.endswith(".return.step") else source[stem]
+        )
+        check(sorted(part["name"] for part in got) == sorted(part["name"] for part in named_parts),
+              f + " INTEROP-004 source component labels")
         # Multi-part documents may reorder independent solids.
         # Equal-volume hinge leaves can differ only in placement; mass alone cannot identify them.
         a = want

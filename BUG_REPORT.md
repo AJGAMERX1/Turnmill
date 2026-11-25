@@ -8,6 +8,7 @@
 |---|---|---|
 | ASM-001 | [cfdb620](https://github.com/AJGAMERX1/Turnmill/commit/cfdb620898b5a2448079343452f8c389cf6edcf7) | Mounted blocks retained the 15 mm gap with zero overlap. Unsaved rotation, selected component and Part exports passed across STEP, STL and 3MF. [FreeCAD and 3MF results](test-evidence/phase2/assembly/freecad.json) |
 | INTEROP-005 | [08df462](https://github.com/AJGAMERX1/Turnmill/commit/08df462f4bc457decf48f9e76c4240d81b388326) | DXF and SVG both center the last tick at 155.000 mm, 1.000 mm after its neighbor. FreeCAD measured the 0.200 mm cut and the in-stock half of the edge tick. [Measurements](test-evidence/phase2/projects/ruler/boundary-measurements.json) |
+| UI-001, INTEROP-001 | [67ca0a0](https://github.com/AJGAMERX1/Turnmill/commit/67ca0a03728c27aba6215ac7532ea7c066bded20) | The 10.000 mm barrel thread measured 0.749976–0.750026 mm pitch in FreeCAD. The full-length M5 screw is one valid solid, measured at 5.000 mm major diameter and 0.800 mm pitch. [Thread sections and measurements](test-evidence/phase2/projects/machined-threads.json) |
 
 ## Original Phase 1 findings
 

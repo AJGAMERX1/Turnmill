@@ -3,9 +3,10 @@ import {
   getOC,
   measureVolume,
   type Shape3D,
-  type ShapeMesh,
   type Solid,
+  type ShapeMesh,
 } from "replicad";
+import { componentNames } from "./stepNames";
 import { strToU8, zipSync } from "three/examples/jsm/libs/fflate.module.js";
 import type { Body } from "./geometry";
 
@@ -22,7 +23,7 @@ function checkImportedSolid(shape: Shape3D) {
   }
 }
 
-function readStep(path: string): Shape3D[] {
+function readStep(path: string, text: string) {
   const oc = getOC();
   const reader = new oc.STEPControl_Reader();
   try {
@@ -55,7 +56,12 @@ function readStep(path: string): Shape3D[] {
         const solids = shape.solids;
         if (!solids.length)
           throw new Error("The STEP file contains no closed solids.");
-        return solids;
+        try {
+          return { shapes: solids, names: componentNames(reader, text, solids) };
+        } catch (error) {
+          solids.forEach(solid => solid.delete());
+          throw error;
+        }
       } finally {
         shape.delete();
       }
@@ -203,9 +209,12 @@ export async function importSolidFile(
 ): Promise<Body[]> {
   const oc = getOC();
   const path = "/import-" + crypto.randomUUID() + "." + format;
-  oc.FS.writeFile(path, new Uint8Array(await file.arrayBuffer()));
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  oc.FS.writeFile(path, bytes);
   try {
-    const shapes = format === "step" ? readStep(path) : readStl(path);
+    const { shapes, names } = format === "step"
+      ? readStep(path, new TextDecoder().decode(bytes))
+      : { shapes: readStl(path), names: [] };
     try {
       for (let i = 0; i < shapes.length; i++) {
         if (format === "stl" && stlUnit === "in")
@@ -214,7 +223,7 @@ export async function importSolidFile(
       }
       return shapes.map((shape, index) => ({
         shape,
-        name: shapes.length === 1 ? name : name + " · " + (index + 1),
+        name: names[index] ?? (shapes.length === 1 ? name : name + " · " + (index + 1)),
       }));
     } catch (error) {
       shapes.forEach((shape) => shape.delete());
@@ -253,7 +262,6 @@ function xmlName(name: string) {
     .replace(/>/g, "&gt;");
 }
 
-/** OC triangulates each face separately. Weld the matching face-boundary vertices into a 3MF object mesh. */
 function meshXml(mesh: ShapeMesh) {
   const vertexIds = new Map<string, number>();
   const vertexXml: string[] = [],
