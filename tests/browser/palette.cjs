@@ -1,12 +1,9 @@
-const { chromium } = require("playwright-core");
 const assert = require("node:assert/strict");
 const { join } = require("node:path");
 (async () => {
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: process.env.CHROMIUM_PATH,
-    args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
-  });
+  const { openBrowser } = await import("../qa/browser.mjs");
+  const { captureViewport } = await import("../qa/capture.mjs");
+  const browser = await openBrowser({ displayEvidence: true });
   try {
     const page = await browser.newPage({
       viewport: { width: 1450, height: 900 },
@@ -131,9 +128,7 @@ const { join } = require("node:path");
     assert.equal(selected, ids[1]);
     await input.press("ArrowUp");
     assert.equal(await input.getAttribute("aria-activedescendant"), ids[0]);
-    await page.screenshot({
-      path: join(process.cwd(), "test-evidence/browser/palette.png"),
-    });
+    await captureViewport(page, join(process.cwd(), "test-evidence/browser/palette.png"));
     await page.keyboard.press("Escape");
     await palette.waitFor({ state: "hidden" });
     await run(":new-project", /New project/);

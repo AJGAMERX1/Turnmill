@@ -1,4 +1,5 @@
 // A supplied URL tests a deployed site. Local runs exercise a release under the Pages subpath.
+import { captureViewport } from "./capture.mjs";
 import { openBrowser } from "./browser.mjs";
 import { serveBuild } from "./serve.mjs";
 import {
@@ -58,7 +59,7 @@ try {
     () => p.getByRole("button", { name: /STEP solid/ }).click(),
     folder + "/gauge.step",
   );
-  await p.screenshot({ path: folder + "/gauge.png" });
+  await captureViewport(p, folder + "/gauge.png");
   await p.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });

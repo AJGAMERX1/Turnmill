@@ -1,3 +1,4 @@
+import { captureViewport } from "./capture.mjs";
 import { openBrowser, appUrl, measure } from "./browser.mjs";
 import { resolve, join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -6,7 +7,7 @@ import assert from "node:assert/strict";
 const fixture = resolve("test-evidence/ASM-001/two-blocks.turnmill");
 const dir = resolve(process.env.QA_PLACEMENT_OUT || "test-evidence/ASM-001");
 await mkdir(dir, { recursive: true });
-const browser = await openBrowser();
+const browser = await openBrowser({ displayEvidence: true });
 try {
   const p = await browser.newPage({ viewport: { width: 1400, height: 930 }, acceptDownloads: true });
   p.setDefaultTimeout(80000);
@@ -35,7 +36,7 @@ try {
   await open(fixture);
   const seated = await measure(p);
   assert.equal(seated.joints.matrices[1][14], 20);
-  await p.screenshot({ path: join(dir, "seated-assembly.png") });
+  await captureViewport(p, join(dir, "seated-assembly.png"));
   await exportFiles("two-blocks", "all");
 
   const driven = JSON.parse(await readFile(fixture));

@@ -3,6 +3,7 @@ const { chromium } = require("playwright-core"),
   path = require("node:path"),
   fs = require("node:fs/promises");
 (async () => {
+  const { captureViewport } = await import("../qa/capture.mjs");
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH,
     headless: true,
@@ -22,10 +23,7 @@ const { chromium } = require("playwright-core"),
     const base = process.env.TURNMILL_URL || "http://127.0.0.1:4197/",
       addr = (n) => p.getByRole("button", { name: n, exact: true }),
       guide = p.getByRole("region", { name: "Guided pen walkthrough" }),
-      shot = (n) =>
-        p.screenshot({
-          path: path.resolve("test-evidence/browser", n + ".png"),
-        });
+      shot = (n) => captureViewport(p, path.resolve("test-evidence/browser", n + ".png"));
     const metrics = () =>
       p.evaluate(() =>
         Object.fromEntries(

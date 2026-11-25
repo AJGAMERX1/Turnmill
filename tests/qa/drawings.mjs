@@ -1,10 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import assert from "node:assert/strict";
+import { captureViewport } from "./capture.mjs";
 import { openBrowser, appUrl, measure } from "./browser.mjs";
 const folder = resolve("test-evidence/drawings");
 await mkdir(folder, { recursive: true });
-const browser = await openBrowser(),
+const browser = await openBrowser({ displayEvidence: true }),
   errors = [],
   messages = [];
 try {
@@ -42,7 +43,7 @@ try {
       2,
     ),
   );
-  await p.screenshot({ path: folder + "/turnmill-pen.png" });
+  await captureViewport(p, folder + "/turnmill-pen.png");
   await p.getByRole("button", { name: "Drawing", exact: true }).click();
   await p.getByRole("img", { name: "Linked part drawing" }).waitFor();
   const collect = async (name) => {
