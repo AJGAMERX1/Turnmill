@@ -1,0 +1,54 @@
+{
+  "barrel": [
+    {
+      "page": 1,
+      "characters": 356,
+      "minGlyphPt": 4.689068651574814,
+      "text": "TURNMILL THIRD-ANGLE PROJECTION \u00b7 DIMENSIONS IN mm\nTOP ISOMETRIC \u00b7 NTS\n2\n1 A A\nFRONT RIGHT\n2\n1\n92\nEXTERIOR VIEWS: THREAD HELICES OMITTED\nSECTION A\u2013A CUT AT Y = 0 mm\nB\n1. \u00d8 9.7 \u00d7 0.75 pitch \u00b7 external \u00b7 RH \u00b7 8 mm long \u00b7 far end \u00b7 modeled\nSee following sheet for measured dimensions and feature callouts.\nPART DRAWING NO. SCALE REV. SHEET\nBarrel TM-BRL-01 1:1 A 1 / 4\nMaterial: Brass"
+    },
+    {
+      "page": 2,
+      "characters": 191,
+      "minGlyphPt": 6.236220472440948,
+      "text": "TURNMILL SECTION DETAIL \u00b7 FINISHED BODY\nDetail of far end \u00b7 B\nSection A\u2013A, horizontal interval 84 \u2026 92 mm from section start.\n8\nPART DRAWING NO. SCALE REV. SHEET\nBarrel TM-BRL-01 5:1 A 2 / 4\nMaterial: Brass"
+    },
+    {
+      "page": 3,
+      "characters": 860,
+      "minGlyphPt": 6.236220472440948,
+      "text": "TURNMILL FINISHED BODY DIMENSIONS\nDimensions and feature callouts\nAxial surface stations are measured from the left end of the final solid. Dimensions in millimetres.\nDESCRIPTION VALUE AXIAL RANGE / UNITS\nOverall X length 92 mm\nOverall Y width 12 mm\nOverall Z height 12 mm\nSection at Y 0 mm \u00b7 model coordinates\nBore diameter \u00d8 7 X 0 \u2026 92\nOutside diameter \u00d8 12 X 1.1 \u2026 75\nOutside diameter \u00d8 11.2 X 75.3 \u2026 75.7\nOutside diameter \u00d8 12 X 76 \u2026 77\nOutside diameter \u00d8 11.2 X 77.3 \u2026 77.7\nOutside diameter \u00d8 12 X 78 \u2026 79\nOutside diameter \u00d8 11.2 X 79.3 \u2026 79.7\nOutside diameter \u00d8 12 X 80 \u2026 83\nOutside diameter \u00d8 9.7 X 84 \u2026 84.234378\nOutside diameter \u00d8 9.7 X 84.140618 \u2026 84.984371\nOutside diameter \u00d8 9.7 X 84.890622 \u2026 85.734369\nOutside diameter \u00d8 9.7 X 85.640628 \u2026 86.484373\nOutside diameter \u00d8 9.7 X 86.390631 \u2026 87.234373\nOutside diameter \u00d8 9.7 X 87.140626 \u2026 87.984373\nPART DRAWING NO. SCALE REV. SHEET\nBarrel TM-BRL-01 \u2014 A 3 / 4\nMaterial: Brass"
+    },
+    {
+      "page": 4,
+      "characters": 562,
+      "minGlyphPt": 6.236220472440948,
+      "text": "TURNMILL FINISHED BODY DIMENSIONS\nDimensions and feature callouts\nAxial surface stations are measured from the left end of the final solid. Dimensions in millimetres.\nDESCRIPTION VALUE AXIAL RANGE / UNITS\nOutside diameter \u00d8 9.7 X 87.890627 \u2026 88.734371\nOutside diameter \u00d8 9.7 X 88.640627 \u2026 89.484381\nOutside diameter \u00d8 9.7 X 89.39063 \u2026 90.234381\nOutside diameter \u00d8 9.7 X 90.140618 \u2026 90.98437\nOutside diameter \u00d8 9.7 X 90.890619 \u2026 91.500003\nFeature callout \u00d8 9.7 \u00d7 0.75 pitch \u00b7 external \u00b7 RH \u00b7 8 mm long \u00b7 far end \u00b7 modeled\nPART DRAWING NO. SCALE REV. SHEET\nBarrel TM-BRL-01 \u2014 A 4 / 4\nMaterial: Brass"
+    }
+  ],
+  "assembly": [
+    {
+      "page": 1,
+      "characters": 221,
+      "minGlyphPt": 2.3427349901574814,
+      "text": "TURNMILL ASSEMBLY \u00b7 THIRD-ANGLE PROJECTION\nTop Isometric\nA A\nFront Right\n4\n2.\n1\n109.875 14.3\nHome joint positions \u00b7 Overall dimensions in mm Simplified thread outlines\nASSEMBLY DRAWING NO. SCALE REV. SHEET\nTwist pen assembly TM-ASM-01 1:1 A 1 / 4"
+    },
+    {
+      "page": 2,
+      "characters": 188,
+      "minGlyphPt": 6.236220472440948,
+      "text": "TURNMILL SECTION A\u2013A\nAssembly section A\u2013A\nY = 0.95 mm in assembly coordinates \u00b7 Offset from assembly center 0 mm\nBOM item\n1 2 3\nASSEMBLY DRAWING NO. SCALE REV. SHEET\nTwist pen assembly TM-ASM-01 2:1 A 2 / 4"
+    },
+    {
+      "page": 3,
+      "characters": 183,
+      "minGlyphPt": 6.236220472440948,
+      "text": "TURNMILL EXPLODED ASSEMBLY\nExploded view\n3\n1\n4\n2\nBalloon numbers refer to the bill of materials. Simplified thread outlines\nASSEMBLY DRAWING NO. SCALE REV. SHEET\nTwist pen assembly TM-ASM-01 NTS A 3 / 4"
+    },
+    {
+      "page": 4,
+      "characters": 346,
+      "minGlyphPt": 6.236220472440948,
+      "text": "TURNMILL ASSEMBLY PARTS LIST\nBill of materials\nITEM COMPONENT QTY MATERIAL SOURCE / SPECIFICATION JOINT / PARENT\n1 Barrel 1 Brass Modeled part fixed \u00b7 Ground\n2 Threaded cap 1 Aluminum Modeled part screw \u00b7 Barrel\n3 Refill 1 Acetal Modeled part slider \u00b7 Barrel\n4 Pocket clip 1 Steel Modeled part fixed \u00b7 Threaded cap\nASSEMBLY DRAWING NO. SCALE REV. SHEET\nTwist pen assembly TM-ASM-01 \u2014 A 4 / 4"
+    }
+  ]
+}

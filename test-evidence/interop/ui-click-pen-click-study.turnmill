@@ -1,0 +1,266 @@
+{
+  "id": "989d8e2a-373c-4803-b625-c2b846f43cb8",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "1f48fae4-43a6-4c8e-afa7-294fc110043b",
+      "name": "Sketch 1",
+      "points": [
+        {
+          "x": "0",
+          "y": "3.5"
+        },
+        {
+          "x": "32",
+          "y": "3.5"
+        },
+        {
+          "x": "32",
+          "y": "5"
+        },
+        {
+          "x": "0",
+          "y": "5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "7fba98f0-3af0-4623-a24b-4747b9f1f1a7",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "482bc186-ab69-4bd0-8400-1fed39f0f314",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "591741e1-9d9f-40aa-8e9d-ad13ecbc2800",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "bcb0e4d7-5497-433f-8c53-ef2eaed57d81",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ff7996d0-c1be-4c74-8e0b-6a0dbfc7d950",
+      "name": "Sketch 2",
+      "points": [
+        {
+          "x": "0",
+          "y": "1.9"
+        },
+        {
+          "x": "7",
+          "y": "1.9"
+        },
+        {
+          "x": "7",
+          "y": "3.2"
+        },
+        {
+          "x": "0",
+          "y": "3.2"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "552f238d-464e-4eca-92bf-d825fc8605f4",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "41b65e46-faa2-4cb5-a673-f0b4a610ffaa",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "563d4d17-590e-4faa-89f7-a1b1883d8363",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "15c0a758-af84-4872-920d-fa720e42f467",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eaa83c39-2684-49bc-a9db-5badd0463e5e",
+      "name": "Sketch 3",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "26",
+          "y": "0"
+        },
+        {
+          "x": "26",
+          "y": "1.5"
+        },
+        {
+          "x": "0",
+          "y": "1.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "b9cb5c3e-ab8a-4047-8722-6d9e90d5c0d4",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "78f19b49-31bb-4bef-a60f-a87e03c7e4ac",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "b3db65ad-2743-4e56-ae7c-e921c04bab7e",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "aeec4c2c-9b43-432a-9bfd-41a39c2c76f7",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "82d5d18c-bda3-4cfc-80e9-1255277c699a",
+      "name": "Guide tube",
+      "kind": "revolve",
+      "sketchId": "1f48fae4-43a6-4c8e-afa7-294fc110043b",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    },
+    {
+      "id": "5e921c8d-a498-4dcd-a640-4030b358ae85",
+      "name": "Cam ring",
+      "kind": "revolve",
+      "sketchId": "ff7996d0-c1be-4c74-8e0b-6a0dbfc7d950",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    },
+    {
+      "id": "aaa0e89b-f7d4-439c-ba84-4113bfe78333",
+      "name": "Plunger",
+      "kind": "revolve",
+      "sketchId": "eaa83c39-2684-49bc-a9db-5badd0463e5e",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "assemblyItems": {
+      "82d5d18c-bda3-4cfc-80e9-1255277c699a": 1,
+      "5e921c8d-a498-4dcd-a640-4030b358ae85": 2,
+      "aaa0e89b-f7d4-439c-ba84-4113bfe78333": 3
+    },
+    "joints": {
+      "5e921c8d-a498-4dcd-a640-4030b358ae85": {
+        "kind": "revolute",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "360 deg",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1
+      },
+      "aaa0e89b-f7d4-439c-ba84-4113bfe78333": {
+        "kind": "slider",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 mm",
+        "max": "4 mm",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1,
+        "cam": {
+          "driver": "5e921c8d-a498-4dcd-a640-4030b358ae85",
+          "law": {
+            "lift": "1.2 mm",
+            "radius": "4.5 mm",
+            "lobes": "4",
+            "rise": "32 deg",
+            "high": "12 deg",
+            "returnAngle": "32 deg",
+            "preload": "0.6",
+            "rate": "0.7",
+            "load": "0.2",
+            "travel": "2.5 mm",
+            "compression": "4 mm",
+            "pressure": "45 deg"
+          },
+          "datum": "0 mm",
+          "phase": "0 deg",
+          "direction": 1,
+          "springEnabled": true
+        }
+      }
+    },
+    "assemblyClearance": {
+      "requiredGap": "0.05 mm"
+    }
+  }
+}

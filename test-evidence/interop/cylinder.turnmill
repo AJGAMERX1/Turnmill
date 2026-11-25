@@ -1,0 +1,42 @@
+{
+  "id": "be7c5109-f356-42e1-9184-462e068a2347",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "cyl-profile",
+      "name": "Analytic cylinder profile",
+      "points": [
+        {
+          "x": "0 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "100 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "100 mm",
+          "y": "5 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "5 mm"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "cyl",
+      "name": "Analytic cylinder",
+      "kind": "revolve",
+      "operation": "new",
+      "sketchId": "cyl-profile",
+      "amount": "360 deg",
+      "suppressed": false
+    }
+  ]
+}

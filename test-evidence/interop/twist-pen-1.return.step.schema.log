@@ -1,0 +1,17 @@
+/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/interop-tools/step-build/bin/p21read_sdai_ap214e3: load file ...
+Reading Data from /Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/test-evidence/interop/twist-pen-1.return.step...
+
+HEADER read:
+
+FIRST PASS complete:  3381 instances created.
+  0  ERRORS	  0  WARNINGS
+
+
+SECOND PASS complete:  3381 instances valid.
+  0  ERRORS	  0  WARNINGS
+
+Finished reading file.
+
+p21 ReadExchangeFile() Physical memory: -1833329648kb; Virtual memory: 0kb; User CPU time: 6128296992ms; System CPU time: 6128297072ms
+/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/interop-tools/step-build/bin/p21read_sdai_ap214e3: write file ...
+/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/interop-tools/step-build/bin/p21read_sdai_ap214e3: /var/folders/k2/y82gz3197s52ldqmcr60m2fh0000gn/T/tmpjv1reqtg/rewrite.stp written

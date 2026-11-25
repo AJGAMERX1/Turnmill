@@ -1,0 +1,16 @@
+[ui-pen-twist-pen.stl]
+size_x = 109.875000
+size_y = 14.300000
+size_z = 12.397549
+min_x = -1.500000
+min_y = -6.200000
+min_z = -6.198774
+max_x = 108.375000
+max_y = 8.100000
+max_z = 6.198774
+number_of_facets = 51056
+manifold = yes
+degenerate_facets = 1
+facets_removed = 1
+number_of_parts =  4
+volume = 10084.105469

@@ -1,0 +1,14 @@
+[m5-nut.stl]
+size_x = 9.237604
+size_y = 8.000000
+size_z = 4.000000
+min_x = -4.618802
+min_y = -4.000000
+min_z = 0.000000
+max_x = 4.618802
+max_y = 4.000000
+max_z = 4.000000
+number_of_facets = 7366
+manifold = yes
+number_of_parts =  1
+volume = 157.399307

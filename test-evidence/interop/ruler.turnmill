@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "id": "example-pocket-ruler",
+  "name": "Pocket ruler",
+  "parameters": [
+    {
+      "name": "blank_length",
+      "label": "Blank length",
+      "expression": "155.4 mm"
+    },
+    {
+      "name": "blank_width",
+      "label": "Blank width",
+      "expression": "20 mm"
+    },
+    {
+      "name": "blank_thickness",
+      "label": "Blank thickness",
+      "expression": "2 mm"
+    },
+    {
+      "name": "layout_margin",
+      "label": "Layout margin",
+      "expression": "1 mm"
+    },
+    {
+      "name": "mark_depth",
+      "label": "Engraving depth",
+      "expression": "0.2 mm"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "blank-outline",
+      "name": "Blank outline",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "blank_length",
+          "y": "0"
+        },
+        {
+          "x": "blank_length",
+          "y": "blank_width"
+        },
+        {
+          "x": "0",
+          "y": "blank_width"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "graduation-layout",
+      "name": "Graduation layout · generated",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "blank_length - 2*layout_margin",
+          "y": "0"
+        },
+        {
+          "x": "0",
+          "y": "blank_width - 2*layout_margin"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "blank",
+      "name": "Aluminum blank",
+      "kind": "extrude",
+      "sketchId": "blank-outline",
+      "operation": "new",
+      "amount": "blank_thickness",
+      "suppressed": false
+    },
+    {
+      "id": "graduations",
+      "name": "Dual-edge graduations",
+      "kind": "extrude",
+      "sketchId": "graduation-layout",
+      "operation": "cut",
+      "amount": "mark_depth",
+      "bodyId": "blank",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "scale": {
+      "layout": "linear",
+      "top": "mm",
+      "bottom": "in16",
+      "length": "blank_length - 2*layout_margin",
+      "width": "blank_width - 2*layout_margin",
+      "offset": "0.5 mm",
+      "major": "3.7 mm",
+      "mid": "2.5 mm",
+      "minor": "1.4 mm",
+      "weight": "0.10 mm",
+      "midWeight": "0.14 mm",
+      "majorWeight": "0.20 mm",
+      "font": "Helvetiker CAD",
+      "fontSize": "1.9 mm",
+      "labelGap": "0.75 mm",
+      "independentLabels": true,
+      "bottomFont": "Helvetiker Bold CAD",
+      "bottomFontSize": "2 mm",
+      "bottomLabelGap": "0.9 mm",
+      "bottomFrequency": "1",
+      "depth": "mark_depth",
+      "appliedId": "graduations",
+      "attachment": {
+        "targetBodyId": "blank",
+        "face": "top",
+        "u": "layout_margin",
+        "v": "layout_margin",
+        "angle": "0 deg"
+      }
+    },
+    "bodyMaterials": {
+      "blank": "Aluminum"
+    }
+  }
+}

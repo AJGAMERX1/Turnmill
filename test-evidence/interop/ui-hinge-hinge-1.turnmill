@@ -1,0 +1,321 @@
+{
+  "id": "90ce38a5-3271-4d55-856f-b97fc454b862",
+  "version": 1,
+  "name": "Fixed leaf",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "a0178352-df71-4ee9-b868-8f1cf68ff686",
+      "name": "Sketch 1",
+      "points": [
+        {
+          "x": "0",
+          "y": "1.7"
+        },
+        {
+          "x": "8",
+          "y": "1.7"
+        },
+        {
+          "x": "8",
+          "y": "2.5"
+        },
+        {
+          "x": "0",
+          "y": "2.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "b1336dc2-7e1c-4ba2-a332-bb33cb89e10d",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "c18357fd-0e93-4116-a109-660f72ebda81",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "6c866289-8e2a-409b-954d-285fdb3b9791",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "ba493de8-eec1-4785-815c-382c29efd872",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d26d8e9c-6d0a-4de7-9302-41ce35bd7c4b",
+      "name": "Sketch 2",
+      "points": [
+        {
+          "x": "0",
+          "y": "-2"
+        },
+        {
+          "x": "8",
+          "y": "-2"
+        },
+        {
+          "x": "8",
+          "y": "-12"
+        },
+        {
+          "x": "0",
+          "y": "-12"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "aa18197a-a63a-440d-b6e8-d0cec4625f1a",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "8ac3696d-51cf-4145-b71c-11cc8722b28f",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "28c7cf3e-707d-4832-b3de-6991d3a8d0a2",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "f1784633-61e0-4b2e-85a1-5748b004f10c",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d4743657-d858-49eb-aae8-9dff08950664",
+      "name": "Sketch 3",
+      "points": [
+        {
+          "x": "9",
+          "y": "1.7"
+        },
+        {
+          "x": "17",
+          "y": "1.7"
+        },
+        {
+          "x": "17",
+          "y": "2.5"
+        },
+        {
+          "x": "9",
+          "y": "2.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "98a6cc3a-6364-41da-b35d-f674ffd6cff2",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "48b450d2-d719-413c-a798-fb3e00fcfddc",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "88747819-41c4-4839-84c9-f1e2083136e3",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "ffe85be8-d6cb-4ebc-afd8-2419c46cdf26",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1c06cd51-86ff-460f-9669-dc75ba37dc67",
+      "name": "Sketch 4",
+      "points": [
+        {
+          "x": "9",
+          "y": "2"
+        },
+        {
+          "x": "17",
+          "y": "2"
+        },
+        {
+          "x": "17",
+          "y": "12"
+        },
+        {
+          "x": "9",
+          "y": "12"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "91fd8c36-96a2-498d-bc6b-8194207ffacd",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "17eb30ca-2ad1-466c-a324-9b7ed5e8b930",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "ca442cec-7b16-4875-a1d2-7b83437f2410",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "4d732597-43b8-4f9d-b056-2a97c2824c24",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b3420855-747d-4d52-bd7a-f3625f07988e",
+      "name": "Sketch 5",
+      "points": [
+        {
+          "x": "0",
+          "y": "0"
+        },
+        {
+          "x": "17",
+          "y": "0"
+        },
+        {
+          "x": "17",
+          "y": "1.5"
+        },
+        {
+          "x": "0",
+          "y": "1.5"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "4274c954-79a6-42e5-8f5d-c80865ce3f31",
+          "type": "horizontal",
+          "indices": [
+            0
+          ]
+        },
+        {
+          "id": "7ba5da61-1554-470f-9ead-1f62be712b4c",
+          "type": "vertical",
+          "indices": [
+            1
+          ]
+        },
+        {
+          "id": "d793efff-38a4-4956-841e-129b638cdc03",
+          "type": "horizontal",
+          "indices": [
+            2
+          ]
+        },
+        {
+          "id": "b13ca8ea-2488-4516-b4be-f879c6684e29",
+          "type": "vertical",
+          "indices": [
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "726ef44a-81f1-4749-9855-3f780fe9958a",
+      "name": "Fixed leaf",
+      "kind": "revolve",
+      "sketchId": "a0178352-df71-4ee9-b868-8f1cf68ff686",
+      "amount": "360 deg",
+      "operation": "new",
+      "suppressed": false
+    },
+    {
+      "id": "9dcef24f-0176-4285-8e7c-7aaefc870b88",
+      "name": "Fixed leaf web",
+      "kind": "extrude",
+      "sketchId": "d26d8e9c-6d0a-4de7-9302-41ce35bd7c4b",
+      "amount": "1 mm",
+      "operation": "add",
+      "suppressed": false,
+      "bodyId": "726ef44a-81f1-4749-9855-3f780fe9958a"
+    }
+  ],
+  "workspaces": {
+    "assemblyItems": {
+      "726ef44a-81f1-4749-9855-3f780fe9958a": 1,
+      "2976f5cd-d823-4cce-85a5-ee871ebad7ab": 2,
+      "cafcd00a-a858-4041-851a-ad20fd03def2": 3
+    },
+    "joints": {
+      "2976f5cd-d823-4cce-85a5-ee871ebad7ab": {
+        "kind": "revolute",
+        "parent": "",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "180 deg",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1
+      }
+    },
+    "assemblyClearance": {
+      "requiredGap": "0.1 mm"
+    }
+  }
+}

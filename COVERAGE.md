@@ -1,6 +1,6 @@
 # Phase 1 coverage
 
-Inventory checkpoint. Status is specific to the test type. The table starts before formal testing.
+Independent interchange checkpoint. Updated cells apply only to the cases described in INTEROP.md and BUG_REPORT.md.
 
 | System | Nominal | Edge/error | UI | Persistence/exchange |
 |---|---|---|---|---|
@@ -23,10 +23,10 @@ Inventory checkpoint. Status is specific to the test type. The table starts befo
 | Straight metric/inch fractional/decimal, ratio, architectural and angular scales | Not covered | Not covered | Not covered | Not covered |
 | Dual scales and engraving on blank/existing planar face | Not covered | Not covered | Not covered | Not covered |
 | Native save/open, autosave, history recovery, offline restart | Not covered | Not covered | Not covered | Not covered |
-| STEP, STL, 3MF export; STEP/STL import | Not covered | Not covered | Not covered | Not covered |
+| STEP, STL, 3MF export; STEP/STL import | Fail | Fail | Fail | Fail |
 | Selectable AP242 export, 3MF and PDF import | Not built yet | Not built yet | Not built yet | Not built yet |
 | DXF/SVG export and planar profile import | Not covered | Not covered | Not covered | Not covered |
-| PDF drawings/export/print | Not covered | Not covered | Not covered | Not covered |
+| PDF drawings/export/print | Pass | Not covered | Pass | Pass |
 | Orbit, pan, zoom, fit, selection highlighting, responsive layouts and high DPI | Not covered | Not covered | Not covered | Not covered |
 | Live section in the Part viewport, light theme, general preferences panel | Not built yet | Not built yet | Not built yet | Not built yet |
 | Command palette, keyboard shortcuts, tooltips, empty states, guided pen | Not covered | Not covered | Not covered | Not covered |

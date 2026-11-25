@@ -1,0 +1,30 @@
+{
+  "cases": [
+    "SYS-002",
+    "block",
+    "cylinder",
+    "hinge",
+    "hinge-1",
+    "hinge-2",
+    "hinge-3",
+    "m5-cosmetic",
+    "m5-nut",
+    "ruler",
+    "ruler-blank",
+    "twist-pen",
+    "twist-pen-1",
+    "twist-pen-2",
+    "twist-pen-3",
+    "twist-pen-4",
+    "ui-click-pen-click-study",
+    "ui-click-pen-click-study-1",
+    "ui-click-pen-click-study-2",
+    "ui-click-pen-click-study-3",
+    "ui-hinge-hinge",
+    "ui-hinge-hinge-1",
+    "ui-hinge-hinge-2",
+    "ui-hinge-hinge-3",
+    "ui-ruler-graduated-ruler"
+  ],
+  "issues": []
+}

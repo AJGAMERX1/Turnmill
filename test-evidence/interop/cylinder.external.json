@@ -1,0 +1,40 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 127,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 7851.923828,
+    "bbox": [
+      [
+        0.0,
+        -5.0,
+        -4.999012
+      ],
+      [
+        100.0,
+        5.0,
+        4.999012
+      ]
+    ],
+    "parts": "1"
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "volume": 7851.9116681840915,
+        "closed": true,
+        "triangles": 628
+      }
+    ],
+    "buildItems": 1
+  }
+}

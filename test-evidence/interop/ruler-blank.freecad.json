@@ -1,0 +1,127 @@
+{
+  "case": "ruler-blank",
+  "freecad": [
+    "1",
+    "1",
+    "4"
+  ],
+  "step": {
+    "volume": 6216.0,
+    "area": 6917.5999999999985,
+    "bbox": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        155.4,
+        20.0,
+        2.0
+      ]
+    ],
+    "center": [
+      77.7,
+      10.0,
+      1.0
+    ],
+    "faces": 6,
+    "edges": 12,
+    "solids": 1,
+    "closed": true,
+    "valid": true,
+    "shapeCheck": "OK",
+    "parts": [
+      {
+        "volume": 6216.0,
+        "area": 6917.5999999999985,
+        "bbox": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            155.4,
+            20.0,
+            2.0
+          ]
+        ],
+        "center": [
+          77.7,
+          10.0,
+          1.0
+        ],
+        "faces": 6,
+        "edges": 12,
+        "solids": 1,
+        "closed": true,
+        "valid": true
+      }
+    ],
+    "objects": [
+      {
+        "name": "Aluminum ruler stock",
+        "type": "Part::Feature",
+        "parents": [],
+        "placement": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "solids": 1,
+        "bbox": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            155.4,
+            20.0,
+            2.0
+          ]
+        ]
+      }
+    ],
+    "roots": [
+      "Aluminum ruler stock"
+    ],
+    "overlaps": []
+  },
+  "stl": {
+    "volume": 6216.0,
+    "area": 6917.60009765625,
+    "bbox": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        155.39999389648438,
+        20.0,
+        2.0
+      ]
+    ],
+    "closed": true,
+    "nonManifold": false,
+    "selfIntersections": false,
+    "points": 8,
+    "triangles": 12,
+    "components": 1
+  }
+}

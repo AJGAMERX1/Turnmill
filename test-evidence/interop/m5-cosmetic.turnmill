@@ -1,0 +1,190 @@
+{
+  "id": "d61d9f7b-20bc-434c-907d-162a691c8e8c",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [
+    {
+      "name": "screw_8dd68_diameter",
+      "expression": "5 mm",
+      "label": "Hex screw diameter"
+    },
+    {
+      "name": "screw_8dd68_pitch",
+      "expression": "0.8 mm",
+      "label": "Hex screw pitch"
+    },
+    {
+      "name": "screw_8dd68_across_flats",
+      "expression": "8 mm",
+      "label": "Hex screw across flats"
+    },
+    {
+      "name": "screw_8dd68_height",
+      "expression": "3.5 mm",
+      "label": "Hex screw height"
+    },
+    {
+      "name": "screw_8dd68_length",
+      "expression": "12 mm",
+      "label": "Hex screw length"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "a4581a9e-a7c4-4be0-8a48-8a503f09e42c",
+      "name": "M5 hex screw · 12 mm profile",
+      "points": [
+        {
+          "x": "0 mm + screw_8dd68_diameter/2",
+          "y": "0 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "0 mm + screw_8dd68_diameter/2"
+        },
+        {
+          "x": "0 mm - screw_8dd68_diameter/2",
+          "y": "0 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "0 mm - screw_8dd68_diameter/2"
+        }
+      ],
+      "constraints": [
+        {
+          "id": "1f57ba4a-050b-494b-be6f-38ff6ca2108a",
+          "type": "arc",
+          "indices": [
+            0
+          ],
+          "value": "-(screw_8dd68_diameter/2)"
+        },
+        {
+          "id": "c9467bee-5a7b-475d-a1da-3901da70f958",
+          "type": "arc",
+          "indices": [
+            1
+          ],
+          "value": "-(screw_8dd68_diameter/2)"
+        },
+        {
+          "id": "455c6f96-513f-4f26-bbd2-b8fad7a10f50",
+          "type": "arc",
+          "indices": [
+            2
+          ],
+          "value": "-(screw_8dd68_diameter/2)"
+        },
+        {
+          "id": "23fb6e87-1ecf-418a-b003-e2d776b766f1",
+          "type": "arc",
+          "indices": [
+            3
+          ],
+          "value": "-(screw_8dd68_diameter/2)"
+        }
+      ]
+    },
+    {
+      "id": "6f8af91a-9fa8-4bdd-ad3f-57a922cf1a74",
+      "name": "Hex head profile",
+      "points": [
+        {
+          "x": "screw_8dd68_across_flats * 0.577350269189626",
+          "y": "screw_8dd68_across_flats * 0"
+        },
+        {
+          "x": "screw_8dd68_across_flats * 0.288675134594813",
+          "y": "screw_8dd68_across_flats * 0.5"
+        },
+        {
+          "x": "screw_8dd68_across_flats * -0.288675134594813",
+          "y": "screw_8dd68_across_flats * 0.5"
+        },
+        {
+          "x": "screw_8dd68_across_flats * -0.577350269189626",
+          "y": "screw_8dd68_across_flats * 0"
+        },
+        {
+          "x": "screw_8dd68_across_flats * -0.288675134594813",
+          "y": "screw_8dd68_across_flats * -0.5"
+        },
+        {
+          "x": "screw_8dd68_across_flats * 0.288675134594813",
+          "y": "screw_8dd68_across_flats * -0.5"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "99aa906c-7e44-40ed-8852-52a9d93705bd",
+      "name": "M5 hex screw · 12 mm",
+      "kind": "extrude",
+      "amount": "-screw_8dd68_length",
+      "sketchId": "a4581a9e-a7c4-4be0-8a48-8a503f09e42c",
+      "operation": "new",
+      "suppressed": false,
+      "finishes": [
+        {
+          "kind": "thread",
+          "id": "3bc08852-e523-4d97-b631-a079918e72c1",
+          "name": "M5 × 0.8",
+          "side": "external",
+          "mode": "cosmetic",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "screw_8dd68_diameter",
+          "pitch": "screw_8dd68_pitch",
+          "length": "screw_8dd68_length",
+          "end": "start"
+        }
+      ]
+    },
+    {
+      "id": "0950c941-b1b6-48ff-9f29-ed1b267ee29d",
+      "name": "Hex head",
+      "kind": "extrude",
+      "amount": "screw_8dd68_height",
+      "sketchId": "6f8af91a-9fa8-4bdd-ad3f-57a922cf1a74",
+      "operation": "add",
+      "suppressed": false,
+      "finishes": [],
+      "bodyId": "99aa906c-7e44-40ed-8852-52a9d93705bd"
+    }
+  ],
+  "workspaces": {
+    "bodyMaterials": {
+      "99aa906c-7e44-40ed-8852-52a9d93705bd": "Steel"
+    },
+    "hardwareComponents": {
+      "99aa906c-7e44-40ed-8852-52a9d93705bd": {
+        "source": "Hex screw",
+        "dimensions": [
+          {
+            "label": "diameter",
+            "parameter": "screw_8dd68_diameter"
+          },
+          {
+            "label": "pitch",
+            "parameter": "screw_8dd68_pitch"
+          },
+          {
+            "label": "across flats",
+            "parameter": "screw_8dd68_across_flats"
+          },
+          {
+            "label": "height",
+            "parameter": "screw_8dd68_height"
+          },
+          {
+            "label": "length",
+            "parameter": "screw_8dd68_length"
+          }
+        ]
+      }
+    }
+  }
+}

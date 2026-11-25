@@ -1,0 +1,191 @@
+{
+  "id": "83a1bcd9-4ae4-407a-b3c6-b00775a776fb",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "a-profile",
+      "name": "Hinge leaf A profile",
+      "points": [
+        {
+          "x": "0 mm",
+          "y": "2 mm"
+        },
+        {
+          "x": "7.9 mm",
+          "y": "2 mm"
+        },
+        {
+          "x": "7.9 mm",
+          "y": "3.2 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "3.2 mm"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "tab-a-profile",
+      "name": "Leaf A flange profile",
+      "points": [
+        {
+          "x": "0 mm",
+          "y": "2.5 mm"
+        },
+        {
+          "x": "7.9 mm",
+          "y": "2.5 mm"
+        },
+        {
+          "x": "7.9 mm",
+          "y": "9.5 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "9.5 mm"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "b-profile",
+      "name": "Hinge leaf B profile",
+      "points": [
+        {
+          "x": "8.1 mm",
+          "y": "2 mm"
+        },
+        {
+          "x": "16 mm",
+          "y": "2 mm"
+        },
+        {
+          "x": "16 mm",
+          "y": "3.2 mm"
+        },
+        {
+          "x": "8.1 mm",
+          "y": "3.2 mm"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "tab-b-profile",
+      "name": "Leaf B flange profile",
+      "points": [
+        {
+          "x": "8.1 mm",
+          "y": "-9.5 mm"
+        },
+        {
+          "x": "16 mm",
+          "y": "-9.5 mm"
+        },
+        {
+          "x": "16 mm",
+          "y": "-2.5 mm"
+        },
+        {
+          "x": "8.1 mm",
+          "y": "-2.5 mm"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "pin-profile",
+      "name": "Hinge pin profile",
+      "points": [
+        {
+          "x": "-0.5 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "16.5 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "16.5 mm",
+          "y": "1.95 mm"
+        },
+        {
+          "x": "-0.5 mm",
+          "y": "1.95 mm"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "a",
+      "name": "Hinge leaf A",
+      "kind": "revolve",
+      "operation": "new",
+      "sketchId": "a-profile",
+      "amount": "360 deg",
+      "suppressed": false
+    },
+    {
+      "id": "tab-a",
+      "name": "Leaf A flange",
+      "kind": "extrude",
+      "operation": "add",
+      "sketchId": "tab-a-profile",
+      "amount": "1 mm",
+      "suppressed": false
+    },
+    {
+      "id": "b",
+      "name": "Hinge leaf B",
+      "kind": "revolve",
+      "operation": "new",
+      "sketchId": "b-profile",
+      "amount": "360 deg",
+      "suppressed": false
+    },
+    {
+      "id": "tab-b",
+      "name": "Leaf B flange",
+      "kind": "extrude",
+      "operation": "add",
+      "sketchId": "tab-b-profile",
+      "amount": "1 mm",
+      "suppressed": false
+    },
+    {
+      "id": "pin",
+      "name": "Hinge pin",
+      "kind": "revolve",
+      "operation": "new",
+      "sketchId": "pin-profile",
+      "amount": "360 deg",
+      "suppressed": false
+    }
+  ],
+  "workspaces": {
+    "joints": {
+      "b": {
+        "kind": "revolute",
+        "parent": "a",
+        "axis": "X",
+        "min": "0 deg",
+        "max": "180 deg",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "model": "ui-hinge-hinge",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Moving leaf",
+      "volume": 160.9929379868948,
+      "area": 404.8026211167848,
+      "bbox": [
+        [
+          9,
+          -2.5,
+          -2.5
+        ],
+        [
+          17,
+          12,
+          2.5
+        ]
+      ],
+      "center": [
+        13.000000000000002,
+        3.4307923082830825,
+        0.23859036103279935
+      ],
+      "faces": 7,
+      "edges": 15,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

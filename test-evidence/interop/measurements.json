@@ -1,0 +1,1061 @@
+{
+  "cases": [
+    {
+      "case": "SYS-002",
+      "expected": null,
+      "native": 78.4,
+      "freecad": 78.4,
+      "prusaStl": 78.400009,
+      "freecadStl": 78.39999389648438,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "plate"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "plate"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "block",
+      "expected": {
+        "formula": "20 \u00d7 10 \u00d7 5",
+        "volume": 1000,
+        "bbox": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            20,
+            10,
+            5
+          ]
+        ],
+        "center": [
+          10,
+          5,
+          2.5
+        ]
+      },
+      "native": 999.9999999999998,
+      "freecad": 999.9999999999998,
+      "prusaStl": 1000.000061,
+      "freecadStl": 1000.0,
+      "pctDifference": 2.2737367544323207e-14,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Analytic block"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Analytic block"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "cylinder",
+      "expected": {
+        "formula": "\u03c0 \u00d7 5\u00b2 \u00d7 100",
+        "volume": 7853.981633974483,
+        "bbox": [
+          [
+            0,
+            -5,
+            -5
+          ],
+          [
+            100,
+            5,
+            5
+          ]
+        ],
+        "center": [
+          50,
+          0,
+          0
+        ]
+      },
+      "native": 7853.981633974484,
+      "freecad": 7853.981633974483,
+      "prusaStl": 7851.923828,
+      "freecadStl": 7851.87890625,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Analytic cylinder"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Analytic cylinder"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge-1",
+      "expected": null,
+      "native": 205.05565779356672,
+      "freecad": 205.05565779355302,
+      "prusaStl": 205.018356,
+      "freecadStl": 205.0179901123047,
+      "pctDifference": 6.680753944007744e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge leaf A"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge leaf A"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge-2",
+      "expected": null,
+      "native": 205.05565779356672,
+      "freecad": 205.05565779359267,
+      "prusaStl": 205.01741,
+      "freecadStl": 205.0178680419922,
+      "pctDifference": 1.265462313460388e-11,
+      "maxBoundError": 4.440892098500626e-16,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge leaf B"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge leaf B"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge-3",
+      "expected": null,
+      "native": 203.08040310967817,
+      "freecad": 203.08040310967812,
+      "prusaStl": 203.026489,
+      "freecadStl": 203.0263214111328,
+      "pctDifference": 2.799059780776013e-14,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "hinge",
+      "expected": null,
+      "native": 613.1917186968117,
+      "freecad": 613.1917186968113,
+      "prusaStl": 613.061951,
+      "freecadStl": 613.0648193359375,
+      "pctDifference": 5.5620534779838254e-14,
+      "maxBoundError": 4.440892098500626e-16,
+      "valid": true,
+      "solidCount": 3,
+      "names": [
+        "Hinge leaf A",
+        "Hinge leaf B",
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Hinge leaf A",
+        "Hinge leaf B",
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "m5-cosmetic",
+      "expected": null,
+      "native": 429.609139466949,
+      "freecad": 429.6091394669419,
+      "prusaStl": 429.54715,
+      "freecadStl": 429.5449523925781,
+      "pctDifference": 1.653928351342172e-12,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex screw \u00b7 12 mm"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex screw \u00b7 12 mm"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "m5-nut",
+      "expected": null,
+      "native": 157.38674658812351,
+      "freecad": 157.386746597095,
+      "prusaStl": 157.399307,
+      "freecadStl": 157.39895629882812,
+      "pctDifference": 5.700278648901559e-09,
+      "maxBoundError": 1.2470025012589758e-12,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "M5 hex nut"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "M5 hex nut"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ruler-blank",
+      "expected": {
+        "formula": "155.4 \u00d7 20 \u00d7 2",
+        "volume": 6216,
+        "bbox": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            155.4,
+            20,
+            2
+          ]
+        ],
+        "center": [
+          77.7,
+          10,
+          1
+        ]
+      },
+      "native": 6216,
+      "freecad": 6216.0,
+      "prusaStl": 6216.0,
+      "freecadStl": 6216.0,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Aluminum ruler stock"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Aluminum ruler stock"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ruler",
+      "expected": null,
+      "native": 6200.977448029486,
+      "freecad": 6200.977448029446,
+      "prusaStl": 6201.185059,
+      "freecadStl": 6201.55126953125,
+      "pctDifference": 6.453461121798706e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Aluminum blank"
+      ],
+      "knownMesh": [
+        "INTEROP-003"
+      ],
+      "overlap": [],
+      "roots": [
+        "Aluminum blank"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-1",
+      "expected": null,
+      "native": 6431.618930961377,
+      "freecad": 6431.618508023707,
+      "prusaStl": 6429.822754,
+      "freecadStl": 6429.56103515625,
+      "pctDifference": 6.575913071801669e-06,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Barrel"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Barrel"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-2",
+      "expected": null,
+      "native": 1187.9484305955523,
+      "freecad": 1187.9483945798136,
+      "prusaStl": 1187.531128,
+      "freecadStl": 1187.8885498046875,
+      "pctDifference": 3.031759442357881e-06,
+      "maxBoundError": 1.7763568394002505e-15,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Threaded cap"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Threaded cap"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-3",
+      "expected": null,
+      "native": 2415.2721400431005,
+      "freecad": 2415.2721400429505,
+      "prusaStl": 2414.612549,
+      "freecadStl": 2414.607666015625,
+      "pctDifference": 6.213238802558092e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Refill"
+      ],
+      "knownMesh": [
+        "INTEROP-002"
+      ],
+      "overlap": [],
+      "roots": [
+        "Refill"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen-4",
+      "expected": null,
+      "native": 53.475000000000016,
+      "freecad": 53.474999999975005,
+      "prusaStl": 53.475006,
+      "freecadStl": 53.475067138671875,
+      "pctDifference": 4.677158354138479e-11,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Pocket clip"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "twist-pen",
+      "expected": null,
+      "native": 10088.31450160003,
+      "freecad": 10088.313693459064,
+      "prusaStl": 10085.412109,
+      "freecadStl": 10084.1435546875,
+      "pctDifference": 8.01066389020796e-06,
+      "maxBoundError": 3.126388037344441e-13,
+      "valid": true,
+      "solidCount": 4,
+      "names": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "knownMesh": [
+        "INTEROP-002",
+        "overlap at interface"
+      ],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            4
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            4
+          ],
+          "volume": 0.15048545638725214
+        }
+      ],
+      "roots": [
+        "Barrel",
+        "Threaded cap",
+        "Refill",
+        "Pocket clip"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study-1",
+      "expected": null,
+      "native": 1281.7698026646353,
+      "freecad": 1281.7698026646403,
+      "prusaStl": 1281.424805,
+      "freecadStl": 1281.4334716796875,
+      "pctDifference": 3.9025890993469565e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Guide tube"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Guide tube"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study-2",
+      "expected": null,
+      "native": 145.80131505310231,
+      "freecad": 145.8013150531032,
+      "prusaStl": 145.762619,
+      "freecadStl": 145.7626495361328,
+      "pctDifference": 6.042970133853927e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Cam ring"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Cam ring"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study-3",
+      "expected": null,
+      "native": 183.7831702350029,
+      "freecad": 183.7831702350029,
+      "prusaStl": 183.734619,
+      "freecadStl": 183.7344970703125,
+      "pctDifference": 0.0,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Plunger"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Plunger"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-click-pen-click-study",
+      "expected": null,
+      "native": 1611.3542879527406,
+      "freecad": 1611.3542879527818,
+      "prusaStl": 1610.922729,
+      "freecadStl": 1610.9383544921875,
+      "pctDifference": 2.5540401364812717e-12,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 3,
+      "names": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            2
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Guide tube",
+        "Cam ring",
+        "Plunger"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge-1",
+      "expected": null,
+      "native": 160.99293798689453,
+      "freecad": 160.99293798690974,
+      "prusaStl": 160.972992,
+      "freecadStl": 160.97341918945312,
+      "pctDifference": 9.444895369574498e-12,
+      "maxBoundError": 8.881784197001252e-16,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Fixed leaf"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Fixed leaf"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge-2",
+      "expected": null,
+      "native": 160.9929379868948,
+      "freecad": 160.99293798686625,
+      "prusaStl": 160.973068,
+      "freecadStl": 160.9733428955078,
+      "pctDifference": 1.7724626076734168e-11,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Moving leaf"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Moving leaf"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge-3",
+      "expected": null,
+      "native": 120.16591899980958,
+      "freecad": 120.16591899980959,
+      "prusaStl": 120.134529,
+      "freecadStl": 120.13446807861328,
+      "pctDifference": 1.1826027573778654e-14,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [],
+      "roots": [
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-hinge-hinge",
+      "expected": null,
+      "native": 442.1517949735989,
+      "freecad": 442.15179497361993,
+      "prusaStl": 442.080231,
+      "freecadStl": 442.0806884765625,
+      "pctDifference": 4.756752142045426e-12,
+      "maxBoundError": 8.881784197001252e-16,
+      "valid": true,
+      "solidCount": 3,
+      "names": [
+        "Fixed leaf",
+        "Moving leaf",
+        "Hinge pin"
+      ],
+      "knownMesh": [],
+      "overlap": [
+        {
+          "parts": [
+            1,
+            3
+          ],
+          "volume": 0
+        },
+        {
+          "parts": [
+            2,
+            3
+          ],
+          "volume": 0
+        }
+      ],
+      "roots": [
+        "Fixed leaf",
+        "Moving leaf",
+        "Hinge pin"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    },
+    {
+      "case": "ui-ruler-graduated-ruler",
+      "expected": null,
+      "native": 6794.453373627474,
+      "freecad": 6794.453373627462,
+      "prusaStl": 6794.302734,
+      "freecadStl": 6794.5,
+      "pctDifference": 1.874017691289718e-13,
+      "maxBoundError": 0.0,
+      "valid": true,
+      "solidCount": 1,
+      "names": [
+        "Engraved ruler"
+      ],
+      "knownMesh": [
+        "INTEROP-003"
+      ],
+      "overlap": [],
+      "roots": [
+        "Engraved ruler"
+      ],
+      "warnings": [],
+      "stepSchema": "AP242",
+      "strictSchemaExit": 0
+    }
+  ],
+  "reverse": [
+    {
+      "file": "SYS-002.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "SYS-002.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "block.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "block.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "cylinder.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "cylinder.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-filleted-block.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2173730120013965e-14,
+      "names": [
+        "fc-filleted-block"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-straight-knurl.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.1139512783979635e-12,
+      "names": [
+        "fc-straight-knurl"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-threaded-rod.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.1124112011308461e-05,
+      "names": [
+        "fc-threaded-rod"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "fc-two-parts.step",
+      "solids": 2,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "fc-two-parts \u00b7 1",
+        "fc-two-parts \u00b7 2"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 6.583730546480667e-12,
+      "names": [
+        "hinge-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.0977504405921254e-11,
+      "names": [
+        "hinge-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.799059780776013e-14,
+      "names": [
+        "hinge-3.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "hinge.return.step",
+      "solids": 3,
+      "maxVolumeErrorPct": 1.0977504405921254e-11,
+      "names": [
+        "hinge.return \u00b7 1",
+        "hinge.return \u00b7 2",
+        "hinge.return \u00b7 3"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "m5-cosmetic.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.0641025824750223e-12,
+      "names": [
+        "m5-cosmetic.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "m5-nut.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.2715108286099138e-06,
+      "names": [
+        "m5-nut.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ruler-blank.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "ruler-blank.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ruler.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.4666957094997155e-14,
+      "names": [
+        "ruler.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 8.894620551168727e-07,
+      "names": [
+        "twist-pen-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4175561021554693e-07,
+      "names": [
+        "twist-pen-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 2.4852955210233298e-12,
+      "names": [
+        "twist-pen-3.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen-4.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.986214506369888e-14,
+      "names": [
+        "twist-pen-4.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "twist-pen.return.step",
+      "solids": 4,
+      "maxVolumeErrorPct": 8.894620551168727e-07,
+      "names": [
+        "twist-pen.return \u00b7 1",
+        "twist-pen.return \u00b7 2",
+        "twist-pen.return \u00b7 3",
+        "twist-pen.return \u00b7 4"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 3.9025890993469565e-13,
+      "names": [
+        "ui-click-pen-click-study-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 6.042970133853927e-13,
+      "names": [
+        "ui-click-pen-click-study-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 0.0,
+      "names": [
+        "ui-click-pen-click-study-3.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-click-pen-click-study.return.step",
+      "solids": 3,
+      "maxVolumeErrorPct": 6.042970133853927e-13,
+      "names": [
+        "ui-click-pen-click-study.return \u00b7 1",
+        "ui-click-pen-click-study.return \u00b7 2",
+        "ui-click-pen-click-study.return \u00b7 3"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge-1.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 9.74501354019652e-12,
+      "names": [
+        "ui-hinge-hinge-1.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge-2.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.7671664046624416e-11,
+      "names": [
+        "ui-hinge-hinge-2.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge-3.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.1826027573778654e-14,
+      "names": [
+        "ui-hinge-hinge-3.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-hinge-hinge.return.step",
+      "solids": 3,
+      "maxVolumeErrorPct": 1.7265621815782966e-11,
+      "names": [
+        "ui-hinge-hinge.return \u00b7 1",
+        "ui-hinge-hinge.return \u00b7 2",
+        "ui-hinge-hinge.return \u00b7 3"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    },
+    {
+      "file": "ui-ruler-graduated-ruler.return.step",
+      "solids": 1,
+      "maxVolumeErrorPct": 1.3385840652069437e-14,
+      "names": [
+        "ui-ruler-graduated-ruler.return"
+      ],
+      "schema": "AP214",
+      "strictExit": 0
+    }
+  ],
+  "unexpected": [
+    "ui-hinge-hinge.return.step reverse geometry",
+    "ui-hinge-hinge.return.step reverse geometry",
+    "ui-scale scale edge 1 all line positions"
+  ]
+}

@@ -1,0 +1,12 @@
+WebSocket server error: Port 24678 is already in use
+/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/src/geometry.ts:231
+        throw new Error(`${feature.name} — ${detail}`);
+              ^
+
+Error: M5 hex screw · 12 mm — M5 × 0.8 — The operation must produce one connected body. Adjust the profile, or use New body for a separate part.
+    at buildBodies (/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/src/geometry.ts:231:15)
+    at save (file:///Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/tests/interop/native.mjs:37:16)
+    at async Object.hardware (file:///Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/tests/interop/native.mjs:70:3)
+    at async file:///Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/tests/interop/native.mjs:95:113
+
+Node.js v26.5.0

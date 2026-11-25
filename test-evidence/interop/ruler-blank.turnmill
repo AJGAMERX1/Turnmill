@@ -1,0 +1,42 @@
+{
+  "id": "f89d1458-cfd2-4a07-b8ad-dc99d3e6e690",
+  "version": 1,
+  "name": "Untitled part",
+  "parameters": [],
+  "sketches": [
+    {
+      "id": "r-profile",
+      "name": "Aluminum ruler stock profile",
+      "points": [
+        {
+          "x": "0 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "155.4 mm",
+          "y": "0 mm"
+        },
+        {
+          "x": "155.4 mm",
+          "y": "20 mm"
+        },
+        {
+          "x": "0 mm",
+          "y": "20 mm"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "features": [
+    {
+      "id": "r",
+      "name": "Aluminum ruler stock",
+      "kind": "extrude",
+      "operation": "new",
+      "sketchId": "r-profile",
+      "amount": "2 mm",
+      "suppressed": false
+    }
+  ]
+}

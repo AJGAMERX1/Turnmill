@@ -1,0 +1,14 @@
+[FreeCAD Console mode <Use Ctrl-D (i.e. EOF) to exit.>]
+>>> Recompute......
+						(100 %)									[32;1m
+*******************************************************************
+******        Statistics on Transfer (Write)                 ******[0m
+[32;1m
+*******************************************************************
+******        Transfer Mode = 0  I.E.  As Is       ******[0m
+[32;1m******        Transferring Shape, ShapeType = 2                      ******[0m
+[32;1m** WorkSession : Sending all data[0m
+[32;1m Step File Name : /Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/test-evidence/interop/twist-pen-4.return.step(302 ents)  Write  Done[0m
+Checking topology......
+						(3 %)							(7 %)							(10 %)							(14 %)							(17 %)							(21 %)							(25 %)							(28 %)							(32 %)							(35 %)							(39 %)							(42 %)							(46 %)							(50 %)							(53 %)							(57 %)							(60 %)							(64 %)							(67 %)							(71 %)							(75 %)							(78 %)							(82 %)							(85 %)							(89 %)							(92 %)							(96 %)							(100 %)									Checking for self-intersections......
+						(4 %)							(9 %)							(13 %)							(18 %)							(22 %)							(27 %)							(31 %)							(36 %)							(40 %)							(45 %)							(50 %)							(54 %)							(59 %)							(63 %)							(68 %)							(72 %)							(77 %)							(81 %)							(86 %)							(90 %)							(95 %)							(100 %)									>>> 

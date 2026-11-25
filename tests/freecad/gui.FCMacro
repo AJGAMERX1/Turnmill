@@ -1,0 +1,26 @@
+"""Render exact imported STEP views in a separately launched GUI, preserving user documents."""
+import os,traceback,json
+from pathlib import Path
+import FreeCAD as A, FreeCADGui as G, Import, Part
+from PySide import QtCore
+out=Path(os.environ['QA_OUT']);results={}
+def gui_cases():
+    for name in json.loads(os.environ['QA_GUI_CASES']):
+        doc=A.newDocument("QAView")
+        try:
+            Import.insert(str(out/(name+'.step')),doc.Name)
+            doc.recompute()
+            view=G.activeDocument().activeView()
+            for label in ('iso','front','detail'):
+                if label=='front':view.viewFront()
+                else:view.viewIsometric()
+                view.fitAll()
+                if label=='detail':view.zoomIn();view.zoomIn()
+                G.updateGui()
+                view.saveImage(str(out/(name+'.freecad-'+label+'.png')),560,400,'White')
+            results[name]='rendered'
+        except Exception:results[name]=traceback.format_exc()
+        finally:A.closeDocument(doc.Name)
+    (out/'gui.json').write_text(json.dumps(results,indent=2))
+    G.getMainWindow().close()
+QtCore.QTimer.singleShot(300,gui_cases)
