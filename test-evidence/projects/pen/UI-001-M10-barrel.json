@@ -1,0 +1,105 @@
+{
+  "time": "2026-11-25T17:43:23.584Z",
+  "stage": "UI-001-M10-barrel",
+  "mode": "Part",
+  "busy": false,
+  "error": "Barrel — Barrel thread — The result has an invalid edge or face. Adjust the profile or operation so it makes a closed solid.",
+  "status": "Rebuild failed\n4 bodies\nSaved locally\nmm",
+  "projectName": "Twist pen assembly",
+  "parameters": {
+    "barrel_length": 92,
+    "outer_diameter": 12.3,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75,
+    "thread_major": 10,
+    "cap_length": 24,
+    "cap_start": 84.375,
+    "refill_diameter": 6
+  },
+  "features": [
+    {
+      "name": "Barrel",
+      "id": "barrel-revolve",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "83cfdabd-2ca6-474c-8451-9bbbd1bba693",
+          "name": "Barrel thread",
+          "kind": "thread",
+          "end": "end",
+          "side": "external",
+          "mode": "modeled",
+          "diameter": "thread_major",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Threaded cap",
+      "id": "pen-cap",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "f1d1197c-c420-4f7f-bb14-396a953b97f6",
+          "name": "Cap thread",
+          "kind": "thread",
+          "end": "start",
+          "side": "internal",
+          "mode": "modeled",
+          "diameter": "thread_major + 0.20 mm",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Refill",
+      "id": "pen-refill",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Pocket clip",
+      "id": "pen-clip",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 0,
+  "centerOfMass": null,
+  "volume": 0,
+  "area": 0,
+  "bodies": [],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMeasure\nAll bodies\nSelected body\nMass\n— g\nBalance along X\n— mm\nCenter of mass",
+  "console": [
+    {
+      "time": "2026-11-25T17:42:51.580Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083ba00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:42:51.583Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083ba00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:42:51.583Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083ba00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:42:51.583Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083ba00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

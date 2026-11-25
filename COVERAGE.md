@@ -33,3 +33,19 @@ Independent interchange checkpoint. Updated cells apply only to the cases descri
 | Large histories/assemblies, rebuild caching | Not covered | Not covered | Not covered | Not covered |
 | All six project families | Not covered | Not covered | Not covered | Not covered |
 | Independent interoperability checking, chaos/fuzz, regression and CI | Not covered | Not covered | Not covered | Not covered |
+
+## Project and persona coverage
+
+| Case | Result | Measured outcome |
+|---|---|---|
+| Twist pen and new-user guide | Fail | Knurl and name engraving, four components, screw travel and drawing exercised. Exact M10 × 0.75 rebuild fails UI-001. Guided run completed with the sample thread in 145.915 s. |
+| Click pen | Pass for prescribed cam, spring and clearance | Verified plunger return at 360°, actual swept solid checks, full study and separate physical spring. Alternating latch is Not built yet. |
+| Dual ruler | Fail | Both scales exported. 150 mm spans 150 metric intervals and 152.4 mm spans 96 sixteenths. The terminal metric tick misses its center, INTEROP-005. The independent-endpoint layout is Not built yet. |
+| M5 bolt and nut | Fail | The modeled library screw fails, INTEROP-001. A scratch-made thread pair advances 0.800 mm per turn; the cosmetic library fallback exercises screw motion. |
+| Hinge | Pass for tested motion | Two leaves and pin driven through 0, 90 and 180°, clamps at both limits. Full travel and pairwise checks logged. |
+| Finished pen drawings | Pass for content reviewed | Generated barrel/assembly PDFs, sections, detail, title blocks, callouts, exploded view and BOM. |
+| New user | Pass for automated path | Human learnability Not covered. See UX_NOTES.md. |
+| Power user | Pass | Keyboard-only parameter change, rename, reorder and exact undo/redo. |
+| Chaos user | Pass | Seed 0x50454e35, 50 undo/redo pairs, cancel, resize, offscreen drag, reload, two-tab conflict and rescue export. See timestamped actions.jsonl. |
+
+[Project evidence](test-evidence/projects/) · [First-use observations](UX_NOTES.md)

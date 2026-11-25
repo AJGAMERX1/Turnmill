@@ -1,0 +1,174 @@
+{
+  "time": "2026-11-25T17:45:32.943Z",
+  "stage": "01-stock-spring",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n4 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Guide tube",
+      "id": "3880cd56-cc50-4b9c-a4a3-cc1870d43d53",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Cam ring",
+      "id": "330e11c0-6135-44d6-af63-a130ffd91848",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Plunger",
+      "id": "d63ff563-3dee-407f-9e07-2632ce723cfa",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Century Spring B18-127CS",
+      "id": "8438626b-6260-4217-b862-be026c0e7d42",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 13.792117387588089,
+  "centerOfMass": [
+    14.426089711763835,
+    1.5897464188650983e-11,
+    0.02993205701413793
+  ],
+  "volume": 1623.5333885883833,
+  "area": 2421.1678838761827,
+  "bodies": [
+    {
+      "name": "Guide tube",
+      "volume": 1281.7698026646353,
+      "center": [
+        15.999999999999996,
+        4.656498357175346e-16,
+        -2.0571779573936732e-16
+      ],
+      "area": 1789.1370162193875,
+      "bbox": [
+        [
+          0,
+          -5,
+          -5
+        ],
+        [
+          32,
+          5,
+          5
+        ]
+      ],
+      "faces": 4,
+      "edges": 6,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Cam ring",
+      "volume": 145.80131505310231,
+      "center": [
+        3.5,
+        1.0965066775138174e-16,
+        -9.173551154742681e-17
+      ],
+      "area": 265.9672340529119,
+      "bbox": [
+        [
+          0,
+          -3.2,
+          -3.2
+        ],
+        [
+          7,
+          3.2,
+          3.2
+        ]
+      ],
+      "faces": 4,
+      "edges": 6,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Plunger",
+      "volume": 183.7831702350029,
+      "center": [
+        12.999999999999998,
+        -1.256515429713982e-16,
+        -1.4715496153051123e-17
+      ],
+      "area": 259.1813939211579,
+      "bbox": [
+        [
+          0,
+          -1.5,
+          -1.5
+        ],
+        [
+          26,
+          1.5,
+          1.5
+        ]
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Century Spring B18-127CS",
+      "volume": 12.179100635642689,
+      "center": [
+        0.000001593370096481169,
+        2.293316496854217e-9,
+        4.317999948905234
+      ],
+      "area": 106.88223968272528,
+      "bbox": [
+        [
+          -2.1844070588175684,
+          -2.184406964179663,
+          -1.0000000233146835e-7
+        ],
+        [
+          2.1844070588175986,
+          2.18440696417941,
+          8.636000099999954
+        ]
+      ],
+      "faces": 3,
+      "edges": 3,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMeasure\nAll bodies\nSelected body\nMass\n13.79 g\nBalance along X\n14.43 mm\nCenter of mass",
+  "console": [
+    {
+      "time": "2026-11-25T17:45:23.788Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:45:23.789Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:45:23.789Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "time": "2026-11-25T17:45:23.789Z",
+      "type": "warning",
+      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ]
+}

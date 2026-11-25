@@ -1,0 +1,193 @@
+{
+  "time": "2026-11-25T17:43:58.591Z",
+  "stage": "07-finished",
+  "mode": "Drawing",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n4 bodies\nSaved locally\nmm",
+  "projectName": "My twist pen",
+  "parameters": {
+    "barrel_length": 101.6,
+    "outer_diameter": 12,
+    "bore_diameter": 7,
+    "shoulder_length": 8,
+    "thread_pitch": 0.75,
+    "thread_major": 9.7,
+    "cap_length": 24,
+    "cap_start": 93.975,
+    "refill_diameter": 6
+  },
+  "features": [
+    {
+      "name": "Barrel",
+      "id": "466375dc-e72c-4ac5-9bb3-f8ffab6d2b24",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "1ba8f507-55e0-4126-96ac-858107ee01b1",
+          "name": "Barrel thread",
+          "kind": "thread",
+          "end": "end",
+          "side": "external",
+          "mode": "modeled",
+          "diameter": "thread_major",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Threaded cap",
+      "id": "pen-cap",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "0bdde734-7686-4afa-9053-8608937fc050",
+          "name": "Cap thread",
+          "kind": "thread",
+          "end": "start",
+          "side": "internal",
+          "mode": "modeled",
+          "diameter": "thread_major + 0.20 mm",
+          "length": "shoulder_length",
+          "pitch": "thread_pitch",
+          "hand": "right",
+          "preset": "Custom"
+        }
+      ]
+    },
+    {
+      "name": "Refill",
+      "id": "pen-refill",
+      "suppressed": false,
+      "operation": "new"
+    },
+    {
+      "name": "Pocket clip",
+      "id": "pen-clip",
+      "suppressed": false,
+      "operation": "new"
+    }
+  ],
+  "mass": 68.17266271775449,
+  "centerOfMass": [
+    51.55984585081123,
+    0.04570200009162104,
+    0.0045449333446355294
+  ],
+  "volume": 11076.03129486798,
+  "area": 10321.447178413004,
+  "bodies": [
+    {
+      "name": "Barrel",
+      "volume": 7147.902135011215,
+      "center": [
+        48.30942264480258,
+        0.00027513945502442134,
+        -0.000151623519583862
+      ],
+      "area": 6274.4627484006305,
+      "bbox": [
+        [
+          0,
+          -6,
+          -6
+        ],
+        [
+          101.60000009999999,
+          6,
+          6
+        ]
+      ],
+      "faces": 34,
+      "edges": 79,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Threaded cap",
+      "volume": 1187.9484145435072,
+      "center": [
+        106.60763057790737,
+        0.0022776876411998307,
+        0.0013151715709753993
+      ],
+      "area": 2010.6958429900203,
+      "bbox": [
+        [
+          93.97499989605276,
+          -6.2,
+          -6.2
+        ],
+        [
+          117.975,
+          6.2,
+          6.2
+        ]
+      ],
+      "faces": 23,
+      "edges": 55,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Refill",
+      "volume": 2686.705745313259,
+      "center": [
+        52.07994062827042,
+        -1.692583386475181e-16,
+        -5.469018484883217e-17
+      ],
+      "area": 1850.3520285029306,
+      "bbox": [
+        [
+          -1.5,
+          -3,
+          -3
+        ],
+        [
+          99.6,
+          3,
+          3
+        ]
+      ],
+      "faces": 5,
+      "edges": 9,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Pocket clip",
+      "volume": 53.47500000000001,
+      "center": [
+        96.70898784478727,
+        7.364843384759234,
+        0.7500000000000001
+      ],
+      "area": 185.93655851942225,
+      "bbox": [
+        [
+          77.975,
+          6.1,
+          0
+        ],
+        [
+          114.975,
+          8.1,
+          1.5
+        ]
+      ],
+      "faces": 10,
+      "edges": 24,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": null,
+  "console": []
+}

@@ -1,0 +1,85 @@
+{
+  "time": "2026-11-25T17:43:33.146Z",
+  "stage": "01-library-bolt",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n1 body\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {
+    "screw_48992_diameter": 5,
+    "screw_48992_pitch": 0.8,
+    "screw_48992_across_flats": 8,
+    "screw_48992_height": 3.5,
+    "screw_48992_length": 12
+  },
+  "features": [
+    {
+      "name": "M5 hex screw · 12 mm",
+      "id": "2675ee54-d142-4d00-b90a-f151fb44eb35",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "kind": "thread",
+          "id": "ee0adba7-65a7-4d95-bb67-199bf9188100",
+          "name": "M5 × 0.8",
+          "side": "external",
+          "mode": "cosmetic",
+          "preset": "M5 × 0.8",
+          "hand": "right",
+          "diameter": "screw_48992_diameter",
+          "pitch": "screw_48992_pitch",
+          "length": "screw_48992_length",
+          "end": "start"
+        }
+      ]
+    },
+    {
+      "name": "Hex head",
+      "id": "19d2216c-eb4e-4125-a710-b7415da6fba7",
+      "suppressed": false,
+      "operation": "add",
+      "finishes": []
+    }
+  ],
+  "mass": 3.3724317448155494,
+  "centerOfMass": [
+    -4.1348208783554296e-16,
+    -1.653928351342172e-16,
+    -2.5004932091640275
+  ],
+  "volume": 429.609139466949,
+  "area": 396.341656123653,
+  "bodies": [
+    {
+      "name": "M5 hex screw · 12 mm",
+      "volume": 429.609139466949,
+      "center": [
+        -4.13482087835543e-16,
+        -1.653928351342172e-16,
+        -2.500493209164028
+      ],
+      "area": 396.341656123653,
+      "bbox": [
+        [
+          -4.618802153517008,
+          -4,
+          -12
+        ],
+        [
+          4.618802153517008,
+          4,
+          3.5
+        ]
+      ],
+      "faces": 10,
+      "edges": 21,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMass\n3.37 g\nBalance along X\n-0 mm\nCenter of mass",
+  "console": []
+}

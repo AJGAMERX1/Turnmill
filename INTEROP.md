@@ -39,3 +39,7 @@ Volumes are in mm³. This checkpoint records files measured in both kernels. For
 | [ui-ruler-graduated-ruler](test-evidence/interop/ui-ruler-graduated-ruler.step) | AP242 | Unapproved candidate | 6794.453374 | 6794.453374 | 0.000000 | True | True | 0 flagged text lines | 1 solids; see names/placement findings | Sign-off pending |
 
 **ASM-001:** the deliberate two-block 20 mm mounting translation fails assembly placement with 1,000 mm³ overlap. See BUG_REPORT.md. PDF inspection covered four barrel pages and four assembly pages. All measured 297 × 210 mm. Full reader logs, returned files, and additional mesh/vector results are in test-evidence.
+
+## Files produced through the project workflows
+
+The actual UI produced the click-pen study, hinge, bolt and nut, fully finished pen, and dual-scale ruler files under [project evidence](test-evidence/projects/). The reader suite also checks available per-body files. The requested M10 pen and modeled M5 library screw failed before valid solid export. Their evidence is UI-001 and INTEROP-001.

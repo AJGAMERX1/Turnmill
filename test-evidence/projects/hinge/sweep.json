@@ -1,0 +1,21 @@
+{
+  "measurements": [
+    {
+      "request": -5,
+      "actual": 0
+    },
+    {
+      "request": 90,
+      "actual": 90
+    },
+    {
+      "request": 181,
+      "actual": 180
+    },
+    {
+      "request": 0,
+      "actual": 0
+    }
+  ],
+  "report": "Fixed leaf — Clear throughout this joint travel · conservative nominal gap ≥ 0.39829 mm. Smallest sampled gap 1.00000 mm at 67.500°.\nHinge pin — Clear throughout this joint travel · conservative nominal gap ≥ 0.12477 mm. Smallest sampled gap 0.20000 mm at 144.844°."
+}

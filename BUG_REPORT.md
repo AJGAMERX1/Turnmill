@@ -1,6 +1,6 @@
 # Turnmill 0.5.0 · Phase 1 findings
 
-Independent exchange checkpoint. Five reproduced findings at this stage: **3 Critical, 1 High, 1 Medium, 0 Low**. Four affect interchange, one affects the hardware library. The order below is the proposed repair order. Subsequent project and systems results are added at their checkpoints.
+Projects and independent exchange checkpoint. **4 Critical, 2 High, 1 Medium, 0 Low**. Five affect interchange, one affects the hardware library and one affects thread rebuilding. Each finding has a replayable expected failure.
 
 ### 1. ASM-001 · Assembly STEP loses the installed component position
 
@@ -20,11 +20,23 @@ Independent exchange checkpoint. Five reproduced findings at this stage: **3 Cri
 
 **Expected-failing test** `INTEROP-003` in tests/interop/known.py. [Ruler STL](test-evidence/interop/ruler.stl) · [FreeCAD Mesh findings](test-evidence/interop/ruler.freecad.json)
 
+### INTEROP-005 · The terminal ruler graduation is shifted inward
+
+**Critical · Ruler DXF/SVG.** Open the dual-scale native project from the UI ruler run and export both outlines. The last tick is clipped at the blank boundary. Its design center is 155.000 mm and its exported outline center is 154.9625 mm, **0.0375 mm short**. Its preceding metric spacing measures 0.9625 mm instead of 1.000 mm. The expected dimensional tolerance is ±0.01 mm. Both vector exports agree with each other and both miss the design center.
+
+**Expected-failing test** `INTEROP-005` in tests/interop/run.py and the minimal terminal fixture. [Measured outline coordinates](test-evidence/interop/ui-scale.vectors.json) · [Source ruler and exports](test-evidence/projects/ruler/)
+
 ### 4. INTEROP-001 · A modeled M5 × 0.8 library screw will not build
 
 **High · Fastener library.** Start a blank part. Open Hardware → Hex screw, select M5 × 0.8, length 12 mm and modeled thread. Insert hardware. Expected one connected, valid screw solid. The build reports “The operation must produce one connected body” and no valid modeled screw is available. Cosmetic hardware can illustrate the assembly but does not provide the requested helical solid.
 
 **Expected-failing test** `INTEROP-001` in tests/interop/native.mjs. [Model and screenshot](test-evidence/projects/bolt-library/) · [Exact diagnostic](test-evidence/interop/INTEROP-001.log)
+
+### UI-001 · The twist pen cannot rebuild at a 10.000 mm major diameter
+
+**High · Modeled external threads.** New project → Twist pen assembly → Named parameters. Change outer_diameter from 12.0 to 12.3 mm and apply. The existing formulas request a 10.000 mm major diameter at 0.750 mm pitch. Expected the four-body model to rebuild with that thread. The barrel thread reports an invalid edge or face; the Measure panel clears. Undo restores the 9.7 mm example. This prevents the requested M10 pen workflow.
+
+**Expected-failing test** `UI-001` in tests/projects/pen.mjs. [Native project and browser capture](test-evidence/projects/pen/)
 
 ### 5. INTEROP-004 · STEP import loses component names
 

@@ -1,0 +1,136 @@
+{
+  "jointUi": null,
+  "time": "2026-11-25T17:47:35.886Z",
+  "stage": "02-handmade-nut",
+  "mode": "Part",
+  "busy": false,
+  "error": "",
+  "status": "Ready\n2 bodies\nSaved locally\nmm",
+  "projectName": "Untitled part",
+  "parameters": {},
+  "features": [
+    {
+      "name": "Hand-built shank",
+      "id": "da2cc9f2-fa46-4f83-a9db-44da1f3a1167",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "78a4ac90-cac9-46db-8bde-6471a17d55ae",
+          "name": "Thread",
+          "end": "start",
+          "kind": "thread",
+          "side": "external",
+          "hand": "right",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "pitch": "0.8 mm",
+          "length": "4 mm",
+          "diameter": "5 mm"
+        }
+      ]
+    },
+    {
+      "name": "Hex head",
+      "id": "b853aae2-e5e7-42bc-9ac6-a0a0b7150041",
+      "suppressed": false,
+      "operation": "add"
+    },
+    {
+      "name": "Hand-built nut",
+      "id": "00c1eefb-19fe-4daa-9c39-895e8ed4c597",
+      "suppressed": false,
+      "operation": "new",
+      "finishes": [
+        {
+          "id": "0477b241-553b-4281-bb2f-2b6c00f0ca4c",
+          "name": "Axial hole",
+          "end": "start",
+          "kind": "hole",
+          "diameter": "5 mm - 0.8 mm * 1.08253175473",
+          "length": "4 mm",
+          "profile": "straight",
+          "termination": "through"
+        },
+        {
+          "id": "32769f8d-8ab8-40ab-ad6a-1f6e5e0e89ca",
+          "name": "Thread",
+          "end": "start",
+          "kind": "thread",
+          "side": "internal",
+          "hand": "right",
+          "mode": "modeled",
+          "preset": "M5 × 0.8",
+          "pitch": "0.8 mm",
+          "length": "4 mm",
+          "diameter": "5 mm"
+        }
+      ]
+    }
+  ],
+  "mass": 4.200961593068729,
+  "centerOfMass": [
+    -1.4606964882025708e-7,
+    -0.000002193008136604995,
+    0.2251766303489056
+  ],
+  "volume": 494.23077565514456,
+  "area": 645.5475896067813,
+  "bodies": [
+    {
+      "name": "Hand-built shank",
+      "volume": 336.8440290758374,
+      "center": [
+        -2.1628230387539197e-7,
+        -0.000003200617604096072,
+        -0.6040904310803944
+      ],
+      "area": 363.33996209994643,
+      "bbox": [
+        [
+          -4.61880215,
+          -4,
+          -8.000000102502746
+        ],
+        [
+          4.61880215,
+          4,
+          3.5
+        ]
+      ],
+      "faces": 19,
+      "edges": 48,
+      "solids": 1,
+      "valid": true
+    },
+    {
+      "name": "Hand-built nut",
+      "volume": 157.38674657930716,
+      "center": [
+        4.201667760812214e-9,
+        -3.649089394361186e-8,
+        1.9999998872167837
+      ],
+      "area": 282.2076275068349,
+      "bbox": [
+        [
+          -4.61880225,
+          -4.0000001,
+          -1.0243277291532799e-7
+        ],
+        [
+          4.61880225,
+          4.0000001,
+          4.000000102432924
+        ]
+      ],
+      "faces": 18,
+      "edges": 48,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "joints": null,
+  "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMeasure\nAll bodies\nSelected body\nMass\n4.2 g\nBalance along X\n-0 mm\nCenter of mass",
+  "console": []
+}
