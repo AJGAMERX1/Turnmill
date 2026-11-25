@@ -1,0 +1,71 @@
+[
+  {
+    "run": "First three-edit production trial before aggregate run",
+    "worker": {
+      "units": "ms",
+      "durations": [
+        1055.7060829999973,
+        1003.0047080000004,
+        939.9383329999982
+      ],
+      "median": 1003.0047080000004,
+      "interactiveBudget": 500
+    },
+    "browser": {
+      "unit": "ms",
+      "durations": [
+        996.0999999642372,
+        995.6000000238419,
+        1144.199999988079
+      ],
+      "start": "Immediately before Playwright clicks Apply",
+      "end": "First Ready transition after rebuilding"
+    }
+  },
+  {
+    "run": "Phase 1 recorded run",
+    "worker": {
+      "units": "ms",
+      "durations": [
+        532.2289579999997,
+        517.3521660000006,
+        506.20520800000304
+      ],
+      "median": 517.3521660000006,
+      "interactiveBudget": 500
+    },
+    "browser": {
+      "durations": [
+        613.1000000238419,
+        606.9000000357628,
+        687.8999999761581
+      ],
+      "unit": "ms",
+      "start": "Immediately before Playwright clicks Apply",
+      "end": "First Ready transition after rebuilding"
+    }
+  },
+  {
+    "run": "Clean checkout before performance oracle correction",
+    "worker": {
+      "units": "ms",
+      "durations": [
+        464.4279159999969,
+        454.7574170000007,
+        449.7365000000027
+      ],
+      "median": 454.7574170000007,
+      "interactiveBudget": 500
+    },
+    "browser": {
+      "durations": [
+        589.6999999880791,
+        552.9000000357628,
+        556.1999999880791
+      ],
+      "unit": "ms",
+      "start": "Immediately before Playwright clicks Apply",
+      "end": "First Ready transition after rebuilding"
+    }
+  }
+]

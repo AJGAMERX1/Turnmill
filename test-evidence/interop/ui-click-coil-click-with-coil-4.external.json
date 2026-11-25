@@ -1,0 +1,64 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 685,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 12.147349,
+    "bbox": [
+      [
+        -2.1844,
+        -2.1844,
+        1.1e-05
+      ],
+      [
+        2.1844,
+        2.184407,
+        8.636
+      ]
+    ],
+    "parts": "1",
+    "sliceExit": 0,
+    "extrusionMoves": 196
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            -2.1843998432159424,
+            -2.1843998432159424,
+            1.0780217962746974e-05
+          ],
+          [
+            2.1843998432159424,
+            2.1844067573547363,
+            8.63599967956543
+          ]
+        ],
+        "volume": 12.14731289999114,
+        "closed": true,
+        "triangles": 255114
+      }
+    ],
+    "buildItems": 1,
+    "names": [
+      "Century Spring B18-127CS"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 12.147206,
+        "manifold": true
+      }
+    ]
+  }
+}

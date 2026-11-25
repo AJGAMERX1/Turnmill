@@ -1,8 +1,8 @@
 {
   "durations": [
-    613.1000000238419,
-    606.9000000357628,
-    687.8999999761581
+    1178.6000000238419,
+    546.6999999880791,
+    544.5
   ],
   "unit": "ms",
   "start": "Immediately before Playwright clicks Apply",

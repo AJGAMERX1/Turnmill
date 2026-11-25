@@ -1,0 +1,127 @@
+{
+  "case": "ui-click-coil-click-with-coil-1",
+  "freecad": [
+    "1",
+    "1",
+    "4"
+  ],
+  "step": {
+    "volume": 1281.7698026646403,
+    "area": 1789.137016219407,
+    "bbox": [
+      [
+        0.0,
+        -5.0,
+        -5.0
+      ],
+      [
+        32.0,
+        5.0,
+        5.0
+      ]
+    ],
+    "center": [
+      16.0,
+      2.7983337746453636e-14,
+      2.9073798892984785e-16
+    ],
+    "faces": 4,
+    "edges": 6,
+    "solids": 1,
+    "closed": true,
+    "valid": true,
+    "shapeCheck": "OK",
+    "parts": [
+      {
+        "volume": 1281.7698026646403,
+        "area": 1789.137016219407,
+        "bbox": [
+          [
+            0.0,
+            -5.0,
+            -5.0
+          ],
+          [
+            32.0,
+            5.0,
+            5.0
+          ]
+        ],
+        "center": [
+          16.0,
+          2.7983337746453636e-14,
+          2.9073798892984785e-16
+        ],
+        "faces": 4,
+        "edges": 6,
+        "solids": 1,
+        "closed": true,
+        "valid": true
+      }
+    ],
+    "objects": [
+      {
+        "name": "Guide tube",
+        "type": "Part::Feature",
+        "parents": [],
+        "placement": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "solids": 1,
+        "bbox": [
+          [
+            0.0,
+            -5.0,
+            -5.0
+          ],
+          [
+            32.0,
+            5.0,
+            5.0
+          ]
+        ]
+      }
+    ],
+    "roots": [
+      "Guide tube"
+    ],
+    "overlaps": []
+  },
+  "stl": {
+    "volume": 1281.4334716796875,
+    "area": 1789.004638671875,
+    "bbox": [
+      [
+        0.0,
+        -5.0,
+        -4.999011516571045
+      ],
+      [
+        32.0,
+        5.0,
+        4.999011516571045
+      ]
+    ],
+    "closed": true,
+    "nonManifold": false,
+    "selfIntersections": false,
+    "points": 632,
+    "triangles": 1264,
+    "components": 1
+  }
+}

@@ -1,7 +1,11 @@
 import { resolve } from "node:path";
-import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import {
+  finalHistoryEdit,
+  evaluateInteractiveBudget,
+} from "./interactive-budget.mjs";
 import { openBrowser, appUrl, measure } from "../qa/browser.mjs";
-import { evidence, save, near, xfail } from "./runtime.mjs";
+import { evidence, save, near } from "./runtime.mjs";
 const browser = await openBrowser(),
   durations = [];
 try {
@@ -62,12 +66,22 @@ try {
     durations.push(ms);
   }
   await page.screenshot({ path: resolve(evidence, "SYS-003/history.png") });
-  const sorted = [...durations].sort((a, b) => a - b);
-  await xfail("SYS-003", "Browser common last-feature edit", async () =>
-    assert.ok(
-      sorted[1] <= 500,
-      "Median " + sorted[1].toFixed(1) + " ms, interactive budget is 500 ms.",
-    ),
+  const replay = JSON.parse(
+    await readFile(resolve(evidence, "SYS-003/boolean-work.json"), "utf8"),
+  );
+  const result = evaluateInteractiveBudget(finalHistoryEdit, durations, replay);
+  await save("SYS-003/result.json", {
+    ...result,
+    issue: "SYS-003",
+    title: "Apply to Ready for a final-feature edit",
+  });
+  console.log(
+    result.outcome,
+    "SYS-003 browser Apply-to-Ready median",
+    result.median.toFixed(2),
+    "ms, budget",
+    result.budgetMs,
+    "ms.",
   );
 } finally {
   await save("SYS-003/browser-timings.json", {

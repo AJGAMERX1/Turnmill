@@ -1,5 +1,6 @@
 {
-  "time": "2026-11-25T17:45:32.943Z",
+  "jointUi": null,
+  "time": "2026-11-25T18:05:23.167Z",
   "stage": "01-stock-spring",
   "mode": "Part",
   "busy": false,
@@ -28,7 +29,7 @@
     },
     {
       "name": "Century Spring B18-127CS",
-      "id": "8438626b-6260-4217-b862-be026c0e7d42",
+      "id": "2371d4ad-e850-45ee-a6d6-63eb04662ce3",
       "suppressed": false,
       "operation": "new"
     }
@@ -151,24 +152,24 @@
   "inspector": "PHYSICAL PROPERTIES\nMaterial\nBrass\nAluminum\nSteel\nNitrile\nTitanium\nAcetal\nDensity\ng/cm³\nMeasure\nAll bodies\nSelected body\nMass\n13.79 g\nBalance along X\n14.43 mm\nCenter of mass",
   "console": [
     {
-      "time": "2026-11-25T17:45:23.788Z",
+      "time": "2026-11-25T18:05:17.175Z",
       "type": "warning",
-      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "value": "[.WebGL-0x1040083ae00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
-      "time": "2026-11-25T17:45:23.789Z",
+      "time": "2026-11-25T18:05:17.178Z",
       "type": "warning",
-      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "value": "[.WebGL-0x1040083ae00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
-      "time": "2026-11-25T17:45:23.789Z",
+      "time": "2026-11-25T18:05:17.178Z",
       "type": "warning",
-      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "value": "[.WebGL-0x1040083ae00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
-      "time": "2026-11-25T17:45:23.789Z",
+      "time": "2026-11-25T18:05:17.178Z",
       "type": "warning",
-      "value": "[.WebGL-0x1340083a200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "value": "[.WebGL-0x1040083ae00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ]
 }

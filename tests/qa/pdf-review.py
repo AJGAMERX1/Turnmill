@@ -1,5 +1,5 @@
 """Validate A4 drawing content and render a contact sheet for human review."""
-import json,subprocess
+import json,os,subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from PIL import Image,ImageOps,ImageDraw
@@ -8,7 +8,7 @@ out=Path('test-evidence/drawings')
 tiles=[]
 results={}
 catalog=[('barrel','TM-BRL-01',out/'barrel.pdf',4),('assembly','TM-ASM-01',out/'assembly.pdf',4)]
-projects=Path('test-evidence/projects')
+projects=Path(os.environ.get('TURNMILL_PROJECT_EVIDENCE','test-evidence/projects'))
 for name,number,rel,count in [('machined-barrel','TM-BRL-01','drawing/barrel.pdf',4),('machined-assembly','TM-ASM-01','drawing/assembly.pdf',3),('guided-barrel','TM-BRL-01','guide/guided-barrel.pdf',4)]:
     catalog.append((name,number,projects/rel,count))
 for stem,number,pdf,expected_pages in catalog:

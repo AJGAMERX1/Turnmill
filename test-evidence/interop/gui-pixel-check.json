@@ -161,6 +161,36 @@
     "freecad-front": 36540,
     "freecad-detail": 132932
   },
+  "ui-click-coil-click-with-coil": {
+    "app-iso": 469984,
+    "freecad-iso": 35160,
+    "freecad-front": 36900,
+    "freecad-detail": 77898
+  },
+  "ui-click-coil-click-with-coil-1": {
+    "app-iso": 469972,
+    "freecad-iso": 40322,
+    "freecad-front": 41952,
+    "freecad-detail": 89526
+  },
+  "ui-click-coil-click-with-coil-2": {
+    "app-iso": 469970,
+    "freecad-iso": 67903,
+    "freecad-front": 55104,
+    "freecad-detail": 145968
+  },
+  "ui-click-coil-click-with-coil-3": {
+    "app-iso": 469670,
+    "freecad-iso": 15695,
+    "freecad-front": 18216,
+    "freecad-detail": 34847
+  },
+  "ui-click-coil-click-with-coil-4": {
+    "app-iso": 466751,
+    "freecad-iso": 33098,
+    "freecad-front": 31083,
+    "freecad-detail": 68379
+  },
   "ui-click-pen-click-study": {
     "app-iso": 470160,
     "freecad-iso": 40322,

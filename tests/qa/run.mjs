@@ -1,6 +1,6 @@
 // Run all suites to retain independent failure evidence. Unexpected outcomes make the process fail.
 import { spawn } from "node:child_process";
-import { mkdir, writeFile, access } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile, access } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import { resolve } from "node:path";
 import { serveBuild } from "./serve.mjs";
@@ -9,6 +9,9 @@ const env = { ...process.env },
 const evidence = "test-evidence/runner";
 await mkdir(evidence, { recursive: true });
 await mkdir("test-evidence/browser", { recursive: true });
+// A successful reader must consume this run's exports, never the checked-in evidence.
+env.QA_INTEROP_OUT ||= await mkdtemp(resolve(evidence,"interop-"));
+env.TURNMILL_PROJECT_EVIDENCE ||= await mkdtemp(resolve(evidence,"projects-"));
 let py = env.QA_PYTHON || "python3";
 if (!env.QA_PYTHON) {
   try {

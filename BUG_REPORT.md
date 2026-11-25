@@ -1,6 +1,8 @@
 # Turnmill 0.5.0 · Phase 1 findings
 
-**13 reproduced findings: 5 Critical, 2 High, 5 Medium, 1 Low.** By assigned system: solid/mesh/assembly interchange 5, ruler graduation geometry 1, hardware library 1, thread rebuilding 1, assembly/drawing parameter handling 1, engraving placement and labels 2, rebuild performance 1, sketch undo 1. Known cases have strict expected-failure regressions, or platform-scoped timed expectations for the performance finding. A passing suite can include these known defects.
+**14 reproduced findings: 6 Critical, 2 High, 5 Medium, 1 Low.** By assigned system: solid/mesh/assembly interchange 6, ruler graduation geometry 1, hardware library 1, thread rebuilding 1, assembly/drawing parameter handling 1, engraving placement and labels 2, rebuild performance 1, sketch undo 1. Known cases have strict expected-failure regressions, or platform-scoped timed expectations for the performance finding. A passing suite can include these known defects.
+
+The replayable chaos run used seed `0x50454e35` and recorded 139 actions. [Timestamped session](test-evidence/projects/chaos/actions.jsonl)
 
 **First five to fix:** assembly STEP placement (ASM-001); ruler graduation position (INTEROP-005); refill STL topology (INTEROP-002); engraved-ruler STL intersections (INTEROP-003); threaded-rod STL intersections (INTEROP-006).
 
@@ -12,13 +14,13 @@
 
 ### INTEROP-002 · Exported refill STL has a non-manifold tip
 
-**Critical · STL export.** Open the included twist pen, choose Export, select Refill and choose STL. Use the fixed 0.005 mm / 0.08 rad settings. Expected one closed printable manifold. FreeCAD Mesh reports an open, non-manifold mesh, 6,477 triangles and two connected components. Raw STL inspection finds a collapsed triangle and two edges with incidence other than two. PrusaSlicer reports manifold; the two readers disagree. The defect also appears in the entire pen STL.
+**Critical · STL export.** Open the included twist pen in Part, select Refill in the history, then choose Export → Selected body → STL mesh. Use the fixed 0.005 mm / 0.08 rad settings. Expected one closed printable manifold. FreeCAD Mesh reports an open, non-manifold mesh, 6,477 triangles and two connected components. Raw STL inspection finds a collapsed triangle and two edges with incidence other than two. PrusaSlicer reports manifold; the two readers disagree. The defect also appears in the entire pen STL.
 
 **Expected-failing test** `INTEROP-002` in tests/interop/known.py. [Failing mesh](test-evidence/interop/twist-pen-3.stl) · [FreeCAD measurements](test-evidence/interop/twist-pen-3.freecad.json)
 
 ### INTEROP-003 · Engraved ruler STL has self-intersections
 
-**Critical · STL export.** Open New project → Pocket ruler, wait for the engraved blank to build and export STL. Expected a closed mesh with zero self-intersections. FreeCAD Mesh reports self-intersections in the 99,440-triangle pocket ruler. Closure and PrusaSlicer's manifold flag both pass. The longer UI-built ruler also reproduces the finding.
+**Critical · STL export.** Open [the 155.4 × 20 × 2 mm engraved ruler fixture](test-evidence/interop/ruler.turnmill), wait for its 0.2 mm-deep marks to build, then choose Export → All bodies → STL mesh. Expected a closed mesh with zero self-intersections. FreeCAD Mesh reports self-intersections in the 99,440-triangle test ruler. Closure and PrusaSlicer's manifold flag both pass. The longer UI-built ruler also reproduces the finding.
 
 **Expected-failing test** `INTEROP-003` in tests/interop/known.py. [Ruler STL](test-evidence/interop/ruler.stl) · [FreeCAD Mesh findings](test-evidence/interop/ruler.freecad.json)
 
@@ -34,9 +36,15 @@
 
 **Expected-failing test** `INTEROP-006` in tests/interop/known.py. [Mesh](test-evidence/interop/threaded-rod.stl) · [Exact and mesh readings](test-evidence/interop/threaded-rod.freecad.json) · [Facet diagnostics](test-evidence/interop/ruler-detail.json)
 
+### INTEROP-007 · Catalog compression spring STL and 3MF intersect themselves
+
+**Critical · STL and 3MF export.** Open the four-body click project. In Part, select the Century Spring B18-127CS in history and choose Export → Selected body → STL mesh. Expected a closed printable coil with zero self-intersections. The exact STEP passes validity and shell closure checks. FreeCAD Mesh identifies **131 intersecting facet pairs** in the isolated spring. The separately exported 3MF contains the identical 255,114 triangles and the same defect. The assembly STL has 3,278 intersecting pairs; its loss of the spring mount also reproduces ASM-001. Reapplying the saved 90° rotation about Y and 10 mm X translation removes its three unintended solid overlaps.
+
+**Expected-failing test** `INTEROP-007` in tests/interop/known.py. [STL](test-evidence/interop/ui-click-coil-click-with-coil-4.stl) · [3MF and STL triangle correspondence](test-evidence/interop/spring-mesh-formats.json) · [Facet pairs and installed-versus-exported placement](test-evidence/interop/spring-detail.json) · [Native project](test-evidence/projects/click-coil/click-with-coil.turnmill)
+
 ### INTEROP-001 · A modeled M5 × 0.8 library screw will not build
 
-**High · Fastener library.** Start a blank part. Open Hardware → Hex screw, select M5 × 0.8, length 12 mm and modeled thread. Insert hardware. Expected one connected, valid screw solid. The build reports “The operation must produce one connected body” and no valid modeled screw is available. Cosmetic hardware can illustrate the assembly but does not provide the requested helical solid.
+**High · Fastener library.** Start a blank part. Choose Assembly → Hardware → Hex screw, select M5 × 0.8, length 12 mm and modeled thread. Insert hardware. Expected one connected, valid screw solid. The build reports “The operation must produce one connected body” and no valid modeled screw is available. Cosmetic hardware can illustrate the assembly but does not provide the requested helical solid.
 
 **Expected-failing test** `INTEROP-001` in tests/interop/native.mjs. [Model and screenshot](test-evidence/projects/bolt-library/) · [Exact diagnostic](test-evidence/interop/INTEROP-001.log)
 
@@ -66,9 +74,9 @@
 
 ### SYS-003 · Editing the final feature in a 100-feature body exceeds 500 ms
 
-**Medium · Rebuild performance.** Open the 100-feature fixture, edit the final additive extrusion three times, and time from Apply to the next Ready state. The specific interactive budget is 500 ms. Recorded Chromium times on the test Mac were 613, 607 and 688 ms. The unchanged-body cache helps independent parts; all 100 features in this case belong to one solid. Timings vary with hardware and load.
+**Medium · Rebuild performance.** Open the 100-feature fixture, edit the final additive extrusion three times, and time from Apply to the next Ready state. The specific interactive budget is 500 ms. The repeated browser run measured 1,178.6, 546.7 and 544.5 ms on the test Mac, for a median of 546.7 ms. Each final edit repeated 98 unchanged Boolean unions before doing the changed union. Rebuilding without an edit performed zero unions. Earlier runs are preserved alongside these measurements.
 
-**Expected-failing test** `SYS-003` in tests/systems/performance.mjs and performance-browser.mjs. [Fixture, individual timings and screenshot](test-evidence/systems/SYS-003/)
+**Expected-failing test** `SYS-003` in tests/systems/performance-browser.mjs. The native performance.mjs records the repeated unions. The interactive budget uses the browser time from Apply to Ready. [Fixture, individual timings and screenshot](test-evidence/systems/SYS-003/)
 
 ### SYS-004 · Sketch-local undo stops after 80 edits
 

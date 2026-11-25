@@ -1,6 +1,4 @@
 Error: Failed to open library "/Library/Frameworks/3DconnexionNavlib.framework/3DconnexionNavlib"! Error: dlopen(/Library/Frameworks/3DconnexionNavlib.framework/3DconnexionNavlib, 0x0005): tried: '/Library/Frameworks/3DconnexionNavlib.framework/3DconnexionNavlib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/Library/Frameworks/3DconnexionNavlib.framework/3DconnexionNavlib' (no such file), '/Library/Frameworks/3DconnexionNavlib.framework/3DconnexionNavlib' (no such file)!
-/Users/anaiaholiver/Documents/Codex/2026-11-24/ra/work/Turnmill-QA/tests/freecad/gui.FCMacro:16: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
-  camera=view.getCameraNode()
 FreeCAD 1.1.4, Libs: 1.1.4R20260928 (Git shallow)
 (C) 2001-2026 FreeCAD contributors
 FreeCAD is free and open-source software licensed under the terms of LGPL2+ license.

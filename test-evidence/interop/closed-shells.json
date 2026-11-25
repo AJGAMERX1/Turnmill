@@ -167,6 +167,44 @@
       true
     ]
   },
+  "ui-click-coil-click-with-coil-1": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-coil-click-with-coil-2": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-coil-click-with-coil-3": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-coil-click-with-coil-4": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true
+    ]
+  },
+  "ui-click-coil-click-with-coil": {
+    "looseEdges": 0,
+    "looseFaces": 0,
+    "closedShells": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
   "ui-click-pen-click-study-1": {
     "looseEdges": 0,
     "looseFaces": 0,

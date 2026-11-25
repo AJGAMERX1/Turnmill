@@ -1,0 +1,36 @@
+{
+  "model": "ui-click-coil-click-with-coil",
+  "expected": null,
+  "parts": [
+    {
+      "name": "Cam ring",
+      "volume": 145.80131505310231,
+      "area": 265.9672340529119,
+      "bbox": [
+        [
+          0,
+          -3.2,
+          -3.2
+        ],
+        [
+          7,
+          3.2,
+          3.2
+        ]
+      ],
+      "center": [
+        3.5,
+        1.0965066775138174e-16,
+        -9.173551154742681e-17
+      ],
+      "faces": 4,
+      "edges": 6,
+      "solids": 1,
+      "valid": true
+    }
+  ],
+  "stl": {
+    "linearMm": 0.005,
+    "angularRadians": 0.08
+  }
+}

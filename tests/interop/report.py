@@ -68,8 +68,13 @@ def row(c):
         mesh = ext["3mf"]
         v = sum(q["volume"] for q in mesh["meshes"])
         closed = all(q["closed"] for q in mesh["meshes"])
+        mesh_status = (
+            "INTEROP-007, 131 self-intersections; identical STL and 3MF triangles"
+            if n == "ui-click-coil-click-with-coil-4"
+            else "Container/mesh checked"
+        )
         lines.append(
-            f"|[{n}.3mf]({n}.3mf)|3MF|{source}|{c['native']:.6f}|{v:.6f}, independent triangle integration|{pct(v):.5f}|Per-part coordinates checked|2-manifold edge counts {closed}|Prusa import exit {mesh['slicerExit']}|{mesh['buildItems']} build items|Container/mesh checked|"
+            f"|[{n}.3mf]({n}.3mf)|3MF|{source}|{c['native']:.6f}|{v:.6f}, independent triangle integration|{pct(v):.5f}|Per-part coordinates checked|2-manifold edge counts {closed}|Prusa import exit {mesh['slicerExit']}|{mesh['buildItems']} build items|{mesh_status}|"
         )
 
 

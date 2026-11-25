@@ -1,0 +1,14 @@
+[ui-click-coil-click-with-coil.stl]
+size_x = 34.184399
+size_y = 10.000000
+size_z = 13.635012
+min_x = -2.184399
+min_y = -5.000000
+min_z = -4.999012
+max_x = 32.000000
+max_y = 5.000000
+max_z = 8.636000
+number_of_facets = 258270
+manifold = yes
+number_of_parts =  4
+volume = 1623.040527

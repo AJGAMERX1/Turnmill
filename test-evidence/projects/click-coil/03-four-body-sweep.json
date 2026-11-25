@@ -1,5 +1,12 @@
 {
-  "time": "2026-11-25T17:45:38.585Z",
+  "jointUi": {
+    "value": 0,
+    "measure": "Rotation\nDrive value\n°",
+    "readings": [
+      "Follower · Plunger\nSlider position\n0.000 mm\nClosing spring\n0.600 N\nCam phase\nRise\nContact\nPrescribed"
+    ]
+  },
+  "time": "2026-11-25T18:05:29.632Z",
   "stage": "03-four-body-sweep",
   "mode": "Assembly",
   "busy": false,
@@ -28,7 +35,7 @@
     },
     {
       "name": "Century Spring B18-127CS",
-      "id": "8438626b-6260-4217-b862-be026c0e7d42",
+      "id": "2371d4ad-e850-45ee-a6d6-63eb04662ce3",
       "suppressed": false,
       "operation": "new"
     }
@@ -152,11 +159,11 @@
       "3880cd56-cc50-4b9c-a4a3-cc1870d43d53",
       "330e11c0-6135-44d6-af63-a130ffd91848",
       "d63ff563-3dee-407f-9e07-2632ce723cfa",
-      "8438626b-6260-4217-b862-be026c0e7d42"
+      "2371d4ad-e850-45ee-a6d6-63eb04662ce3"
     ],
     "selected": "330e11c0-6135-44d6-af63-a130ffd91848",
     "poses": {
-      "8438626b-6260-4217-b862-be026c0e7d42": [
+      "2371d4ad-e850-45ee-a6d6-63eb04662ce3": [
         90
       ]
     },
@@ -296,7 +303,7 @@
           "springEnabled": true
         }
       },
-      "8438626b-6260-4217-b862-be026c0e7d42": {
+      "2371d4ad-e850-45ee-a6d6-63eb04662ce3": {
         "kind": "revolute",
         "parent": "",
         "axis": "Y",

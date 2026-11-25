@@ -13,6 +13,7 @@ const checks = [
   ["motion", 90000],
   ["findings", 90000],
   ["parameters-history", 60000],
+  ["check-interactive-budget", 20000],
   ["performance", 180000],
   ["fuzz", fuzzMs + 120000],
 ];

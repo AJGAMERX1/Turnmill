@@ -1,6 +1,6 @@
 """Run one script in a disposable, isolated instance, and capture its full merged console."""
 
-import json, os, shutil, subprocess, sys, tempfile
+import os, secrets, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
@@ -15,15 +15,21 @@ folder = Path(__file__).resolve().parent
 
 def run(script, case):
     with tempfile.TemporaryDirectory() as td:
+        marker = "QA_FREECAD_COMPLETED_" + secrets.token_hex(16)
         env = {
             **os.environ,
             "QA_OUT": str(out),
             "QA_CASE": case,
+            "QA_COMPLETION_MARKER": marker,
             "FREECAD_USER_HOME": td,
             "XDG_CONFIG_HOME": td,
         }
         log = out / (case + ".freecad.log")
-        code = f"import runpy; qa_globals=runpy.run_path({str(folder / script)!r},run_name='__main__')\nexit()\n"
+        # Keep print on the same interactive statement as run_path: an exception must skip it.
+        code = (
+            f"import os, runpy; qa_globals=runpy.run_path({str(folder / script)!r},run_name='__main__'); "
+            "print(os.environ['QA_COMPLETION_MARKER'],flush=True)\nexit()\n"
+        )
         with log.open("w") as fp:
             subprocess.run(
                 [fc, "--console", "-u", str(Path(td) / "user.cfg")],
@@ -35,8 +41,14 @@ def run(script, case):
                 env=env,
                 check=True,
             )
-        if "Traceback (most recent call last)" in log.read_text(errors="replace"):
-            raise RuntimeError(str(log))
+        transcript = log.read_text(errors="replace")
+        if (
+            marker not in transcript
+            or "Traceback (most recent call last)" in transcript
+        ):
+            raise RuntimeError(
+                f"FreeCAD did not complete {script} for {case}. See {log}"
+            )
 
 
 if __name__ == "__main__":

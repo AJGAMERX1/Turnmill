@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { Solid } from "replicad";
 import {
   runtime,
   boxSketch,
@@ -7,7 +8,6 @@ import {
   project,
   near,
   save,
-  xfail,
 } from "./runtime.mjs";
 const api = await runtime();
 const { ModelBodies } = await api.load("modelBodies"),
@@ -72,15 +72,31 @@ try {
     history.map((v) => v.op),
   );
   const long = new ModelBodies();
+  // Observe the actual boolean calls in the production kernel path. Restore the
+  // method before leaving the fixture, including when geometry validation fails.
+  const solidMethods = Object.getPrototypeOf(Solid.prototype);
+  const originalFuse = solidMethods.fuse;
+  let fuses = 0;
+  solidMethods.fuse = function (...args) {
+    fuses++;
+    return Reflect.apply(originalFuse, this, args);
+  };
+  const replay = { coldFuses: 0, unchangedFuses: 0, editedFuses: [] };
   try {
     const cold = await time("Cold 100-feature history, one solid", 60000, () =>
       build(single, long),
     );
+    replay.coldFuses = fuses;
+    fuses = 0;
+    const unchanged = await build(single, long, cold.keys);
+    near(unchanged.volume, cold.volume, 1e-7, "unchanged cache control");
+    replay.unchangedFuses = fuses;
     near(cold.volume, 150.5, 0.1505, "100-feature solid");
     await save("SYS-003/100-feature-history.turnmill", single);
     let last = cold;
     const durations = [];
     for (const depth of [0.75, 0.5, 0.625]) {
+      fuses = 0;
       single.features.at(-1).amount = String(depth);
       const edit = await time(
         "Edit final additive feature to " + depth + " mm in 100-feature solid",
@@ -89,7 +105,9 @@ try {
         true,
       );
       near(edit.volume, 149 + 1.5 * depth, 0.15, "last feature edit");
-      samples.at(-1).trackedBy = "SYS-003";
+      samples.at(-1).scope = "Native diagnostic for an end-to-end budget";
+      replay.editedFuses.push(fuses);
+      samples.at(-1).booleanFuses = fuses;
       durations.push(samples.at(-1).ms);
       last = edit;
     }
@@ -100,18 +118,20 @@ try {
       median: sorted[1],
       interactiveBudget: 500,
     });
-    await xfail(
-      "SYS-003",
-      "Editing the last additive feature exceeds the 500 ms interaction budget",
-      async () =>
-        assert.ok(
-          sorted[1] <= 500,
-          "Median of three warm last-feature edits was " +
-            sorted[1].toFixed(2) +
-            " ms, budget 500 ms.",
-        ),
+    assert.equal(
+      replay.coldFuses,
+      99,
+      "Observer failed to count the 99 unions in the initial build",
+    );
+    await save("SYS-003/boolean-work.json", replay);
+    console.log(
+      "Native diagnostic:",
+      sorted[1].toFixed(2),
+      "ms median; boolean fuses",
+      JSON.stringify(replay),
     );
   } finally {
+    solidMethods.fuse = originalFuse;
     long.clear();
   }
   const many = Array.from({ length: 50 }, (_, i) => ({
@@ -150,7 +170,11 @@ try {
   } finally {
     big.clear();
   }
-  const missed = samples.filter((t) => t.exceedsBudget && !t.trackedBy);
+  const missed = samples.filter(
+    (t) =>
+      t.exceedsBudget &&
+      t.scope !== "Native diagnostic for an end-to-end budget",
+  );
   if (missed.length)
     throw Error(
       "Exceeded runtime budgets: " + missed.map((t) => t.name).join(", "),

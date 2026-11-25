@@ -1,1 +1,1 @@
-XFAIL SYS-003 Browser common last-feature edit Median 613.1 ms, interactive budget is 500 ms.
+XFAIL SYS-003 browser Apply-to-Ready median 546.70 ms, budget 500 ms.

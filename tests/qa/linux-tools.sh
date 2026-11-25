@@ -11,7 +11,12 @@ curl --fail --location --retry 3 "https://github.com/FreeCAD/FreeCAD/releases/do
 (cd "$tools_dir" && echo "f6dc6ba676e5ac96a565ebc8d657232f94c6158e85b4352141bd1a46f6b43434  $cad_file" | sha256sum -c - && chmod +x "$cad_file" && "./$cad_file" --appimage-extract >/dev/null)
 cat > "$tools_dir/freecadcmd" <<'WRAPPER'
 #!/usr/bin/env bash
-exec "$(dirname "$0")/squashfs-root/AppRun" "$@"
+app="$(dirname "$0")/squashfs-root"
+for cmd in freecadcmd FreeCADCmd; do
+  if test -x "$app/usr/bin/$cmd"; then exec "$app/AppRun" "$cmd" "$@"; fi
+done
+echo "FreeCADCmd was not included in this archive; using the FreeCAD console frontend" >&2
+exec "$app/AppRun" "$@"
 WRAPPER
 chmod +x "$tools_dir/freecadcmd"
 git clone --depth 1 --branch v0.8.2 https://github.com/stepcode/stepcode "$tools_dir/stepcode"

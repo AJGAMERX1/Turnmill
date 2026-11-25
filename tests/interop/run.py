@@ -6,7 +6,7 @@ from external import root, out, schema, slicer, mf, vectors
 
 sys.path.insert(0, str(root / "tests/freecad"))
 from runner import run
-from known import run as xfails
+from known import run as xfails, mesh_findings
 
 args = argparse.ArgumentParser()
 args.add_argument(
@@ -147,27 +147,10 @@ def inspect_case(f):
         and delta(arrays(mesh["bbox"]), arrays(s["bbox"])) <= 0.01,
         name + " STL dimensions",
     )
-    known = []
-    if not mesh["closed"] or mesh["nonManifold"]:
-        if "twist-pen" in name:
-            known.append("INTEROP-002")
-        elif name in ["ui-bolt-library-bolt-nut", "ui-bolt-scratch-bolt-nut"]:
-            known.append("ASM-001")
-        else:
-            check(False, name + " STL closure")
-    if mesh["selfIntersections"]:
-        if "ruler" in name:
-            known.append("INTEROP-003")
-        elif "twist-pen" in name:
-            known.append("overlap at interface")
-        elif name == "threaded-rod":
-            known.append("INTEROP-006")
-        elif name in ["ui-bolt-library-bolt-nut", "ui-bolt-scratch-bolt-nut"]:
-            known.append("ASM-001")
-        else:
-            check(False, name + " STL self-intersection")
-    if prusa["manifold"] != "yes" and not known:
-        check(False, name + " Prusa manifold")
+    known = mesh_findings(name, mesh, len(native))
+    # Every measured case was reported manifold by Prusa after its own mesh handling.
+    # A new Prusa diagnostic is independent of FreeCAD's existing defects.
+    check(prusa["manifold"] == "yes", name + " Prusa manifold")
     if "3mf" in ext:
         x = ext["3mf"]
         check(
@@ -286,6 +269,7 @@ def reverse_checks():
 
 
 def setup_and_check():
+    projects = Path(os.getenv("TURNMILL_PROJECT_EVIDENCE", root / "test-evidence/projects"))
     if not options.existing:
         node(
             "simple",
@@ -296,21 +280,30 @@ def setup_and_check():
             "ruler",
             "terminal",
         )
-        if (root / "test-evidence/projects").exists():
-            node("projects")
+        node("projects")
     run("create_references.py", "references")
     with concurrent.futures.ThreadPoolExecutor(2) as pool:
         list(pool.map(check_one, sorted(out.glob("*.native.json"))))
+    with (out / "harness-controls.log").open("w") as log:
+        subprocess.run(
+            [sys.executable, str(root / "tests/interop/check-harness.py")],
+            check=True,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            timeout=100,
+        )
     run("closed_shells.py", "closed-shells")
     run("threads.py", "threads")
     run("planar.py", "ruler")
     run("inspection_details.py", "ruler-detail")
-    if (root / "test-evidence/projects/ruler/ruler.svg").exists():
+    if (out / "ui-click-coil-click-with-coil-4.native.json").exists():
+        run("spring_detail.py", "spring-detail")
+    if (projects / "ruler/ruler.svg").exists():
         from shutil import copyfile
 
         for ext in ["dxf", "svg"]:
             copyfile(
-                root / ("test-evidence/projects/ruler/ruler." + ext),
+                projects / ("ruler/ruler." + ext),
                 out / ("ui-scale." + ext),
             )
         run("planar.py", "ui-scale")

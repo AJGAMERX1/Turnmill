@@ -1045,6 +1045,239 @@
     ]
   },
   {
+    "file": "ui-click-coil-click-with-coil-1.return.step",
+    "parts": [
+      {
+        "name": "ui-click-coil-click-with-coil-1.return",
+        "volume": 1281.7698026646353,
+        "area": 1789.1370162193875,
+        "bbox": [
+          [
+            0,
+            -5,
+            -5
+          ],
+          [
+            32,
+            5,
+            5
+          ]
+        ],
+        "center": [
+          15.999999999999996,
+          -1.7739041360667983e-16,
+          -4.849062328142229e-16
+        ],
+        "faces": 4,
+        "edges": 6,
+        "solids": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-2.return.step",
+    "parts": [
+      {
+        "name": "ui-click-coil-click-with-coil-2.return",
+        "volume": 145.80131505310231,
+        "area": 265.9672340529119,
+        "bbox": [
+          [
+            0,
+            -3.2,
+            -3.2
+          ],
+          [
+            7,
+            3.2,
+            3.2
+          ]
+        ],
+        "center": [
+          3.5000000000000004,
+          2.680349656144887e-16,
+          -2.4842503560032003e-16
+        ],
+        "faces": 4,
+        "edges": 6,
+        "solids": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-3.return.step",
+    "parts": [
+      {
+        "name": "ui-click-coil-click-with-coil-3.return",
+        "volume": 183.7831702350029,
+        "area": 259.1813939211579,
+        "bbox": [
+          [
+            0,
+            -1.5,
+            -1.5
+          ],
+          [
+            26,
+            1.5,
+            1.5
+          ]
+        ],
+        "center": [
+          12.999999999999998,
+          -1.3531704627689036e-16,
+          -4.322723328384941e-17
+        ],
+        "faces": 3,
+        "edges": 3,
+        "solids": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil-4.return.step",
+    "parts": [
+      {
+        "name": "ui-click-coil-click-with-coil-4.return",
+        "volume": 12.179100635643223,
+        "area": 106.88223968272997,
+        "bbox": [
+          [
+            -2.1844070588175444,
+            -2.1844069641796073,
+            -1.0000009281464485e-7
+          ],
+          [
+            2.184407058817597,
+            2.184406964179464,
+            8.636000100000013
+          ]
+        ],
+        "center": [
+          0.0000015933701906536284,
+          2.2932500016525527e-9,
+          4.317999948905157
+        ],
+        "faces": 3,
+        "edges": 3,
+        "solids": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "file": "ui-click-coil-click-with-coil.return.step",
+    "parts": [
+      {
+        "name": "ui-click-coil-click-with-coil.return · 1",
+        "volume": 1281.7698026646353,
+        "area": 1789.1370162193875,
+        "bbox": [
+          [
+            0,
+            -5,
+            -5
+          ],
+          [
+            32,
+            5,
+            5
+          ]
+        ],
+        "center": [
+          15.999999999999996,
+          -1.7739041360667983e-16,
+          -4.849062328142229e-16
+        ],
+        "faces": 4,
+        "edges": 6,
+        "solids": 1,
+        "valid": true
+      },
+      {
+        "name": "ui-click-coil-click-with-coil.return · 2",
+        "volume": 145.80131505310231,
+        "area": 265.9672340529119,
+        "bbox": [
+          [
+            0,
+            -3.2,
+            -3.2
+          ],
+          [
+            7,
+            3.2,
+            3.2
+          ]
+        ],
+        "center": [
+          3.5000000000000004,
+          2.680349656144887e-16,
+          -2.4842503560032003e-16
+        ],
+        "faces": 4,
+        "edges": 6,
+        "solids": 1,
+        "valid": true
+      },
+      {
+        "name": "ui-click-coil-click-with-coil.return · 3",
+        "volume": 183.7831702350029,
+        "area": 259.1813939211579,
+        "bbox": [
+          [
+            0,
+            -1.5,
+            -1.5
+          ],
+          [
+            26,
+            1.5,
+            1.5
+          ]
+        ],
+        "center": [
+          12.999999999999998,
+          -1.3531704627689036e-16,
+          -4.322723328384941e-17
+        ],
+        "faces": 3,
+        "edges": 3,
+        "solids": 1,
+        "valid": true
+      },
+      {
+        "name": "ui-click-coil-click-with-coil.return · 4",
+        "volume": 12.179100635643223,
+        "area": 106.88223968272997,
+        "bbox": [
+          [
+            -2.1844070588175444,
+            -2.1844069641796073,
+            -1.0000009281464485e-7
+          ],
+          [
+            2.184407058817597,
+            2.184406964179464,
+            8.636000100000013
+          ]
+        ],
+        "center": [
+          0.0000015933701906536284,
+          2.2932500016525527e-9,
+          4.317999948905157
+        ],
+        "faces": 3,
+        "edges": 3,
+        "solids": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
     "file": "ui-click-pen-click-study-1.return.step",
     "parts": [
       {

@@ -1,0 +1,3 @@
+PASS stale JSON and STEP plus a FreeCAD substitute returning zero rejected
+PASS fresh FreeCADCmd Block import, completion token, valid 1000 mm³
+PASS new defects on cap and ruler blank, changed defect signatures and unexpected repair rejected

@@ -10,9 +10,13 @@ out = Path(
     )
 )
 cases = [p.name.removesuffix(".native.json") for p in sorted(out.glob("*.native.json"))]
-cases += sorted(json.loads((out / "freecad-sources.json").read_text()))
-for group in range((len(cases) + 4) // 5):
-    names = cases[group * 5 : group * 5 + 5]
+# Keep the inspected sheets stable and group the spring assembly with its four exported bodies.
+coil_cases = [name for name in cases if name.startswith("ui-click-coil-")]
+original = [name for name in cases if name not in coil_cases]
+original += sorted(json.loads((out / "freecad-sources.json").read_text()))
+pages = [original[start : start + 5] for start in range(0, len(original), 5)]
+pages += [coil_cases[start : start + 5] for start in range(0, len(coil_cases), 5)]
+for group, names in enumerate(pages):
     sheet = Image.new("RGB", (1080, 30 + len(names) * 170), "white")
     draw = ImageDraw.Draw(sheet)
     for k, t in enumerate(

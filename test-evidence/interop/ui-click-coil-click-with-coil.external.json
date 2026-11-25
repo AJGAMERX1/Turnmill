@@ -1,0 +1,130 @@
+{
+  "step": {
+    "schema": "AP242",
+    "strictExit": 0,
+    "mm": true,
+    "entities": 1213,
+    "unresolved": [],
+    "duplicateIds": 0,
+    "diagnostics": []
+  },
+  "stl": {
+    "exit": 0,
+    "manifold": "yes",
+    "volume": 1623.040527,
+    "bbox": [
+      [
+        -2.184399,
+        -5.0,
+        -4.999012
+      ],
+      [
+        32.0,
+        5.0,
+        8.636
+      ]
+    ],
+    "parts": "4",
+    "sliceExit": 0,
+    "extrusionMoves": 2306
+  },
+  "3mf": {
+    "unit": "millimeter",
+    "meshes": [
+      {
+        "bbox": [
+          [
+            0.0,
+            -5.0,
+            -4.999011516571045
+          ],
+          [
+            32.0,
+            5.0,
+            4.999011516571045
+          ]
+        ],
+        "volume": 1281.431969146753,
+        "closed": true,
+        "triangles": 1264
+      },
+      {
+        "bbox": [
+          [
+            0.0,
+            -3.200000047683716,
+            -3.1993675231933594
+          ],
+          [
+            7.0,
+            3.200000047683716,
+            3.1993675231933594
+          ]
+        ],
+        "volume": 145.76288849676644,
+        "closed": true,
+        "triangles": 1264
+      },
+      {
+        "bbox": [
+          [
+            0.0,
+            -1.5,
+            -1.4997035264968872
+          ],
+          [
+            26.0,
+            1.5,
+            1.4997035264968872
+          ]
+        ],
+        "volume": 183.73473625125928,
+        "closed": true,
+        "triangles": 628
+      },
+      {
+        "bbox": [
+          [
+            -2.1843998432159424,
+            -2.1843998432159424,
+            1.0780217962746974e-05
+          ],
+          [
+            2.1843998432159424,
+            2.1844067573547363,
+            8.63599967956543
+          ]
+        ],
+        "volume": 12.14731289999114,
+        "closed": true,
+        "triangles": 255114
+      }
+    ],
+    "buildItems": 4,
+    "names": [
+      "Guide tube",
+      "Cam ring",
+      "Plunger",
+      "Century Spring B18-127CS"
+    ],
+    "slicerExit": 0,
+    "slicerParts": [
+      {
+        "volume": 1281.431763,
+        "manifold": true
+      },
+      {
+        "volume": 145.762955,
+        "manifold": true
+      },
+      {
+        "volume": 183.734604,
+        "manifold": true
+      },
+      {
+        "volume": 12.147206,
+        "manifold": true
+      }
+    ]
+  }
+}

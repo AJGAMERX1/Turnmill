@@ -405,6 +405,7 @@ export async function coil(s, study) {
   await writeFile(join(s.dir, "sweep.txt"), report);
   await sample(s, "03-four-body-sweep");
   await native(s, "click-with-coil");
+  await stepExport(s, "click-with-coil");
   assert(report.includes(spring));
   assert(
     report.split("\n").every((line) => /clear throughout/i.test(line)),

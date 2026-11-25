@@ -11,15 +11,15 @@ A status describes the exercised examples in that cell. “Fail” takes precede
 | Linear/circular patterns, mirror, sweep, loft | Pass | Pass | Not covered | Pass | Measured in feature suite; UI-specific coverage per operation was not repeated. |
 | Modeled/cosmetic threads | Fail | Fail | Fail | Fail | UI-001, INTEROP-001, INTEROP-006. Independent thread sections measured for samples. |
 | Straight/diamond knurl | Pass | Pass | Pass | Pass | Both kernel cases, straight-groove UI and independent STEP reader. Complex reference sign-off pending. |
-| Flat/cylindrical marks and emboss | Pass | Fail | Pass | Pass | SYS-002. Through-cut depth accepted, documented; all thickness/graphic combinations not measured. |
+| Flat/cylindrical marks and emboss | Pass | Fail | Fail | Pass | SYS-002. Through-cut depth accepted, documented; all thickness/graphic combinations not measured. |
 | Parameters, references, rename, reorder, suppress, remove | Pass | Pass | Pass | Pass | Model reverted exactly after parameter changes, invalid target rejected, keyboard reorder/undo verified. |
 | Document undo, autosave, reopen, multiple tabs, storage interruption | Pass | Pass | Pass | Pass | Legacy 85 snapshots, lazy reads, interrupted write retry, branch truncation, native rescue and reopen; see browser/history.json. |
 | All seven joints, limits and motion poses | Pass | Fail | Fail | Fail | SYS-001 for named angular limits and ASM-001 for exported placement. 328 analytic clearance measurements and 12 continuous ranges. |
-| Cam, plunger and spring mechanism | Pass | Pass | Pass | Pass | Quasistatic cam law, physical spring, all-pair hinge/click travel. Video capture across browser codecs not repeated. |
+| Cam, plunger and spring mechanism | Pass | Pass | Pass | Fail | Quasistatic cam law, physical spring, driven leaf or cam against every other component through its travel. Spring mesh exports fail INTEROP-007. Video capture across browser codecs not repeated. |
 | Physical click latch | Not built yet | Not built yet | Not built yet | Not built yet | No stateful mechanical latch. |
 | Fits and tolerances | Pass | Pass | Not covered | Not covered | Supported four ISO fit classes and size limits, 48 table checks; physical gauges unavailable. |
-| Fastener library / BOM | Fail | Fail | Fail | Fail | Differentiate modeled M5 library screw failure from verified BOM, scratch pair and the remaining library families. |
-| Drawing views, section/detail, dimensions, annotations, BOM | Pass | Fail | Pass | Pass | SYS-001 blocks assembly drawing for a named angle; linked dimension, valid/invalid references and printed outputs tested. |
+| Fastener library / BOM | Fail | Fail | Fail | Fail | Modeled M5 library screw fails; isolated stock spring STL and 3MF self-intersect (INTEROP-007). Scratch pair and BOM exercised. |
+| Drawing views, section/detail, dimensions, annotations, BOM | Pass | Fail | Fail | Pass | SYS-001 blocks assembly drawing for a named angle; linked dimension, valid/invalid references and printed outputs tested. |
 | Ruler/scale geometry, labels, ticks and applied depth | Pass | Fail | Fail | Fail | All supported unit families in logic tests. Ruler edges and cut depth measured. INTEROP-003 and INTEROP-005. Independent terminal lengths not implemented. |
 | Native, STEP, STL, DXF and SVG import/export; 3MF/PDF export | Fail | Fail | Fail | Fail | See individual formats in INTEROP.md, results differ by format. |
 | Second STEP schema selector or 3MF/PDF import | Not built yet | Not built yet | Not built yet | Not built yet | AP242 from Turnmill, AP214/AP242 readers, output-only PDF/3MF. |
@@ -39,10 +39,10 @@ A status describes the exercised examples in that cell. “Fail” takes precede
 | Case | Result | Measured outcome |
 |---|---|---|
 | Twist pen and new-user guide | Fail | Knurl and name engraving, four components, screw travel and drawing exercised. Exact M10 × 0.75 rebuild fails UI-001. Guided run completed with the sample thread in 145.915 s. |
-| Click pen | Pass for prescribed cam, spring and clearance | Verified plunger return at 360°, actual swept solid checks, full study and separate physical spring. Alternating latch is Not built yet. |
+| Click pen | Pass for prescribed motion, fail for mesh export | Verified plunger return at 360°, actual swept solid checks, full study and separate physical spring. The isolated stock spring has 131 intersecting facet pairs in STL and 3MF. Alternating latch is Not built yet. |
 | Dual ruler | Fail | Both scales exported. 150 mm spans 150 metric intervals and 152.4 mm spans 96 sixteenths. The terminal metric tick misses its center, INTEROP-005. The independent-endpoint layout is Not built yet. |
 | M5 bolt and nut | Fail | The modeled library screw fails, INTEROP-001. A scratch-made thread pair advances 0.800 mm per turn; the cosmetic library fallback exercises screw motion. |
-| Hinge | Pass for tested motion | Two leaves and pin driven through 0, 90 and 180°, clamps at both limits. Full travel and pairwise checks logged. |
+| Hinge | Pass for tested motion | Two leaves and pin driven through 0, 90 and 180°, clamps at both limits. The driven leaf was checked against each other component through travel. |
 | Finished pen drawings | Pass for content reviewed | Generated barrel/assembly PDFs, sections, detail, title blocks, callouts, exploded view and BOM. |
 | New user | Pass for automated path | Human learnability Not covered. See UX_NOTES.md. |
 | Power user | Pass | Keyboard-only parameter change, rename, reorder and exact undo/redo. |

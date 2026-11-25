@@ -1,6 +1,6 @@
 # Comparison of Turnmill and FreeCAD geometry
 
-Each of the nine visual-review JPEGs shows actual screenshots. Columns show the Turnmill viewport and FreeCAD's isometric, front, and enlarged views. Each row represents the same physical file or the same native geometry before export. Shape names appear above the first image. The four independent FreeCAD fixtures were also imported through Turnmill's **Import CAD file** dialog. Whole pen views can obscure the refill and clip. Their individual rows and per-solid measurements record those parts separately.
+Each of the ten visual-review JPEGs shows actual screenshots. Columns show the Turnmill viewport and FreeCAD's isometric, front, and enlarged views. Each row represents the same physical file or the same native geometry before export. Shape names appear above the first image. The four independent FreeCAD fixtures were also imported through Turnmill's **Import CAD file** dialog. Whole pen views can obscure the refill and clip. Their individual rows and per-solid measurements record those parts separately.
 
 | Contact sheet | Observations |
 |---|---|
@@ -13,6 +13,7 @@ Each of the nine visual-review JPEGs shows actual screenshots. Columns show the 
 | 7 | The independent UI hinge leaves have the same offset along the pin. The customized barrel carries narrow longitudinal cuts on its left-hand band and a shoulder thread at its right end. The cap entrance, tapered refill, and clip shape remain identifiable in separate views. |
 | 8 | The assembled customized pen shows the added external marks. The UI ruler has two graduation rows. A native FreeCAD filleted block kept its rounded edges when imported into Turnmill. The FreeCAD straight-knurled cylinder and helical rod retain their grooves. |
 | 9 | The spacer hole and the gap to the stop block are visible in both views. Their source labels are lost on return import, as recorded in INTEROP-004. |
+| 10 | The housing and cam retain their open bores and the plunger remains a slender cylinder. The independent spring views show separated turns and the same free ends. In the combined export, the spring stands across the housing wall near the end of the tube. In the [saved assembly workspace](../projects/click-coil/02-seated-spring.png) it lies along the bore. The measured spring intersections are recorded in [spring-detail.json](spring-detail.json). |
 
 Turnmill's brass, steel and aluminum display colors differ from the uniform grey in FreeCAD's imported views. Source material-colored appearance was not transferred. The visual comparison samples exterior views and cannot rule out hidden face defects. Console warnings from the macOS GUI launch concerned the unavailable optional 3Dconnexion controller and Python binding deprecations. Per-file FreeCADCmd imports and B-rep checks are logged separately. The standalone M5/CAD fixture is a nominal flank shape; the workflow does not certify tool selection, production tolerances or print strength.
 

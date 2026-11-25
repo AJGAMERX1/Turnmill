@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, readdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile, readdir, access } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
@@ -320,7 +320,15 @@ async function terminal() {
   await writeFile(join(out, "terminal.svg"), svgFile(sheet));
 }
 async function projects() {
-  const base = resolve("test-evidence/projects");
+  const base = resolve(process.env.TURNMILL_PROJECT_EVIDENCE || "test-evidence/projects");
+  const required = ["bolt-library/bolt-nut", "bolt-scratch/bolt-nut", "click-pen/click-study", "click-coil/click-with-coil", "hinge/hinge", "pen/twist-pen", "ruler/graduated-ruler"];
+  for (const stem of required) {
+    if (process.env.QA_ONLY_CASE && !("ui-"+stem.replace("/","-")).startsWith(process.env.QA_ONLY_CASE)) continue;
+    for (const ext of [".turnmill",".step"]) {
+      const file=join(base,stem+ext);
+      try {await access(file);} catch {throw Error("Missing project export "+file+". Run the corresponding production UI scenario first.");}
+    }
+  }
   for (const dir of await readdir(base)) {
     const folder = join(base, dir);
     const files = await readdir(folder).catch(() => []);
