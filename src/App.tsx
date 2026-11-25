@@ -1397,6 +1397,7 @@ export default function App() {
               fitToken={fit}
               exportRequest={exportRequest}
               onStatus={setKernel}
+              takeFinishBody={finishing.takeFinishBody}
               appearances={appearances}
             />
             <div className="view-top">
@@ -2021,6 +2022,7 @@ export default function App() {
             finishing.preview(
               currentF,
               rows,
+              modelSignature,
               valid ? kernel.bodyProperties : undefined,
             )
           }
@@ -2035,7 +2037,7 @@ export default function App() {
             )
           }
           onSave={(finishes) => {
-            if (!finishing.isValidated(currentF, finishes)) {
+            if (!finishing.acceptValidated(currentF, finishes)) {
               setNotice(
                 "The part changed. Open its finishes again to rebuild the preview.",
               );

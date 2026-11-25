@@ -19,6 +19,14 @@ The same four-part engraved M10 pen passed from modeling through a two-turn cap 
 | SYS-004 | [600c014](https://github.com/AJGAMERX1/Turnmill/commit/600c014ee95c7a52e5c818f8b12a7eb92498804b) | Undo restored the original 10.00 mm sketch coordinate after 82 edits. Redo restored 10.82 mm. [Evidence](test-evidence/phase2/systems/SYS-004/history.json) |
 | SYS-005 | [600c014](https://github.com/AJGAMERX1/Turnmill/commit/600c014ee95c7a52e5c818f8b12a7eb92498804b) | The planar engraving start and end controls both identify the X axis. [Evidence](test-evidence/phase2/systems/SYS-005/options.json) |
 
+## Additional finding during release verification
+
+### PERF-001 · Applying a validated modeled thread rebuilds the same solid twice
+
+**High · Modeling performance, repaired.** Sketch a Ø5 mm circle with four radius-constrained arcs, extrude it −8 mm, and apply a modeled M5 × 0.8 external thread for its full length. Ubuntu recorded 50.748 s to validate the preview, then 425.823 s from commit to Ready against a 240 s budget. A second Ubuntu run took 49.513 s and 40.005 s respectively. Kernel profiling showed that both workers repeated ten helical Boolean cuts. [Original hosted run](https://github.com/AJGAMERX1/Turnmill/actions/runs/45688984922) · [Second hosted run](https://github.com/AJGAMERX1/Turnmill/actions/runs/45691201848)
+
+The committed edit now reuses the preview worker’s exact B-rep when the evaluated history and applied finish match. The model worker checks the restored solid and its volume. On the test Mac, the repaired browser run took 24.091 s for preview and **0.964 s from commit to Ready**. FreeCAD measured the same 128.66457625047 mm³ before and after transfer. The paired STL and 3MF exports matched byte for byte. The permanent scratch-bolt regression records both durations and enforces the original four-minute budget. [Timing, geometry and cancellation evidence](test-evidence/phase2/PERF-001/receipt.json)
+
 ## Original Phase 1 findings
 
 The following entries describe the 0.5.0 observations at the review checkpoint. Their original expected-failure tests are visible at the linked Phase 1 revision.

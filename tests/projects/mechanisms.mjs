@@ -294,12 +294,41 @@ export async function boltScratch(s) {
   await feature(p, "Extrude", "Hand-built shank", "-8 mm");
   let round = await sample(s, "01-handmade-round-shank");
   assert(Math.abs(round.volume - Math.PI * 2.5 ** 2 * 8) < 0.001);
+  const firstThreadEvent = s.readiness.length;
   await operation(p, "thread", {
     "Thread size": "M5 × 0.8",
     "Threaded length": "8 mm",
     End: "start",
   });
   const threaded = await sample(s, "full-length-handmade");
+  const events = s.readiness.slice(firstThreadEvent);
+  const checks = events.findIndex((e) =>
+    e.finish?.startsWith("Checking the solid"),
+  );
+  const rebuilds = events.findIndex(
+    (e, i) => i > checks && e.status === "Rebuilding" && !e.finish,
+  );
+  const ready = events.find(
+    (e, i) => i > rebuilds && e.status === "Ready" && !e.finish,
+  );
+  assert(
+    checks >= 0 && rebuilds > checks && ready,
+    "Observe the validated finish and its committed Ready state",
+  );
+  const timing = {
+    previewMs: events[rebuilds].timeMs - events[checks].timeMs,
+    committedRebuildMs: ready.timeMs - events[rebuilds].timeMs,
+    committedBudgetMs: 240000,
+    volumeMm3: threaded.volume,
+  };
+  await writeFile(
+    join(s.dir, "thread-finish-timing.json"),
+    JSON.stringify(timing, null, 2) + "\n",
+  );
+  assert(
+    timing.committedRebuildMs <= timing.committedBudgetMs,
+    "Applying a validated M5 thread exceeded four minutes",
+  );
   assert.equal(threaded.bodies[0].solids, 1);
   assert(threaded.bodies[0].valid && threaded.volume < round.volume);
   const hex = Array.from({ length: 6 }, (_, i) =>

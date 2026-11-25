@@ -83,6 +83,65 @@ try {
     ],
     amount: 3,
   };
+  // A preview belongs to one complete evaluated body history. Check its use and
+  // rejection independently of timing, including retained stock before its last cut.
+  const preview = new ModelBodies();
+  const committed = new ModelBodies();
+  try {
+    const history = [plate, bore];
+    const checked = preview.build(history);
+    const brep = preview.bodies[0].shape.serialize();
+    let reads = 0;
+    const snapshot = {
+      bodyId: plate.id,
+      history: JSON.stringify(history),
+      get brep() {
+        reads++;
+        return brep;
+      },
+      volume: checked.volume,
+    };
+    const installed = committed.build([...history, tube], [], snapshot);
+    assert.equal(reads, 1);
+    near(installed.bodyProperties[0].volume, checked.volume);
+    for (const field of ["vertices", "normals", "triangles", "edges"]) {
+      assert.deepEqual(
+        installed.changes[0].mesh[field],
+        checked.changes[0].mesh[field],
+      );
+    }
+    const edited = [plate, { ...bore, amount: 4 }, tube];
+    const changed = committed.build(edited, installed.keys, snapshot);
+    assert.equal(reads, 1);
+    near(changed.bodyProperties[0].volume, 984);
+    const unreadable = { ...snapshot, brep: "" };
+    const fallback = committed.build(
+      [...history, tube],
+      changed.keys,
+      unreadable,
+    );
+    near(fallback.bodyProperties[0].volume, checked.volume);
+    assert.throws(
+      () =>
+        committed.build(
+          [plate, { ...bore, amount: 0 }],
+          fallback.keys,
+          snapshot,
+        ),
+      /nonzero/,
+    );
+    const undo = committed.build([plate, tube], fallback.keys);
+    near(undo.bodyProperties[0].volume, 1000);
+    const redo = committed.build([...history, tube], undo.keys);
+    near(redo.bodyProperties[0].volume, checked.volume);
+    const reorder = committed.build([tube, ...history], redo.keys);
+    assert.deepEqual(reorder.keys, [redo.keys[1], redo.keys[0]]);
+    assert.equal(reorder.changes.length, 0);
+  } finally {
+    preview.clear();
+    committed.clear();
+  }
+
   const a = model.build([plate, bore, tube]);
   assert.equal(a.changes.length, 2);
   const [plateKey, tubeKey] = a.keys;

@@ -1,7 +1,7 @@
 import { observeGeometry } from "../tests/hook/observe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createStudio, type View } from "./studio";
-import type { RenderBody } from "./geometry";
+import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
 
@@ -29,10 +29,11 @@ type Props = {
   exportRequest: ExportRequest | null;
   appearances?: number[];
   onStatus: (status: KernelStatus) => void;
+  takeFinishBody?: () => FinishBodySnapshot | undefined;
 };
 export type KernelReply = { revision: number } & (
   | ((
-      | { type: "built"; meshes: RenderBody[] }
+      | { type: "built"; meshes: RenderBody[]; previewBody?: PreviewSolid }
       | { type: "updated"; keys: number[]; changes: MeshChange[] }
     ) & {
       volume: number;
@@ -68,6 +69,7 @@ export function Viewport({
   fitToken,
   exportRequest,
   onStatus,
+  takeFinishBody,
   appearances = [],
 }: Props) {
   const node = useRef<HTMLDivElement>(null);
@@ -96,6 +98,7 @@ export function Viewport({
   const pendingBuild = useRef<{
     revision: number;
     features: EvaluatedFeature[];
+    finishBody?: FinishBodySnapshot;
   } | null>(null);
   function dispatchBuild() {
     if (activeBuild.current || !pendingBuild.current || !engine.current) return;
@@ -212,7 +215,11 @@ export function Viewport({
   useEffect(() => {
     const current = ++revision.current;
     publish({ signature, busy: true, error: "" });
-    pendingBuild.current = { revision: current, features };
+    pendingBuild.current = {
+      revision: current,
+      features,
+      finishBody: takeFinishBody?.(),
+    };
     dispatchBuild();
   }, [signature]);
   useEffect(() => {

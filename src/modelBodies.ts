@@ -3,6 +3,8 @@ import {
   cloneBody,
   displayBodies,
   releaseBodies,
+  restoreFinishBody,
+  type FinishBodySnapshot,
   type Body,
   type RenderBody,
 } from "./geometry";
@@ -42,7 +44,11 @@ export class ModelBodies {
     this.entries.clear();
   }
 
-  build(features: EvaluatedFeature[], retainedMeshes: number[] = []) {
+  build(
+    features: EvaluatedFeature[],
+    retainedMeshes: number[] = [],
+    finishBody?: FinishBodySnapshot,
+  ) {
     const histories: EvaluatedFeature[][] = [];
     for (const feature of features) {
       if (feature.operation === "new") histories.push([]);
@@ -104,9 +110,18 @@ export class ModelBodies {
             created.push(prefixBody);
           }
         }
-        const [body] = prefix
-          ? buildBodies(history.slice(-1), { id, body: prefix.body })
-          : buildBodies(history);
+        // A finish preview may cover only this solid, including its downstream features.
+        // The full evaluated history must still match at commit, including names and IDs.
+        const restored =
+          finishBody?.bodyId === id &&
+          finishBody.history === JSON.stringify(history)
+            ? restoreFinishBody(finishBody, name)
+            : undefined;
+        const body =
+          restored ??
+          (prefix
+            ? buildBodies(history.slice(-1), { id, body: prefix.body })
+            : buildBodies(history))[0];
         body.name = name;
         created.push(body);
         const { meshes, bodyProperties, area } = displayBodies([body]);

@@ -34,6 +34,18 @@ export type Body = {
   guides?: Float32Array[];
   threadFrames?: import("./threadMates").ThreadFrame[];
 };
+/** Exact solid previously built by a finish-preview worker. Projects never store this cache. */
+export type PreviewSolid = {
+  brep: string;
+  volume: number;
+  guides?: Body["guides"];
+  threadFrames?: Body["threadFrames"];
+};
+export type FinishBodySnapshot = PreviewSolid & {
+  bodyId: string;
+  history: string;
+};
+
 export type RenderBody = {
   vertices: Float32Array;
   normals: Float32Array;
@@ -175,10 +187,43 @@ function checkSolid(shape: Shape3D) {
   } finally {
     solids.forEach((solid) => solid.delete());
   }
-  if (!(volume(shape) > 0))
+  const measured = volume(shape);
+  if (!(measured > 0))
     throw new Error(
       "The result has no volume. Give the profile an enclosed area and a nonzero depth.",
     );
+  return measured;
+}
+
+/** Revalidate the serialized solid before promoting it into the editable kernel. */
+export function restoreFinishBody(
+  snapshot: PreviewSolid,
+  name: string,
+): Body | undefined {
+  let shape: AnyShape | undefined;
+  try {
+    shape = deserializeShape(snapshot.brep);
+    if (!isShape3D(shape)) return;
+    const measured = checkSolid(shape);
+    if (
+      !Number.isFinite(snapshot.volume) ||
+      Math.abs(measured - snapshot.volume) > 1e-8 * Math.max(1, measured)
+    )
+      return;
+    const body = {
+      name,
+      shape,
+      guides: snapshot.guides,
+      threadFrames: snapshot.threadFrames,
+    };
+    shape = undefined;
+    return body;
+  } catch {
+    // The caller rebuilds the original history when the snapshot is unreadable.
+    return;
+  } finally {
+    shape?.delete();
+  }
 }
 
 /** New starts a body. An Add or Cut acts on the most recently started body. */

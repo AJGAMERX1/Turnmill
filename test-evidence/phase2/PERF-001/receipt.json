@@ -1,0 +1,252 @@
+{
+  "case": "PERF-001 — modeled M5 × 0.8 thread over the complete 8 mm four-arc extruded shank",
+  "observedTiming": "Preview begins at Checking the solid. Commit begins at Rebuilding and ends at Ready in the visible status bar.",
+  "existingCommitBudgetMs": 240000,
+  "beforeHostedUbuntu": [
+    {
+      "runUrl": "https://github.com/AJGAMERX1/Turnmill/actions/runs/45688984922",
+      "revision": "282764b",
+      "headed": false,
+      "scenarioStatus": "FAIL",
+      "previewMs": 50748,
+      "committedRebuildMs": 425823,
+      "events": [
+        {
+          "timeMs": 1795636847620,
+          "status": "Ready",
+          "finish": "Checking the solid before applying…"
+        },
+        {
+          "timeMs": 1795636898368,
+          "status": "Rebuilding",
+          "finish": null
+        },
+        {
+          "timeMs": 1795637324191,
+          "status": "Ready",
+          "finish": null
+        }
+      ]
+    },
+    {
+      "runUrl": "https://github.com/AJGAMERX1/Turnmill/actions/runs/45691201848",
+      "revision": "e905e39",
+      "headed": true,
+      "scenarioStatus": "PASS",
+      "previewMs": 49513,
+      "committedRebuildMs": 40005,
+      "events": [
+        {
+          "timeMs": 1795637681507,
+          "status": "Ready",
+          "finish": "Checking the solid before applying…"
+        },
+        {
+          "timeMs": 1795637731020,
+          "status": "Rebuilding",
+          "finish": null
+        },
+        {
+          "timeMs": 1795637771025,
+          "status": "Ready",
+          "finish": null
+        }
+      ]
+    }
+  ],
+  "afterMacOS": {
+    "system": "macOS 26.6 arm64, production QA build, Chromium",
+    "scenarioStatus": "PASS",
+    "previewMs": 24091,
+    "committedRebuildMs": 964,
+    "events": [
+      {
+        "timeMs": 1795639498879,
+        "status": "Ready",
+        "finish": "Checking the solid before applying…"
+      },
+      {
+        "timeMs": 1795639522970,
+        "status": "Rebuilding",
+        "finish": null
+      },
+      {
+        "timeMs": 1795639523934,
+        "status": "Ready",
+        "finish": null
+      }
+    ],
+    "nativeTrial": {
+      "validated preview": {
+        "elapsedMs": 30911.778,
+        "volumeMm3": 128.66457620939508,
+        "areaMm2": 217.5280535652139
+      },
+      "original shank": {
+        "elapsedMs": 5.334,
+        "volumeMm3": 157.0796326794897,
+        "areaMm2": 164.93361431346415
+      },
+      "accepted preview": {
+        "elapsedMs": 351.264,
+        "volumeMm3": 128.66457620939497,
+        "areaMm2": 217.52805356521435
+      },
+      "undo": {
+        "elapsedMs": 6.646,
+        "volumeMm3": 157.0796326794897,
+        "areaMm2": 164.93361431346415
+      },
+      "ordinary redo": {
+        "elapsedMs": 23861.913,
+        "volumeMm3": 128.66457620939508,
+        "areaMm2": 217.5280535652139
+      },
+      "suppressed finish stale hint ignored": {
+        "elapsedMs": 3.954,
+        "volumeMm3": 157.0796326794897,
+        "areaMm2": 164.93361431346415
+      },
+      "cosmetic preview": {
+        "elapsedMs": 14.013,
+        "volumeMm3": 157.0796326794897,
+        "areaMm2": 164.93361431346415
+      },
+      "cosmetic applied": {
+        "elapsedMs": 3.705,
+        "volumeMm3": 157.0796326794898,
+        "areaMm2": 164.93361431346426
+      },
+      "mismatched volume rebuild": {
+        "elapsedMs": 15.625,
+        "volumeMm3": 157.0796326794897,
+        "areaMm2": 164.93361431346415
+      },
+      "invalid BRep fallback": {
+        "elapsedMs": 3.723,
+        "volumeMm3": 157.0796326794897,
+        "areaMm2": 164.93361431346415
+      },
+      "scoped selected body with other solid": {
+        "elapsedMs": 258.749,
+        "volumeMm3": 305.3791629738208,
+        "areaMm2": 398.16963114662747
+      },
+      "reordered bodies": {
+        "elapsedMs": 0.025,
+        "volumeMm3": 305.3791629738208,
+        "areaMm2": 398.16963114662747
+      },
+      "renamed": {
+        "elapsedMs": 19324.646,
+        "volumeMm3": 128.66457620939508,
+        "areaMm2": 217.5280535652139
+      }
+    },
+    "firstBaselineNativePreviewMs": 17977.904,
+    "firstBaselineNativeRepeatedBuildMs": 18538.307,
+    "nativeBaselineProductionVolumeMm3": 128.66457620939508,
+    "sampleEncodedBrepBytes": 2008730
+  },
+  "freecad": {
+    "version": "1.1.4",
+    "sameMeasurementsForPreviewAndCommittedSolid": true,
+    "step": {
+      "volume": 128.66457625047195,
+      "area": 217.52805356308977,
+      "bbox": [
+        [
+          -2.500000129763848,
+          -2.5000001,
+          -8.000000102497001
+        ],
+        [
+          2.5000001165799675,
+          2.5000001162216297,
+          1.02496491440983e-07
+        ]
+      ],
+      "faces": 16,
+      "edges": 42,
+      "solids": 1,
+      "closed": true,
+      "valid": true
+    },
+    "name": "Hand-built shank",
+    "stl": {
+      "volume": 128.60496520996094,
+      "points": 7788,
+      "triangles": 15572,
+      "closed": true,
+      "nonManifold": false,
+      "selfIntersections": false,
+      "components": 1
+    }
+  },
+  "identicalFileSha256InPairedExport": {
+    "stl": "7bb41e151cca34b7d8c57fd7fd281b68c32c0800c9c9a83a3a5a1209427213cf",
+    "3mf": "9122b55937b20f820a4f19a0277a6e31190464cdcf1799b23f90510299e15c61"
+  },
+  "browserCancellationAndNoOpVolumesMm3": {
+    "start": 128.66457620939508,
+    "pendingCancel": 128.66457620939508,
+    "noOp": 128.66457620939508,
+    "validatedCancel": 128.66457620939508
+  },
+  "m10Acceptance": {
+    "status": "PASS",
+    "sameProjectCheckpoints": 11,
+    "freecadPose": {
+      "centerDisplacementFromPartToInstalledSTEPmm": {
+        "Pocket clip": [
+          0.7499999999999574,
+          1.7763568394002505e-15,
+          -9.992007221626409e-16
+        ],
+        "Threaded cap": [
+          0.7499999999999147,
+          7.621507591704102e-15,
+          5.469583119754873e-15
+        ],
+        "Refill": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "Barrel": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "partSpaceMassGrams": 66.16258322339016,
+      "partSpaceCenterOfMassMm": [
+        46.775513108906594,
+        0.04806894965325905,
+        0.004379905694548936
+      ],
+      "materialMassGramsByBody": {
+        "Pocket clip": 0.41977874999980386,
+        "Threaded cap": 3.305072699695331,
+        "Refill": 3.40553371746056,
+        "Barrel": 59.03219805623446
+      },
+      "independentCapBarrelBoundaryDistanceMmByDegree": {
+        "0": 0.049965562959915596,
+        "360": 0.04996430022397345,
+        "720": 0.04996503290109571
+      }
+    },
+    "reviewedA4DrawingPages": {
+      "barrel": 4,
+      "assembly": 3
+    }
+  },
+  "regressions": [
+    "scripts/check-model-cache.mjs",
+    "tests/projects/run.mjs bolt-scratch",
+    "tests/projects/m10-acceptance.mjs",
+    "tests/qa/m10-acceptance.py",
+    "tests/systems/browser.mjs"
+  ]
+}

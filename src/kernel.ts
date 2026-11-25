@@ -2,7 +2,12 @@ import { inspectBodies } from "../tests/hook/metrics";
 import initOC from "replicad-opencascadejs";
 import wasmUrl from "replicad-opencascadejs/wasm?url";
 import { setOC } from "replicad";
-import { exportBodies, type RenderBody } from "./geometry";
+import {
+  exportBodies,
+  type FinishBodySnapshot,
+  type PreviewSolid,
+  type RenderBody,
+} from "./geometry";
 import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
@@ -10,6 +15,7 @@ import type { EvaluatedFeature } from "./types";
 const worker = self as unknown as DedicatedWorkerGlobalScope;
 const ready = initOC({ locateFile: () => wasmUrl }).then(setOC);
 const model = new ModelBodies();
+const MIN_PREVIEW_SNAPSHOT_MS = 1000;
 let currentRevision = -1;
 
 type Request =
@@ -19,6 +25,8 @@ type Request =
       revision: number;
       features: EvaluatedFeature[];
       retainedMeshes?: number[];
+      previewBodyIndex?: number;
+      finishBody?: FinishBodySnapshot;
     }
   | {
       type: "export";
@@ -54,9 +62,11 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
 
     if (data.type === "build") {
       currentRevision = -1;
+      const started = performance.now();
       const { changes, keys, ...properties } = model.build(
         data.features,
         data.retainedMeshes,
+        data.finishBody,
       );
       const meshes = changes.map((change) => change.mesh);
       // One-shot preview workers receive the complete mesh list, as before.
@@ -64,8 +74,29 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         data.retainedMeshes === undefined
           ? { type: "built", meshes }
           : { type: "updated", keys, changes };
+      // Only finish preview workers return editable geometry. Ordinary viewport
+      // rebuilds, exports and inexpensive previews avoid serializing another copy.
+      let previewBody: PreviewSolid | undefined;
+      if (
+        data.previewBodyIndex !== undefined &&
+        performance.now() - started >= MIN_PREVIEW_SNAPSHOT_MS
+      ) {
+        const body = model.bodies[data.previewBodyIndex];
+        if (body) {
+          try {
+            previewBody = {
+              brep: body.shape.serialize(),
+              volume: properties.bodyProperties[data.previewBodyIndex].volume,
+              guides: body.guides,
+              threadFrames: body.threadFrames,
+            };
+          } catch {
+            // A successful preview can still be applied by a normal history rebuild.
+          }
+        }
+      }
       worker.postMessage(
-        { ...output, revision: data.revision, ...properties },
+        { ...output, revision: data.revision, previewBody, ...properties },
         meshes.flatMap(buffers),
       );
       currentRevision = data.revision;

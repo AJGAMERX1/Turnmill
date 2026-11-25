@@ -322,7 +322,7 @@ export async function run(name, fn) {
   listen(p);
   p.setDefaultTimeout(20000);
   p.on("dialog", (d) => d.accept());
-  const s = { page: p, ctx, dir, name, events };
+  const s = { page: p, ctx, dir, name, events, readiness };
   let status = "PASS",
     message = "";
   try {

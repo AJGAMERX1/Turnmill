@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { evaluateModel } from "./buildModel";
 import type { Finish } from "./finishingTypes";
-import type { RenderBody } from "./geometry";
+import type { FinishBodySnapshot, RenderBody } from "./geometry";
 import type { Feature, Project } from "./types";
 import type { KernelReply } from "./Viewport";
 import type { BodyProps } from "./materials";
@@ -12,6 +12,7 @@ type Verified = {
   featureId: string;
   signature: string;
   message: string;
+  body?: FinishBodySnapshot;
 };
 
 export function useFinishPreview(project: Project) {
@@ -19,6 +20,22 @@ export function useFinishPreview(project: Project) {
   const activeProject = useRef(project);
   const pending = useRef<{ cancel: () => void } | null>(null);
   const checked = useRef<Verified | null>(null);
+  const applied = useRef<{
+    projectId: string;
+    featureId: string;
+    finishes: Finish[];
+    body: FinishBodySnapshot;
+  } | null>(null);
+  const takeFinishBody = useCallback(() => {
+    const edit = applied.current;
+    applied.current = null;
+    if (!edit || activeProject.current.id !== edit.projectId) return;
+    const feature = activeProject.current.features.find(
+      (f) => f.id === edit.featureId,
+    );
+    // Only the commit that received these exact finish rows can consume this preview.
+    if (feature?.finishes === edit.finishes) return edit.body;
+  }, []);
 
   const clear = useCallback(() => {
     pending.current?.cancel();
@@ -28,6 +45,15 @@ export function useFinishPreview(project: Project) {
 
   useLayoutEffect(() => {
     activeProject.current = project;
+    const edit = applied.current;
+    if (
+      edit &&
+      (project.id !== edit.projectId ||
+        project.features.find((f) => f.id === edit.featureId)?.finishes !==
+          edit.finishes)
+    ) {
+      applied.current = null;
+    }
     clear();
     return () => pending.current?.cancel();
   }, [project, clear]);
@@ -42,9 +68,19 @@ export function useFinishPreview(project: Project) {
     );
   }
 
+  function acceptValidated(feature: Feature, finishes: Finish[]) {
+    if (!isValidated(feature, finishes)) return false;
+    const body = checked.current?.body;
+    applied.current = body
+      ? { projectId: project.id, featureId: feature.id, finishes, body }
+      : null;
+    return true;
+  }
+
   async function preview(
     feature: Feature,
     finishes: Finish[],
+    modelSignature: string,
     verifiedBodies?: BodyProps[],
   ): Promise<Verdict> {
     if (isValidated(feature, finishes))
@@ -95,10 +131,11 @@ export function useFinishPreview(project: Project) {
         const previousVolume = verifiedBodies?.[bodyIndex]?.volume;
         // A new body starts an independent history. Keep downstream cuts and
         // additions on this body. A previously invalid model needs a full rebuild.
-        const inputs =
-          previousVolume === undefined
-            ? features
-            : features.slice(starts[bodyIndex], starts[bodyIndex + 1]);
+        const history = features.slice(
+          starts[bodyIndex],
+          starts[bodyIndex + 1],
+        );
+        const inputs = previousVolume === undefined ? features : history;
         const resultIndex = previousVolume === undefined ? bodyIndex : 0;
         worker = new Worker(new URL("./kernel.ts", import.meta.url), {
           type: "module",
@@ -133,11 +170,25 @@ export function useFinishPreview(project: Project) {
             featureId: feature.id,
             signature,
             message,
+            body: data.previewBody && {
+              ...data.previewBody,
+              bodyId: history[0].id,
+              history: JSON.stringify(history),
+            },
           };
           setMesh(selectedMesh);
           finish({ ok: true, message });
         };
-        worker.postMessage({ type: "build", revision: 1, features: inputs });
+        worker.postMessage({
+          type: "build",
+          revision: 1,
+          features: inputs,
+          // A no-op edit has no viewport rebuild to consume an exact snapshot.
+          previewBodyIndex:
+            JSON.stringify(features) === modelSignature
+              ? undefined
+              : resultIndex,
+        });
       }
       build().catch((error) => {
         if (pending.current === job)
@@ -152,5 +203,5 @@ export function useFinishPreview(project: Project) {
     });
   }
 
-  return { mesh, preview, isValidated, clear };
+  return { mesh, preview, acceptValidated, takeFinishBody, clear };
 }
