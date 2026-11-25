@@ -23,8 +23,8 @@ jobs:
         run: bash tests/qa/linux-tools.sh
       - name: Measure a solid in FreeCAD and check its STEP and STL
         run: |
-          printf 'import Part; print("QA_BOX_VOLUME", Part.makeBox(2,3,4).Volume)\nexit()\n' | xvfb-run -a "$FREECAD_CMD" --console | tee /tmp/freecad-tool.log
-          grep -F 'QA_BOX_VOLUME 24' /tmp/freecad-tool.log
-          "$STEPCODE_AP242" test-evidence/interop/block.step
+          printf 'import Part; v=Part.makeBox(2,3,4).Volume; assert abs(v-24.0)<0.000001; print("FREECAD_ANALYTIC_OK", v)\nexit()\n' | xvfb-run -a "$FREECAD_CMD" --console | tee /tmp/freecad-tool.log
+          grep -F 'FREECAD_ANALYTIC_OK' /tmp/freecad-tool.log
+          "$STEPCODE_AP242" -s test-evidence/interop/block.step /tmp/qa-block.stp
           xvfb-run -a "$PRUSASLICER" --info test-evidence/interop/block.stl
           "$QA_PYTHON" -c 'import ezdxf; print(ezdxf.__version__)'
