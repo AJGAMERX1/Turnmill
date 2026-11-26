@@ -594,3 +594,12 @@ p.tm-help {
   border-color: #6c5940;
   background: #322e28;
 }
+
+.ruler-export-hint {
+  max-width: 260px;
+  margin: 4px 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #bec6c3;
+}
+.ruler-export-hint a, .ruler-settings-link { color: #e6bb7c; }

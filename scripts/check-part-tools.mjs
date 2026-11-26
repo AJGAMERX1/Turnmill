@@ -132,6 +132,10 @@ try {
     );
   }
 
+  const { validateProject } = await server.ssrLoadModule("/src/projects.ts");
+  const { insertHardware } = await server.ssrLoadModule("/src/hardware.ts");
+  const { bindHistoryTargets, projectPartTabs, partFeatures, partSketches, savePartFeature, organizePartInsertion } =
+    await server.ssrLoadModule("/src/partTabs.ts");
   const blockVolume = 20 * 12 * 8;
   const pocket = {
     ...newSolid("Pocket", "pocket", "height / 2"),
@@ -139,6 +143,39 @@ try {
     bodyId: plate.id,
   };
   await verify("Extrude cut", [plate, pocket], blockVolume - 4 * 6 * 4);
+  // A feature added to the first of two open parts must still machine the first body.
+  const tab = { id: "reserved-id", name: "Coupon blank" };
+  const multi = { ...source, emptyParts: [tab], features: [plate, blank] };
+  assert.deepEqual(projectPartTabs(validateProject(JSON.parse(JSON.stringify(multi)))).map((p) => p.id),
+    [plate.id, blank.id, tab.id]);
+  const cutFirst = savePartFeature(multi, plate, { ...pocket, bodyId: undefined });
+  assert.deepEqual(cutFirst.features.map((f) => f.id), [plate.id, pocket.id, blank.id]);
+  assert.deepEqual(partFeatures(cutFirst, plate.id).map((f) => f.id), [plate.id, pocket.id]);
+  assert.deepEqual(partSketches(cutFirst, plate.id, partFeatures(cutFirst, plate.id)).map((s) => s.id), ["plate", "pocket"]);
+  await verify("Isolated first part cut survives assembly rebuild", cutFirst.features,
+    blockVolume - 4 * 6 * 4 + Math.PI * 25 * 24, 2);
+  // A legacy cut with an implicit target follows the last active body, even past a suppressed root.
+  const oldCut = { ...pocket, bodyId: undefined };
+  const legacy = { ...multi, features: [plate, { ...blank, suppressed: true }, oldCut] };
+  assert.deepEqual(partFeatures(legacy, plate.id).map((f) => f.id), [plate.id, pocket.id]);
+  const bound = bindHistoryTargets(legacy.features);
+  assert.equal(bound.at(-1).bodyId, plate.id);
+  await assert.rejects(() => evaluateModel({ ...legacy, features: [plate, blank, bound.at(-1)] }), /needs its original body earlier in the history/);
+  const freshSketch = rectangle("coupon-tab-sketch", 0, 0, 1, 2);
+  const modeled = savePartFeature(cutFirst, tab, newSolid("temporary", freshSketch.id, "5"), freshSketch);
+  assert.equal(modeled.features.at(-1).id, tab.id);
+  assert.equal(modeled.sketches.at(-1).partId, tab.id);
+  assert.deepEqual(modeled.emptyParts, []);
+  assert.doesNotThrow(() => validateProject(JSON.parse(JSON.stringify(modeled))));
+  const hardware = organizePartInsertion(multi, insertHardware(multi, "screw", 1, "12 mm", "cosmetic"), tab);
+  const [shank, head] = partFeatures(hardware, tab.id);
+  assert.equal(shank.name, tab.name);
+  assert.equal(head.bodyId, tab.id);
+  assert.equal(hardware.workspaces.bodyMaterials[tab.id], "Steel");
+  assert.ok(hardware.workspaces.hardwareComponents[tab.id].dimensions.length > 0);
+  assert.deepEqual(hardware.emptyParts, []);
+  assert.throws(() => validateProject({ ...multi, emptyParts: [{ ...tab, id: plate.id }] }), /unique ID/);
+  console.log("PASS linked part tabs, scoped cuts against two B-rep bodies, pending tab save/load, and catalog fastener ownership.");
   const latheBore = {
     ...newSolid("Bore", "bore", "360 deg", "revolve"),
     operation: "cut",

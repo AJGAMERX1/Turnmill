@@ -73,6 +73,7 @@ Object.assign(env, {
 try {
   await run("baseline", ["npm", "test"]);
   await run("test-hook", ["node", "tests/qa/hook.mjs"]);
+  await run("inspector-dimensions", ["node", "tests/qa/inspector-dimensions.mjs"]);
   await run("projects", ["node", "tests/projects/run.mjs"], {}, 65 * 60000);
   const m10 = await mkdtemp(resolve(evidence, "projects-m10-"));
   if (await run("m10-acceptance", ["node", "tests/projects/m10-acceptance.mjs"], {
@@ -96,6 +97,12 @@ try {
   await run("shortcuts", ["node", "tests/browser/shortcuts.mjs"]);
   await run("drawing-export", ["node", "tests/qa/drawings.mjs"]);
   await run("pdf-review", [env.QA_PDF_PYTHON || py, "tests/qa/pdf-review.py"]);
+  const rulers = await mkdtemp(resolve(evidence, "ruler-export-"));
+  if (await run("ruler-export", ["node", "tests/qa/ruler-export.mjs"], { QA_RULER_EXPORT_OUT: rulers }))
+    await run("ruler-export-step", [py, "tests/freecad/runner.py", "ruler-export"], { QA_INTEROP_OUT: rulers });
+  const workspaces = await mkdtemp(resolve(evidence, "part-workspaces-"));
+  if (await run("part-workspaces", ["node", "tests/qa/part-workspaces.mjs"], { QA_PART_WORKSPACES_OUT: workspaces }))
+    await run("part-workspaces-step", [py, "tests/freecad/runner.py", "part-workspaces"], { QA_INTEROP_OUT: workspaces });
   if (await run("assembly-export", ["node", "tests/qa/placement.mjs"]))
     await run("assembly-step", [py, "tests/qa/check-placement.py"]);
   await run(

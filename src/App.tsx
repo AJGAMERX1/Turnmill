@@ -1,5 +1,8 @@
+import InputValue from "./InputValue";
+import SelectionDimensions from "./SelectionDimensions";
 import { observeModel } from "../tests/hook/observe";
 import PenGuidePanel, { GuideProfile } from "./PenGuidePanel";
+import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
 import {
   addGuideParts,
   guidedPen,
@@ -18,6 +21,10 @@ import {
   type PaletteContext,
 } from "./commands";
 import CommandPalette from "./CommandPalette";
+import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
+import type { JointConfig } from "./kinematics";
+import PartTabBar from "./PartTabBar";
+import { bindHistoryTargets, bodyOwners, organizePartInsertion, partFeatures, partSketches, projectPartTabs, savePartFeature } from "./partTabs";
 import type { LiveAssembly } from "./Mechanisms";
 import HardwareDialog from "./HardwareDialog";
 import { finishLabels, type FinishKind } from "./finishingTypes";
@@ -63,10 +70,11 @@ import {
   PenTool,
   Menu,
   Pencil,
+  Trash2,
   X,
   ArrowDownToLine,
 } from "lucide-react";
-import type { Project, Sketch, Feature, EvaluatedFeature } from "./types";
+import type { Project, Sketch, Feature, EvaluatedFeature, PartTab } from "./types";
 import {
   blankProject,
   turnedProject,
@@ -84,6 +92,7 @@ import FinishPreview from "./FinishPreview";
 import { useFinishPreview } from "./useFinishPreview";
 import ExchangeDialog from "./exchangeDialog";
 import { isScaleFeature } from "./secondaryEngraving";
+import { downloadRulerVector, prepareRulerExport, rulerSolidId, type RulerExportOptions, type RulerTool } from "./rulerExport";
 import rulerTemplate from "../examples/pocket-ruler.turnmill?raw";
 import {
   Modal,
@@ -110,6 +119,7 @@ type DialogName =
   | "import"
   | "advanced"
   | "hardware"
+  | "part-name"
   | null;
 const modes = [
   { name: "Part", Icon: Box },
@@ -129,47 +139,6 @@ export function downloadFile(name: string, blob: Blob) {
   link.download = name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-function InputValue({
-  value,
-  onCommit,
-  label,
-}: {
-  value: string;
-  onCommit: (v: string) => void;
-  label: string;
-}) {
-  const [editing, setEditing] = useState(false),
-    [draft, setDraft] = useState(value),
-    cancel = useRef(false);
-  return (
-    <input
-      aria-label={label}
-      spellCheck={false}
-      value={editing ? draft : value}
-      onFocus={(e) => {
-        cancel.current = false;
-        setDraft(value);
-        setEditing(true);
-        e.target.select();
-      }}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => {
-        if (!cancel.current && editing && draft.trim() && draft !== value)
-          onCommit(draft.trim());
-        setEditing(false);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
-        if (e.key === "Escape") {
-          cancel.current = true;
-          setEditing(false);
-          setDraft(value);
-          e.currentTarget.blur();
-        }
-      }}
-    />
-  );
 }
 function ProfileCard({ points }: { points: [number, number][] }) {
   if (!points.length) return null;
@@ -233,6 +202,19 @@ export default function App() {
     [presetAdvanced, setPresetAdvanced] = useState<Advanced["kind"]>();
   const [selected, setSelected] = useState<string>("barrel-revolve"),
     [editingSketch, setEditingSketch] = useState<string | null>(null);
+  const [partSelection, setPartSelection] = useState<{ projectId: string; id: string }>();
+  const [partName, setPartName] = useState({ id: "", value: "" });
+  const parts = useMemo(() => projectPartTabs(project), [project.features, project.emptyParts]);
+  const activePart = mode === "Part" && partSelection?.projectId === project.id
+    ? parts.find((part) => part.id === partSelection.id) : undefined;
+  const history = useMemo(() => activePart ? partFeatures(project, activePart.id) : project.features,
+    [project.features, activePart?.id]);
+  const sketches = useMemo(() => activePart ? partSketches(project, activePart.id, history) : project.sketches,
+    [project.sketches, history, activePart?.id]);
+  const partEditorProject = activePart ? { ...project, features: history, sketches } : project;
+  const [context, setContext] = useState<{
+    anchor: MenuAnchor; title: string; items: MenuItem[]; project: Project;
+  } | null>(null);
   const [entryId, setEntryId] = useState<string>();
   const guide = penGuide(project);
   const [guideAssist, requestGuideAssist] = useState(0);
@@ -289,6 +271,18 @@ export default function App() {
     [rename, setRename] = useState(""),
     [helpStep, setHelpStep] = useState(0);
   const scaleConfig = project.workspaces?.scale;
+  const [rulerOptions, setRulerOptions] = useState<RulerExportOptions>({ include: false, centerlines: false });
+  const [rulerToolChoice, setRulerToolChoice] = useState<{ projectId: string; tool: RulerTool }>();
+  const hasAttachablePart = project.features.some((f) => f.operation === "new" && !f.suppressed && !isScaleFeature(project, f.id));
+  const rulerTool: RulerTool = !hasAttachablePart ? "stock"
+    : rulerToolChoice?.projectId === project.id ? rulerToolChoice.tool
+    : scaleConfig?.modelId && !scaleConfig.appliedId ? "stock" : "part";
+  const rulerBodyId = rulerSolidId(project, rulerTool);
+  const showRulerVectors = mode === "Scales" || (!!scaleConfig && (!activePart ||
+    activePart.id === scaleConfig.modelId || activePart.id === scaleConfig.attachment?.targetBodyId));
+  const prepareVectors = mode === "Scales" || (showRulerVectors && menu === "export");
+  const rulerVectors = useMemo(() => prepareVectors ? prepareRulerExport(project, rulerOptions) : undefined,
+    [prepareVectors, project.name, project.parameters, scaleConfig, rulerOptions]);
   const modeledScale =
     scaleConfig?.modelId || scaleConfig?.appliedId ? scaleConfig : undefined;
   const geoSignature = useMemo(
@@ -353,17 +347,15 @@ export default function App() {
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, [menu]);
-  const selectedSketch = project.sketches.find((s) => s.id === selected);
+  const selectedSketch = sketches.find((s) => s.id === selected);
   const currentF = selectedSketch
-    ? project.features.find((f) => f.sketchId === selected)
-    : project.features.find((f) => f.id === selected) ||
-      project.features.at(-1);
+    ? history.find((f) => f.sketchId === selected)
+    : history.find((f) => f.id === selected) || history.at(-1);
   const activeSketch =
     pendingSketch || project.sketches.find((s) => s.id === editingSketch);
   const selectedS =
     selectedSketch ||
-    project.sketches.find((s) => s.id === currentF?.sketchId) ||
-    project.sketches.at(-1);
+    sketches.find((s) => s.id === currentF?.sketchId) || sketches.at(-1);
   const resultFor = model.features.find((f) => f.id === currentF?.id);
   const modelSignature = useMemo(
     () => JSON.stringify(model.features),
@@ -377,6 +369,11 @@ export default function App() {
       kernel.signature !== modelSignature ||
       !ready;
   const valid = !error && !busy && kernel.volume > 0;
+  const failedRevolve = error.includes(axisCrossingMessage)
+    ? model.features.find((f) => f.kind === "revolve" && crossesRevolveAxis(f.points))
+    : undefined;
+  const failedFeature = failedRevolve && project.features.find((f) => f.id === failedRevolve.id);
+  const failedSketch = failedFeature && project.sketches.find((s) => s.id === failedFeature.sketchId);
   const defaultMaterial = Object.hasOwn(
     materials,
     project.workspaces?.material || "",
@@ -384,20 +381,13 @@ export default function App() {
     ? project.workspaces!.material
     : "Brass";
   const solidFeatures = model.features.filter((f) => f.operation === "new");
-  const bodyFor = (f?: Feature) => {
-    if (!f) return;
-    if (f.operation === "new") return f.id;
-    if (f.bodyId) return f.bodyId;
-    return project.features
-      .slice(0, project.features.indexOf(f))
-      .reverse()
-      .find((q) => q.operation === "new" && !q.suppressed)?.id;
-  };
+  const owners = useMemo(() => bodyOwners(project.features), [project.features]);
+  const bodyFor = (f?: Feature) => f ? owners.get(f.id) : undefined;
   const materialOf = (id: string) =>
     Object.hasOwn(materials, project.workspaces?.bodyMaterials?.[id] || "")
       ? project.workspaces!.bodyMaterials[id]
       : defaultMaterial;
-  const selectedBodyId = bodyFor(currentF) || "";
+  const selectedBodyId = activePart?.id ?? bodyFor(currentF) ?? "";
   const material = materialOf(selectedBodyId);
   const densityOf = (id: string) =>
     project.workspaces?.bodyDensities?.[id] ??
@@ -406,7 +396,10 @@ export default function App() {
     (f) => materials[materialOf(f.id)].color,
   );
   const measuringSingle =
-    measureScope === "selected" && solidFeatures.length > 1;
+    !!activePart || (measureScope === "selected" && solidFeatures.length > 1);
+  const exportBodyId = mode === "Scales" ? rulerBodyId : activePart?.id;
+  const canExport = valid && (mode !== "Scales" || !!rulerBodyId) &&
+    (!exportBodyId || solidFeatures.some((f) => f.id === exportBodyId));
   const inScope = (_: unknown, i: number) =>
     !measuringSingle || solidFeatures[i]?.id === selectedBodyId;
   const measured = massProperties(
@@ -439,8 +432,36 @@ export default function App() {
     setPendingSketch(null);
     setEditingSketch(null);
   };
+  function openPart(part?: PartTab) {
+    switchMode("Part");
+    setPartSelection(part ? { projectId: project.id, id: part.id } : undefined);
+    if (part) setSelected(partFeatures(project, part.id)[0]?.id ?? project.sketches.find((s) => s.partId === part.id)?.id ?? "");
+  }
+  function saveInsertion(inserted: Project) {
+    const next = organizePartInsertion(project, inserted, activePart);
+    const added = next.features.slice(project.features.length);
+    const focusedRoot = added.find((f) => f.operation === "new");
+    commit(next);
+    if (activePart && focusedRoot) {
+      setPartSelection({ projectId: next.id, id: focusedRoot.id });
+      setSelected(focusedRoot.id);
+    } else {
+      setSelected(added.at(-1)?.id ?? next.sketches.at(-1)?.id ?? "");
+    }
+    return !!focusedRoot;
+  }
+  function namePart(part?: PartTab) {
+    let i = parts.length + 1;
+    while (parts.some((p) => p.name === `Part ${i}`)) i++;
+    setPartName({ id: part?.id || "", value: part?.name || `Part ${i}` });
+    setDialog("part-name");
+    setMenu(null);
+  }
   const changeP = (p: Project) => {
     commit(p);
+    setPartSelection(undefined);
+    setRulerOptions({ include: false, centerlines: false });
+    setRulerToolChoice(undefined);
     const nextGuide = penGuide(p);
     setMode(
       nextGuide && !nextGuide.paused ? guideMode(nextGuide.stage) : "Part",
@@ -459,11 +480,12 @@ export default function App() {
       name: "Sketch " + (project.sketches.length + 1),
       points: [],
       constraints: [],
+      ...(activePart ? { partId: activePart.id } : {}),
     };
     setPendingSketch(s);
     setMode("Part");
   };
-  const createFeature = (kind: Feature["kind"], initial?: Feature) => {
+  const createFeature = (kind: Feature["kind"], initial?: Feature, sourceSketchId?: string) => {
     if (initial && isScaleFeature(project, initial.id)) {
       switchMode("Scales");
       return;
@@ -474,34 +496,80 @@ export default function App() {
       );
       return;
     }
-    setFeatureDraft({ preferred: kind, initial, sketchId: selectedS?.id });
+    setFeatureDraft({ preferred: kind, initial, sketchId: sourceSketchId ?? selectedS?.id });
     setDialog("feature");
     setMenu(null);
   };
-  const editSketch = () => {
-    if (
-      selectedS &&
-      project.features.some(
-        (f) => isScaleFeature(project, f.id) && f.sketchId === selectedS.id,
-      )
-    ) {
+  const editSketchItem = (sketch: Sketch) => {
+    if (project.features.some((f) => isScaleFeature(project, f.id) && f.sketchId === sketch.id)) {
       switchMode("Scales");
       return;
     }
-    if (selectedS) {
-      setMode("Part");
-      setEditingSketch(selectedS.id);
-      setSelected(selectedS.id);
-    } else newSketch();
+    if (activePart && !sketches.some((s) => s.id === sketch.id)) {
+      const owner = sketch.partId ?? bodyFor(project.features.find((f) => f.sketchId === sketch.id));
+      setPartSelection(owner ? { projectId: project.id, id: owner } : undefined);
+    }
+    setMode("Part");
+    setEditingSketch(sketch.id);
+    setSelected(sketch.id);
   };
-  const updateF = (f: Feature) =>
-    commit({
-      ...project,
-      features: project.features.map((i) => (i.id === f.id ? f : i)),
+  const editSketch = () => selectedS ? editSketchItem(selectedS) : newSketch();
+  const renameModelItem = (item: Sketch | Feature) => {
+    setRenameItem(item.id);
+    setRename(item.name);
+    setDialog("rename");
+  };
+  const removeSketch = (sketch: Sketch) => {
+    const inUse = project.features.some((f) => f.sketchId === sketch.id ||
+      operationsOf(f).some(({ operation: op }) =>
+        (op.kind === "loft" && [op.lowerId, op.upperId].includes(sketch.id)) ||
+        (op.kind === "sweep" && [op.pathId, op.sectionId].includes(sketch.id))));
+    if (inUse) {
+      setNotice("This sketch is used by a feature. Remove that feature first.");
+      return;
+    }
+    commit({ ...project, sketches: project.sketches.filter((s) => s.id !== sketch.id) });
+  };
+  const jointUsesThread = (featureId: string, finishId?: string) =>
+    Object.values((project.workspaces?.joints ?? {}) as JointConfig).some(({ threadMate }) =>
+      threadMate && [threadMate.moving, threadMate.mating].some(
+        (ref) => ref.featureId === featureId && (finishId === undefined || ref.finishId === finishId)));
+  function withoutPartRecords(id: string) {
+    const workspaces = { ...project.workspaces };
+    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents"]) {
+      if (workspaces[key] && Object.hasOwn(workspaces[key], id)) {
+        workspaces[key] = { ...workspaces[key] };
+        delete workspaces[key][id];
+      }
+    }
+    return workspaces;
+  }
+  const removeFeature = (feature: Feature) => {
+    const next = project.features[project.features.indexOf(feature) + 1];
+    if (project.features.some((f) => f.operation !== "new" && bodyFor(f) === feature.id) ||
+      (feature.operation === "new" && next && next.operation !== "new" && !next.bodyId)) {
+      setNotice("Remove the operations that use this body first.");
+      return false;
+    }
+    const joints = (project.workspaces?.joints ?? {}) as JointConfig;
+    if (jointUsesThread(feature.id) || Object.values(joints).some(
+      (j) => j.parent === feature.id || j.cam?.driver === feature.id)) {
+      setNotice("Detach the joints that use this part in Assembly before deleting it.");
+      return false;
+    }
+    commit({ ...project, workspaces: withoutPartRecords(feature.id), features: project.features.filter((f) => f.id !== feature.id),
+      sketches: project.sketches.map((s) => s.partId === feature.id ? { ...s, partId: undefined } : s),
     });
+    return true;
+  };
+  const updateF = (f: Feature) => {
+    const toggledBody = f.operation === "new" && project.features.find((q) => q.id === f.id)?.suppressed !== f.suppressed;
+    const features = toggledBody ? bindHistoryTargets(project.features) : project.features;
+    commit({ ...project, features: features.map((item) => item.id === f.id ? f : item) });
+  };
   const reorder = (f: Feature, by: number) => {
-    const a = project.features.slice(),
-      i = a.findIndex((q) => q.id === f.id);
+    const a = bindHistoryTargets(project.features);
+    const i = a.findIndex((q) => q.id === f.id);
     if (i + by < 0 || i + by >= a.length) return;
     [a[i], a[i + by]] = [a[i + by], a[i]];
     let body = "";
@@ -515,6 +583,91 @@ export default function App() {
     }
     commit({ ...project, features: a });
   };
+  function openContext(anchor: MenuAnchor, title: string, items: MenuItem[]) {
+    setMenu(null);
+    setContext({ anchor, title, items, project });
+  }
+  function makeSolidActions(sketch?: Sketch): MenuItem[] {
+    if (!sketch || sketch.points.length < 3) return [];
+    return [
+      { label: "Revolve", icon: RotateCw, shortcut: "R",
+        run: () => createFeature("revolve", failedSketch?.id === sketch.id ? failedFeature : undefined, sketch.id) },
+      { label: "Extrude", icon: Box, shortcut: "X",
+        run: () => createFeature("extrude", undefined, sketch.id) },
+    ];
+  }
+  function sketchMenu(anchor: MenuAnchor, sketch: Sketch) {
+    setSelected(sketch.id);
+    openContext(anchor, sketch.name, [
+      { label: "Edit sketch", icon: SquarePen, shortcut: "E", run: () => editSketchItem(sketch) },
+      ...makeSolidActions(sketch),
+      { label: "Rename", icon: Pencil, shortcut: "F2", divider: true, run: () => renameModelItem(sketch) },
+      { label: "Delete", icon: Trash2, danger: true, run: () => removeSketch(sketch) },
+    ]);
+  }
+  function featureMenu(anchor: MenuAnchor, f: Feature) {
+    setSelected(f.id);
+    const sketch = project.sketches.find((s) => s.id === f.sketchId);
+    const scale = isScaleFeature(project, f.id);
+    openContext(anchor, f.name, [
+      ...(f.kind === "import" ? [] : [{ label: scale ? "Edit scale" : "Edit feature",
+        icon: Pencil, run: () => createFeature(f.kind, f) }]),
+      ...(sketch && !scale ? [
+        { label: "Edit sketch", icon: SquarePen, shortcut: "E", run: () => editSketchItem(sketch) },
+        ...makeSolidActions(sketch),
+      ] : []),
+      ...(!scale ? [
+        { label: "Finish…", icon: Wrench, shortcut: "G", run: () => {
+          setEntryId(undefined); setPresetFinish(undefined); setDialog("finish");
+        } },
+        { label: "Advanced tools…", icon: Boxes, shortcut: "A", run: () => {
+          setEntryId(undefined); setPresetAdvanced(undefined); setDialog("advanced");
+        } },
+      ] : []),
+      { label: "Rename", icon: Pencil, shortcut: "F2", divider: true, run: () => renameModelItem(f) },
+      { label: f.suppressed ? "Restore" : "Suppress", icon: f.suppressed ? Eye : EyeOff,
+        shortcut: "H", run: () => updateF({ ...f, suppressed: !f.suppressed }) },
+      { label: "Delete", icon: Trash2, danger: true, run: () => removeFeature(f) },
+    ]);
+  }
+  function operationMenu(anchor: MenuAnchor, f: Feature, id: string, finish: boolean) {
+    const rows = finish ? f.finishes || [] : operationsOf(f);
+    const op = rows.find((row) => row.id === id);
+    if (!op) return;
+    setSelected(f.id);
+    function change(remove: boolean) {
+      if (finish && jointUsesThread(f.id, id)) {
+        setNotice("Detach the thread mate in Assembly before changing this finish.");
+        return;
+      }
+      const edit = <T extends { id: string; suppressed?: boolean }>(list: T[]) => remove
+        ? list.filter((row) => row.id !== id)
+        : list.map((row) => row.id === id ? { ...row, suppressed: !row.suppressed } : row);
+      updateF(finish ? { ...f, finishes: edit(f.finishes || []) }
+        : { ...f, advanced: undefined, operations: edit(operationsOf(f)) });
+    }
+    openContext(anchor, op.name || "Operation", [
+      { label: "Edit", icon: Pencil, run: () => {
+        setEntryId(id); setPresetFinish(undefined); setPresetAdvanced(undefined);
+        setDialog(finish ? "finish" : "advanced");
+      } },
+      { label: op.suppressed ? "Restore" : "Suppress", icon: op.suppressed ? Eye : EyeOff,
+        run: () => change(false) },
+      { label: "Delete", icon: Trash2, danger: true, divider: true, run: () => change(true) },
+    ]);
+  }
+  function viewportMenu(anchor: MenuAnchor, bodyId: string | null) {
+    if (bodyId !== null) {
+      const feature = project.features.find((f) => f.id === bodyId);
+      if (feature) featureMenu(anchor, feature);
+      return;
+    }
+    openContext(anchor, "Part studio", [
+      { label: "New sketch", icon: SquarePen, shortcut: "S", run: newSketch },
+      ...makeSolidActions(selectedS),
+      { label: "Fit model to view", icon: Scan, shortcut: "F", divider: true, run: () => setFit((v) => v + 1) },
+    ]);
+  }
   const save = () => {
     downloadFile(
       project.name + ".turnmill",
@@ -524,17 +677,26 @@ export default function App() {
     );
     setMenu(null);
   };
+  const exportRulerVector = (format: "svg" | "dxf") => {
+    if (!rulerVectors?.sheet) return;
+    try {
+      downloadRulerVector(rulerVectors, format);
+      setNotice("Downloading " + rulerVectors.base + "." + format);
+    } catch (e) {
+      setNotice((e as Error).message);
+    }
+  };
   const runExport = (format: ExportRequest["format"]) => {
     setMenu(null);
-    if (!valid) {
+    if (!canExport) {
       setNotice("Rebuild a valid solid before exporting.");
       return;
     }
     const inAssembly = mode === "Assembly";
     const live = inAssembly ? liveAssembly.current : null;
-    const id = live?.selected ?? bodyFor(currentF);
+    const id = exportBodyId ?? live?.selected ?? bodyFor(currentF);
     const i = solidFeatures.findIndex((f) => f.id === id);
-    const single = exportScope === "selected" && solidFeatures.length > 1;
+    const single = !!exportBodyId || (exportScope === "selected" && solidFeatures.length > 1);
     if (single && i < 0) {
       setNotice("Select the component you want to export.");
       return;
@@ -547,7 +709,7 @@ export default function App() {
       id: Date.now(),
       format,
       bodyIndex: single ? i : undefined,
-      name: single ? solidFeatures[i].name : project.name,
+      name: mode === "Scales" ? rulerVectors?.base ?? project.name : single ? solidFeatures[i].name : project.name,
       assembly: inAssembly && !single ? {
         ids: solidFeatures.map((f) => f.id),
         joints: project.workspaces?.joints ?? {},
@@ -563,6 +725,7 @@ export default function App() {
   }
   function resumeGuide() {
     if (!guide) return;
+    setPartSelection(undefined);
     const p = setGuide(project, { paused: false });
     commit(guide.stage === "drawing" ? openGuideDrawing(p) : p);
     switchMode(guideMode(guide.stage));
@@ -575,6 +738,7 @@ export default function App() {
     guideDrawing?.dimensions !== false;
   function guideAction() {
     if (!guide) return;
+    setPartSelection(undefined);
     if (guide.stage === "finished") {
       commit(setGuide(project, { paused: true }));
       return;
@@ -628,6 +792,7 @@ export default function App() {
     }
   }
   const knownCommands: Command[] = [
+    { title: "New part", group: "Project", shortcut: "Alt B", run: () => namePart() },
     {
       title: "Insert hardware · screw, nut, washer, pin, spring, O-ring",
       group: "Components",
@@ -675,11 +840,7 @@ export default function App() {
       disabled: !currentF && !selectedSketch,
       run: () => {
         const item = selectedSketch || currentF;
-        if (item) {
-          setRenameItem(item.id);
-          setRename(item.name);
-          setDialog("rename");
-        }
+        if (item) renameModelItem(item);
       },
     },
     {
@@ -688,29 +849,8 @@ export default function App() {
       shortcut: "BACKSPACE",
       disabled: !selectedSketch && (!currentF || currentF.id !== selected),
       run: () => {
-        if (selectedSketch) {
-          if (project.features.some((f) => f.sketchId === selectedSketch.id)) {
-            setNotice(
-              "This sketch is used by a feature. Remove that feature first.",
-            );
-            return;
-          }
-          commit({
-            ...project,
-            sketches: project.sketches.filter(
-              (s) => s.id !== selectedSketch.id,
-            ),
-          });
-        } else if (currentF) {
-          if (project.features.some((f) => f.bodyId === currentF.id)) {
-            setNotice("Remove the operations that use this body first.");
-            return;
-          }
-          commit({
-            ...project,
-            features: project.features.filter((f) => f.id !== currentF.id),
-          });
-        }
+        if (selectedSketch) removeSketch(selectedSketch);
+        else if (currentF) removeFeature(currentF);
       },
     },
     { title: "New sketch", group: "Model", shortcut: "S", run: newSketch },
@@ -772,14 +912,14 @@ export default function App() {
       group: "History",
       shortcut: "Alt ↑",
       run: () => currentF && reorder(currentF, -1),
-      disabled: !currentF || project.features[0] === currentF,
+      disabled: !currentF || history[0] === currentF,
     },
     {
       title: "Move feature later",
       group: "History",
       shortcut: "Alt ↓",
       run: () => currentF && reorder(currentF, 1),
-      disabled: !currentF || project.features.at(-1) === currentF,
+      disabled: !currentF || history.at(-1) === currentF,
     },
     ...Object.entries(finishLabels).map(([k, label]) => ({
       key: "add-" + k,
@@ -819,21 +959,21 @@ export default function App() {
       group: "Export",
       shortcut: "Alt S",
       run: () => runExport("step"),
-      disabled: !valid,
+      disabled: !canExport,
     },
     {
       title: "Export 3MF",
       group: "Export",
       shortcut: "Alt M",
       run: () => runExport("3mf"),
-      disabled: !valid,
+      disabled: !canExport,
     },
     {
       title: "Export STL",
       group: "Export",
       shortcut: "Alt T",
       run: () => runExport("stl"),
-      disabled: !valid,
+      disabled: !canExport,
     },
     ...modes.map(({ name }, i) => ({
       title: name + " workspace",
@@ -876,7 +1016,7 @@ export default function App() {
       let reason = c.reason;
       if (c.disabled && !reason) {
         if (c.group === "Export")
-          reason =
+          reason = (mode === "Scales" && !rulerBodyId ? "Create engraved stock or apply the graduations to a part in Scales." : "") ||
             error ||
             (busy
               ? "Wait for the solid to finish rebuilding."
@@ -909,7 +1049,10 @@ export default function App() {
         ...c,
         reason,
         run: () => {
-          if (mode !== "Part" && partTool) switchMode("Part");
+          if (mode !== "Part" && partTool) {
+            setPartSelection(undefined);
+            switchMode("Part");
+          }
           c.run();
         },
       };
@@ -931,7 +1074,7 @@ export default function App() {
   };
   useEffect(() => {
     function handler(e: KeyboardEvent) {
-      if (e.isComposing || e.key === "Process") return;
+      if (e.isComposing || e.key === "Process" || (e.target as Element)?.closest(".tm-context-menu")) return;
       const inField = !!(e.target as Element)?.closest(
         "input,select,textarea,[contenteditable]:not([contenteditable=false])",
       );
@@ -966,6 +1109,7 @@ export default function App() {
         return;
       }
       if (inField || activeSketch || !ready || e.defaultPrevented) return;
+      if ((e.target as Element)?.closest(".part-documents") && ["F2", "Backspace", "Delete"].includes(e.key)) return;
       const normalized = keyBinding(e);
       if (!normalized) return;
       // Scope selection shortcuts to the editing surface. Backspace on other workspaces
@@ -1106,7 +1250,18 @@ export default function App() {
           </button>
           {menu === "export" && (
             <div className="dropdown align-right">
-              {solidFeatures.length > 1 && (
+              {showRulerVectors && rulerVectors && <>
+                {menuItem("Ruler engraving SVG", Ruler, () => exportRulerVector("svg"), ".svg", !rulerVectors.sheet)}
+                {menuItem("Ruler engraving DXF", Ruler, () => exportRulerVector("dxf"), ".dxf", !rulerVectors.sheet)}
+                {rulerVectors.error && <p className="ruler-export-hint" role="alert">{rulerVectors.error}</p>}
+              </>}
+              {mode === "Scales" && !rulerBodyId && (
+                <p className="ruler-export-hint">
+                  {rulerTool === "stock" ? "Create engraved stock" : "Apply graduations to a part"} in{" "}
+                  <a href="#scale-engraving-settings" onClick={() => setMenu(null)}>3D engraving</a> to export a solid.
+                </p>
+              )}
+              {mode !== "Scales" && !activePart && solidFeatures.length > 1 && (
                 <label className="scope-field">
                   Export geometry
                   <select
@@ -1122,25 +1277,25 @@ export default function App() {
                 </label>
               )}
               {menuItem(
-                "STEP solid",
+                mode === "Scales" ? "Engraved ruler STEP" : "STEP solid",
                 Box,
                 () => runExport("step"),
                 ".step",
-                !valid,
+                !canExport,
               )}
               {menuItem(
                 "STL mesh",
                 Layers3,
                 () => runExport("stl"),
                 ".stl",
-                !valid,
+                !canExport,
               )}
               {menuItem(
                 "3MF model",
                 Box,
                 () => runExport("3mf"),
                 ".3mf",
-                !valid,
+                !canExport,
               )}
               {menuItem("Native project", Save, save, ".turnmill")}
             </div>
@@ -1212,16 +1367,16 @@ export default function App() {
                 <Package size={18} />
               </span>
               <div>
-                <b>{project.name}</b>
-                <small>Parametric part</small>
+                <b>{activePart?.name ?? project.name}</b>
+                <small>{activePart ? project.name : "Parametric part"}</small>
               </div>
             </div>
             <SectionHeading>
               Feature history
-              <span className="count">{project.features.length}</span>
+              <span className="count">{history.length}</span>
             </SectionHeading>
             <div className="history-list">
-              {project.features.map((f, i) => {
+              {history.map((f, i) => {
                 const s = project.sketches.find((s) => s.id === f.sketchId);
                 return (
                   <div
@@ -1236,6 +1391,7 @@ export default function App() {
                           "tree-item sketch-node " +
                           (selected === s.id ? "active" : "")
                         }
+                        {...menuTrigger((a) => sketchMenu(a, s))}
                         title="Select sketch · double-click to edit"
                         onClick={() => setSelected(s.id)}
                         onDoubleClick={() => {
@@ -1252,6 +1408,7 @@ export default function App() {
                       className={
                         "tree-item " + (selected === f.id ? "active" : "")
                       }
+                      {...menuTrigger((a) => featureMenu(a, f))}
                       title="Select feature · double-click to edit"
                       onClick={() => setSelected(f.id)}
                       onDoubleClick={() => createFeature(f.kind, f)}
@@ -1271,6 +1428,7 @@ export default function App() {
                     {(f.finishes || []).map((op) => (
                       <button
                         key={op.id}
+                        {...menuTrigger((a) => operationMenu(a, f, op.id, true))}
                         className="tree-item nested"
                         onClick={() => {
                           setSelected(f.id);
@@ -1286,6 +1444,7 @@ export default function App() {
                     {operationsOf(f).map((op) => (
                       <button
                         key={op.id}
+                        {...menuTrigger((a) => operationMenu(a, f, op.id, false))}
                         className="tree-item nested"
                         onClick={() => {
                           setSelected(f.id);
@@ -1300,7 +1459,7 @@ export default function App() {
                   </div>
                 );
               })}
-              {project.sketches
+              {sketches
                 .filter(
                   (s) => !project.features.some((f) => f.sketchId === s.id),
                 )
@@ -1310,6 +1469,7 @@ export default function App() {
                       "tree-item " + (selected === s.id ? "active" : "")
                     }
                     key={s.id}
+                    {...menuTrigger((a) => sketchMenu(a, s))}
                     onClick={() => setSelected(s.id)}
                     onDoubleClick={() => setEditingSketch(s.id)}
                   >
@@ -1392,12 +1552,15 @@ export default function App() {
           <div className="stage">
             <Viewport
               signature={modelSignature}
+              visibleBodyId={activePart?.id}
               features={model.features}
               view={view}
               fitToken={fit}
               exportRequest={exportRequest}
               onStatus={setKernel}
               takeFinishBody={finishing.takeFinishBody}
+              onBodyContextMenu={viewportMenu}
+              onBodyPick={setSelected}
               appearances={appearances}
             />
             <div className="view-top">
@@ -1406,7 +1569,7 @@ export default function App() {
                   <span className="model-dot" />
                   Part studio
                 </div>
-                <h1>{project.name}</h1>
+                <h1>{activePart?.name ?? project.name}</h1>
               </div>
               <div
                 className="view-holder"
@@ -1466,19 +1629,20 @@ export default function App() {
                 <div>
                   <b>Rebuild needs attention</b>
                   <p>{error}</p>
+                  {failedSketch && <button className="outline-btn" onClick={() => editSketchItem(failedSketch)}>Edit {failedSketch.name}</button>}
                 </div>
               </div>
             )}
             {!error &&
               !busy &&
-              !project.features.length &&
+              !activePart && !history.length &&
               guide?.stage === "barrel" &&
               !guide.paused && <GuideProfile project={project} />}
             {!error &&
               !busy &&
-              !project.features.length &&
-              (!guide || guide.paused || guide.stage !== "barrel") && (
-                <div className="empty-stage">
+              !history.length &&
+              (activePart || !guide || guide.paused || guide.stage !== "barrel") && (
+                <div className="empty-stage" tabIndex={0} aria-label="Empty part" {...menuTrigger((anchor) => viewportMenu(anchor, null))}>
                   <PenTool size={30} />
                   {selectedS && selectedS.points.length >= 3 ? (
                     <>
@@ -1616,6 +1780,10 @@ export default function App() {
                     </div>
                   </label>
                 ))}
+                {!isScaleFeature(project, currentF?.id) && <SelectionDimensions
+                  key={selectedSketch?.id || currentF?.id || selectedS?.id}
+                  project={project} sketch={currentF?.kind === "import" ? undefined : selectedS}
+                  feature={currentF} onChange={commit} />}
                 <button
                   className="all-params"
                   onClick={() => setDialog("parameters")}
@@ -1637,13 +1805,13 @@ export default function App() {
                     "Move feature earlier",
                     MoveUp,
                     () => reorder(currentF, -1),
-                    project.features[0] === currentF,
+                    history[0] === currentF,
                   )}
                   {iconButton(
                     "Move feature later",
                     MoveDown,
                     () => reorder(currentF, 1),
-                    project.features.at(-1) === currentF,
+                    history.at(-1) === currentF,
                   )}
                   {iconButton(
                     currentF.suppressed
@@ -1666,7 +1834,7 @@ export default function App() {
                     aria-label="Material"
                     value={material}
                     onChange={(e) => {
-                      const id = bodyFor(currentF) || "";
+                      const id = selectedBodyId;
                       const densities = {
                         ...project.workspaces?.bodyDensities,
                       };
@@ -1695,7 +1863,7 @@ export default function App() {
                     <dd className="density">
                       <InputValue
                         label="Material density in grams per cubic centimetre"
-                        value={String(densityOf(bodyFor(currentF) || ""))}
+                        value={String(densityOf(selectedBodyId))}
                         onCommit={(s) => {
                           try {
                             const n = parseDensity(s, model.values);
@@ -1705,7 +1873,7 @@ export default function App() {
                                 ...project.workspaces,
                                 bodyDensities: {
                                   ...project.workspaces?.bodyDensities,
-                                  [bodyFor(currentF) || ""]: n,
+                                  [selectedBodyId]: n,
                                 },
                               },
                             });
@@ -1718,7 +1886,7 @@ export default function App() {
                     </dd>
                   </div>
                 </dl>
-                {solidFeatures.length > 1 && (
+                {!activePart && solidFeatures.length > 1 && (
                   <label>
                     <span>Measure</span>
                     <select
@@ -1777,6 +1945,10 @@ export default function App() {
             <Assembly
               {...props}
               liveAssembly={liveAssembly}
+              onOpenPart={(id) => {
+                const part = parts.find((p) => p.id === id);
+                if (part) openPart(part);
+              }}
               guideAssist={guideAssist}
               onImport={() => setDialog("import")}
             />
@@ -1787,14 +1959,29 @@ export default function App() {
               rebuilding={model.key !== geoSignature || model.pending}
             />
           )}
-          {mode === "Scales" && (
+          {mode === "Scales" && rulerVectors && (
             <Scale
               {...props}
+              vectors={rulerVectors} exportOptions={rulerOptions} onExportOptions={setRulerOptions}
+              tool={rulerTool} onTool={(tool) => setRulerToolChoice({ projectId: project.id, tool })}
+              solidReady={canExport} hasEngraving={!!rulerBodyId} onVector={exportRulerVector} onStep={() => runExport("step")}
               rebuilding={model.key !== geoSignature || model.pending}
             />
           )}
         </Suspense>
       </main>
+      {ready && (mode === "Part" || mode === "Assembly") && (
+        <PartTabBar parts={parts} active={activePart?.id} assembly={mode === "Assembly"}
+          onNew={() => namePart()} onPart={openPart} onRename={namePart}
+          onAssembly={() => switchMode("Assembly")}
+          onDelete={(part) => {
+            const root = project.features.find((f) => f.id === part.id);
+            if (root) { removeFeature(root); return; }
+            commit({ ...project, workspaces: withoutPartRecords(part.id),
+              emptyParts: project.emptyParts?.filter((p) => p.id !== part.id),
+              sketches: project.sketches.map((s) => s.partId === part.id ? { ...s, partId: undefined } : s) });
+          }}/>
+      )}
       <footer className="status-bar">
         <span className={error ? "error-indicator" : "good-indicator"}>
           {busy ? (
@@ -1809,11 +1996,11 @@ export default function App() {
         <i />
         <span>
           {
-            project.features.filter(
+            history.filter(
               (f) => !f.suppressed && f.operation === "new",
             ).length
           }{" "}
-          {project.features.filter(
+          {history.filter(
             (f) => !f.suppressed && f.operation === "new",
           ).length === 1
             ? "body"
@@ -1881,6 +2068,15 @@ export default function App() {
         <div className="sketch-layer">
           <SketchEditor
             sketch={activeSketch}
+            onFeature={(kind, sketchId) => {
+              if (dialog === "feature") {
+                setFeatureDraft((draft) => ({ ...draft, preferred: kind }));
+              } else {
+                const failed = kind === "revolve" && failedSketch?.id === sketchId ? failedFeature : undefined;
+                setFeatureDraft({ preferred: kind, sketchId, initial: failed });
+                setDialog("feature");
+              }
+            }}
             parameters={(() => {
               try {
                 return resolveParameters(project.parameters);
@@ -1930,12 +2126,36 @@ export default function App() {
           }}
         />
       )}
+      {dialog === "part-name" && (
+        <Modal title={partName.id ? "Rename part" : "New part"} onClose={close}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const name = partName.value.trim();
+            if (!name) return;
+            const part = { id: partName.id || uid(), name };
+            if (partName.id) {
+              commit({ ...project,
+                features: project.features.map((f) => f.id === part.id ? { ...f, name } : f),
+                emptyParts: project.emptyParts?.map((p) => p.id === part.id ? part : p),
+              });
+            } else {
+              commit({ ...project, emptyParts: [...(project.emptyParts ?? []), part] });
+              openPart(part);
+            }
+            close();
+          }}>
+            <label>Part name<input autoFocus required value={partName.value}
+              onFocus={(e) => e.target.select()} onChange={(e) => setPartName({ ...partName, value: e.target.value })}/></label>
+            <div className="dialog-actions"><button type="button" onClick={close}>Cancel</button>
+              <button className="primary" disabled={!partName.value.trim()}>{partName.id ? "Save name" : "Create part"}</button></div>
+          </form>
+        </Modal>
+      )}
       {dialog === "hardware" && (
         <HardwareDialog
           project={project}
           onSave={(p) => {
-            commit(p);
-            setSelected(p.features.at(-1)?.id || "");
+            saveInsertion(p);
             close();
           }}
           onClose={close}
@@ -1946,7 +2166,7 @@ export default function App() {
           entryId={entryId}
           initialKind={presetAdvanced}
           feature={currentF}
-          project={project}
+          project={partEditorProject}
           onClose={close}
           onSave={(feature) => {
             updateF(feature);
@@ -1958,17 +2178,8 @@ export default function App() {
         <ExchangeDialog
           project={project}
           onSave={(p) => {
-            commit(p);
-            setSelected(
-              (p.features.length > project.features.length
-                ? p.features.at(-1)?.id
-                : p.sketches.at(-1)?.id) || "",
-            );
-            switchMode(
-              mode === "Assembly" && p.features.length > project.features.length
-                ? "Assembly"
-                : "Part",
-            );
+            const addedSolid = saveInsertion(p);
+            switchMode(mode === "Assembly" && addedSolid ? "Assembly" : "Part");
             setFit((v) => v + 1);
             close();
           }}
@@ -1987,26 +2198,25 @@ export default function App() {
       )}
       {dialog === "feature" && (
         <FeatureDialog
-          project={project}
+          project={partEditorProject}
+          scopedPart={!!activePart}
           {...featureDraft}
+          editingProfile={!!activeSketch}
+          onKindChange={(preferred) => setFeatureDraft((draft) => ({ ...draft, preferred }))}
+          onEditSketch={editSketchItem}
           suggestedName={
             guide?.stage === "barrel" &&
             !guide.paused &&
             featureDraft.preferred === "revolve"
               ? "Barrel"
-              : undefined
+              : activePart && !history.length ? activePart.name : undefined
           }
           onClose={close}
           onSave={(f, s) => {
-            const next = {
-              ...project,
-              sketches: s ? [...project.sketches, s] : project.sketches,
-              features: featureDraft.initial
-                ? project.features.map((i) => (i.id === f.id ? f : i))
-                : [...project.features, f],
-            };
-            commit(guideFeatureSaved(next, f));
-            setSelected(f.id);
+            const next = savePartFeature(project, activePart, f, s);
+            const saved = activePart && !history.length ? next.features.at(-1)! : f;
+            commit(guideFeatureSaved(next, saved));
+            setSelected(saved.id);
             setMode("Part");
             close();
           }}
@@ -2049,6 +2259,9 @@ export default function App() {
           }}
           onClose={close}
         />
+      )}
+      {context && context.project === project && mode === "Part" && !activeSketch && !dialog && !search && (
+        <ContextMenu {...context} onClose={() => setContext(null)} />
       )}
       {search && (
         <CommandPalette

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import type { MenuAnchor } from "./ContextMenu";
 import type { RenderBody } from "./geometry";
 
 export type View = "iso" | "front" | "top" | "side" | "left" | "bottom";
@@ -32,6 +33,7 @@ export function setFaceHighlights(
 export function createStudio(
   element: HTMLDivElement,
   onPick: (label: string, bodyIndex: number | null) => void,
+  onContextMenu?: (anchor: MenuAnchor, bodyIndex: number | null) => void,
 ) {
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -46,6 +48,7 @@ export function createStudio(
   canvas.style.cssText =
     "width:100%;height:100%;display:block;touch-action:none;outline:0";
   canvas.tabIndex = 0;
+  if (onContextMenu) canvas.setAttribute("aria-haspopup", "menu");
   canvas.setAttribute(
     "aria-label",
     "3D part. Drag to orbit, scroll to zoom, or shift-drag to pan. Click a face to select it.",
@@ -172,8 +175,8 @@ export function createStudio(
     fittedWidth = xExtent * 1.43;
     fittedHeight = Math.max(yExtent, diagonal * 0.045) * 1.43;
     updateProjection();
-    controls.update();
-    render();
+    // A camera change already draws through the OrbitControls change listener.
+    if (!controls.update()) render();
   }
   function markFaces(previous: FaceHit | null) {
     const bodies = new Set([previous?.body, hover?.body, selected?.body]);
@@ -239,12 +242,35 @@ export function createStudio(
     group.add(root);
     return { body, root, mesh };
   }
-  function updateMeshes(data: RenderBody[]) {
+  function applyColors(tones: number[]) {
+    let changed = false;
+    meshes.forEach((mesh, i) => {
+      const color = tones[i];
+      if (!color) return;
+      let mat = colors.get(color);
+      if (!mat) {
+        mat = bodyMaterial.clone();
+        mat.color.setHex(color);
+        if (color === 0x50585a) {
+          mat.metalness = 0.05;
+          mat.roughness = 0.5;
+        }
+        colors.set(color, mat);
+      }
+      if (Array.isArray(mesh.material) && mesh.material[0] === mat) return;
+      mesh.material = [mat, hoverMaterial, chosenMaterial];
+      changed = true;
+    });
+    return changed;
+  }
+  function updateMeshes(data: RenderBody[], tones?: number[]) {
     if (
       data.length === instances.length &&
       data.every((body, i) => instances[i].body === body)
-    )
+    ) {
+      if (tones && applyColors(tones)) render();
       return;
+    }
     const oldBox = box.clone();
     const reusable = new Map(
       instances.map((instance) => [instance.body, instance]),
@@ -261,6 +287,7 @@ export function createStudio(
     instances = next;
     meshes.length = 0;
     for (const instance of next) meshes.push(instance.mesh);
+    if (tones) applyColors(tones);
     const stillVisible = (face: FaceHit | null): FaceHit | null => {
       if (!face) return null;
       const index = meshes.findIndex((mesh) => mesh.geometry === face.geometry);
@@ -303,7 +330,7 @@ export function createStudio(
     } else render();
   }
   const ray = new THREE.Raycaster();
-  function hit(event: PointerEvent): FaceHit | null {
+  function hit(event: { clientX: number; clientY: number }): FaceHit | null {
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(
       new THREE.Vector2(
@@ -325,21 +352,55 @@ export function createStudio(
   }
   const label = (picked: FaceHit | null) =>
     picked ? "Body " + picked.body + " · Face " + (picked.face + 1) : "";
-  let start: [number, number] | null = null;
-  function down(e: PointerEvent) {
-    if (e.button === 0) start = [e.clientX, e.clientY];
-  }
-  function up(e: PointerEvent) {
-    if (!start) return;
-    const dragged = Math.hypot(e.clientX - start[0], e.clientY - start[1]) > 4;
-    start = null;
-    if (dragged) return;
+  let press: { id: number; x: number; y: number; context: boolean; moved: boolean } | null = null;
+  let handledContext = false;
+  function pickFace(next: FaceHit | null) {
     const previous = selected;
-    selected = hit(e);
+    selected = next;
     onPick(label(selected), selected ? selected.body - 1 : null);
     markFaces(previous);
   }
+  function openContext(x: number, y: number, face: FaceHit | null) {
+    if (!onContextMenu) return;
+    pickFace(face);
+    onContextMenu({ x, y, opener: canvas }, face ? face.body - 1 : null);
+  }
+  function down(e: PointerEvent) {
+    handledContext = false;
+    if (e.button === 0 || (e.button === 2 && onContextMenu))
+      press = { id: e.pointerId, x: e.clientX, y: e.clientY, context: e.button === 2, moved: false };
+  }
+  function up(e: PointerEvent) {
+    if (!press || press.id !== e.pointerId) return;
+    const gesture = press;
+    press = null;
+    handledContext = gesture.context;
+    if (gesture.moved || Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y) > 4) return;
+    if (gesture.context) openContext(e.clientX, e.clientY, hit(e));
+    else pickFace(hit(e));
+  }
+  function cancel(e: PointerEvent) {
+    if (press?.id === e.pointerId) press = null;
+  }
+  function context(e: MouseEvent) {
+    if (!onContextMenu) return;
+    e.preventDefault();
+    // Some platforms send contextmenu on press, others on release. Wait until
+    // a secondary drag has ended so camera panning never opens a menu.
+    if (press) press.context = true;
+    else if (!handledContext) openContext(e.clientX, e.clientY, hit(e));
+    handledContext = false;
+  }
+  function keyboard(e: KeyboardEvent) {
+    if (!onContextMenu || (e.key !== "ContextMenu" && !(e.shiftKey && e.key === "F10"))) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    handledContext = true;
+    openContext(rect.left + rect.width / 2, rect.top + rect.height / 2, selected);
+  }
   function move(e: PointerEvent) {
+    if (press?.id === e.pointerId && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4)
+      press.moved = true;
     if (e.buttons) return;
     const next = hit(e);
     if (next?.body === hover?.body && next?.face === hover?.face) return;
@@ -355,6 +416,9 @@ export function createStudio(
   }
   canvas.addEventListener("pointerdown", down);
   canvas.addEventListener("pointerup", up);
+  canvas.addEventListener("pointercancel", cancel);
+  canvas.addEventListener("contextmenu", context);
+  canvas.addEventListener("keydown", keyboard);
   canvas.addEventListener("pointermove", move);
   canvas.addEventListener("pointerleave", leave);
   const resize = new ResizeObserver(() => {
@@ -366,24 +430,14 @@ export function createStudio(
   return {
     updateMeshes,
     setColors(tones: number[]) {
-      meshes.forEach((mesh, i) => {
-        const color = tones[i];
-        if (!color) return;
-        let mat = colors.get(color);
-        if (!mat) {
-          mat = bodyMaterial.clone();
-          mat.color.setHex(color);
-          if (color === 0x50585a) {
-            mat.metalness = 0.05;
-            mat.roughness = 0.5;
-          }
-          colors.set(color, mat);
-        }
-        mesh.material = [mat, hoverMaterial, chosenMaterial];
-      });
-      render();
+      if (applyColors(tones)) render();
     },
-    bodyAt: (e: PointerEvent) => (hit(e)?.body ?? 0) - 1,
+    pickBodyAt(event: PointerEvent) {
+      const face = hit(event);
+      if (face) canvas.focus({ preventScroll: true });
+      pickFace(face);
+      return face ? face.body - 1 : -1;
+    },
     screenDisplacement(delta: [number, number, number]) {
       const start = controls.target.clone().project(camera);
       const end = controls.target
@@ -395,8 +449,15 @@ export function createStudio(
         ((start.y - end.y) * canvas.clientHeight) / 2,
       ];
     },
-    setOrbitEnabled: (value: boolean) => {
-      controls.enabled = value;
+    dragAxes() {
+      // Orthographic projection maps every pixel to the same world displacement
+      // at every depth. Freeze this basis when the pointer is pressed.
+      const stepX = (camera.right - camera.left) / (camera.zoom * canvas.clientWidth);
+      const stepY = (camera.top - camera.bottom) / (camera.zoom * canvas.clientHeight);
+      return {
+        right: new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(stepX),
+        down: new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(-stepY),
+      };
     },
     setTransforms(matrices: number[][], reframe = false) {
       for (const object of group.children) {
@@ -422,6 +483,9 @@ export function createStudio(
       controls.dispose();
       canvas.removeEventListener("pointerdown", down);
       canvas.removeEventListener("pointerup", up);
+      canvas.removeEventListener("pointercancel", cancel);
+      canvas.removeEventListener("contextmenu", context);
+      canvas.removeEventListener("keydown", keyboard);
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("pointerleave", leave);
       clearGeometry();

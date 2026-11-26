@@ -1,5 +1,9 @@
 import type { Parameter } from "./types";
 
+export function isExpression(value: string) {
+  return !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim());
+}
+
 type Kind = "length" | "angle" | "scalar";
 type Quantity = { n: number; kind: Kind | "bare" };
 const units: Record<string, [number, Kind]> = {

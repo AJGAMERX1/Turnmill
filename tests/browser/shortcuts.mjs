@@ -270,7 +270,7 @@ try {
     await page.locator(`.tm-app[data-workspace="${workspace}"]`).waitFor();
     const pane = {
       Part: ".model-space:not(.offscreen)",
-      Assembly: "h2:has-text('Assemble two or more bodies')",
+      Assembly: ".joint-studio .joint-view canvas",
       Drawing: ".tm-workspace .tm-work-head:has-text('Drawing')",
       Scales: ".tm-ruler-stage",
     }[workspace];

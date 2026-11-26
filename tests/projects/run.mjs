@@ -5,6 +5,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { run, out } from "./support.mjs";
 import { guide, pen, drawing, inscription } from "./pen.mjs";
 import { ruler } from "./ruler.mjs";
+import { revolveAxis } from "./revolve-axis.mjs";
 import {
   hinge,
   clickPen,
@@ -15,6 +16,7 @@ import {
 import { power, chaos } from "./personas.mjs";
 const file = resolve(out, "pen/twist-pen.turnmill");
 const tests = {
+  "revolve-axis": revolveAxis,
   guide,
   pen,
   "pen-inscription": async (s) => {

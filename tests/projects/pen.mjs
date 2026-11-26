@@ -7,6 +7,7 @@ import {
   input,
   newProject,
   sample,
+  snap,
   native,
   ready,
   download,
@@ -44,11 +45,21 @@ export async function guide(s) {
   assert.equal(c.bodies.length, 2);
   await button(panel, "Add refill and clip").click();
   await field(p, "Component").selectOption("pen-cap");
-  await button(p, "Find rotation control").click();
-  await input(p, "Drive value", "360 deg");
-  await p.getByText("Axial travel 0.750 mm", { exact: true }).waitFor();
+  const coupling = p.getByRole("region", { name: "Cam coupling" });
+  await coupling.getByText("2.000 mm", { exact: true }).waitFor();
+  for (const [rotation, refillX] of [[180, -0.625], [0, 2], [180, -0.625]]) {
+    await button(panel, "Twist cap").click();
+    await p.waitForFunction((angle) => Number(document.querySelector('[aria-label="Drive value"]')?.value) === angle, rotation);
+    await coupling.getByText(refillX.toFixed(3) + " mm", { exact: true }).waitFor();
+    const pose = await snap(p);
+    const index = pose.joints.ids.indexOf("pen-refill");
+    assert(index >= 0);
+    const tip = pose.bodies[index].bbox[0][0] + pose.joints.matrices[index][12];
+    assert(Math.abs(tip - (rotation ? -2.125 : 0.5)) < 0.001, "Installed refill tip crosses the nose of the barrel");
+  }
   await button(p, "Save current pose").click({ timeout: 240000 });
-  await sample(s, "04-cap-at-one-turn");
+  const moved = await sample(s, "04-refill-extended");
+  assert.equal(moved.project.workspaces.penGuide.refillTravel, -2.625);
   await button(p, "Find clearance check").click();
   await button(p, "Full travel").click();
   await panel

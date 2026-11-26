@@ -1,5 +1,5 @@
 import { captureViewport } from "../qa/capture.mjs";
-import { openBrowser } from "../qa/browser.mjs";
+import { measure, openBrowser } from "../qa/browser.mjs";
 import assert from "node:assert/strict";
 import { mkdir, writeFile, appendFile, readFile, rm } from "node:fs/promises";
 import { resolve, join } from "node:path";
@@ -33,9 +33,7 @@ export const saved = (p) =>
     null,
     { polling: 100, timeout: 12000 },
   );
-export async function snap(p) {
-  return await p.evaluate(async () => await window.__cadTest.snapshot());
-}
+export { measure as snap };
 export async function sample(s, name, { check = true } = {}) {
   const { page: p, dir } = s;
   if (check) {
@@ -47,10 +45,8 @@ export async function sample(s, name, { check = true } = {}) {
   }
   const pic = join(dir, name + ".png");
   await captureViewport(p, pic);
-  const x = await snap(p).catch((e) => {
-      if (check) throw e;
-      return { error: e.message };
-    }),
+  const x = check ? await measure(p) : await p.evaluate(() => window.__cadTest.snapshot())
+      .catch((e) => ({ error: e.message })),
     props = p.locator(".properties");
   const measurements = (await props.isVisible())
     ? await props.innerText()
@@ -162,7 +158,7 @@ export const native = (s, file) =>
     join(s.dir, file + ".turnmill"),
   );
 export async function stepExport(s, file) {
-  const view = await snap(s.page);
+  const view = await measure(s.page);
   if (view.mode === "Assembly") {
     assert(view.joints?.matrices.length === view.bodies.length && !view.joints.problem);
     await writeFile(join(s.dir, file + ".pose.json"), JSON.stringify({

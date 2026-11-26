@@ -1,4 +1,4 @@
-import { Matrix4, Vector3, Quaternion } from "three";
+import { Euler, Matrix4, Vector3, Quaternion } from "three";
 import type { EvaluatedFeature } from "./types";
 import { evaluate } from "./expressions";
 import { springReading, type CompressionSpring } from "./springForce";
@@ -18,6 +18,25 @@ export const jointKinds = [
   "screw",
 ] as const;
 export type JointKind = (typeof jointKinds)[number];
+type Triple = [string, string, string];
+export type Placement = { position: Triple; rotation: Triple };
+export const originPlacement = (): Placement => ({
+  position: ["0", "0", "0"], rotation: ["0", "0", "0"],
+});
+// The placement is relative to the parent, or the world for a free component.
+export function placementMatrix(p: Placement, values: Record<string, number>) {
+  const [x, y, z] = p.rotation.map((s) => evaluate(s, values, "angle") * Math.PI / 180);
+  const [px, py, pz] = p.position.map((s) => evaluate(s, values));
+  return new Matrix4().makeRotationFromEuler(new Euler(x, y, z, "XYZ")).setPosition(px, py, pz);
+}
+export function placementFromMatrix(matrix: Matrix4): Placement {
+  const e = new Euler().setFromRotationMatrix(matrix, "XYZ");
+  const number = (n: number) => String(Number(n.toFixed(12)));
+  return {
+    position: matrix.elements.slice(12, 15).map(number) as Triple,
+    rotation: [e.x, e.y, e.z].map((n) => number(n * 180 / Math.PI)) as Triple,
+  };
+}
 export type CamLink = {
   driver: string;
   law: CamExpressions;
@@ -42,7 +61,14 @@ export type Joint = {
   spring?: CompressionSpring;
   threadMate?: import("./threadMates").ThreadMate;
   mount?: number[];
+  floating?: boolean;
+  placement?: Placement;
 };
+export const isFloating = (j?: Joint) => !j || (j.kind === "fixed" && !j.parent && j.floating === true);
+export function jointMount(j: Joint, values: Record<string, number>) {
+  const matrix = j.placement ? placementMatrix(j.placement, values) : new Matrix4();
+  return j.mount ? matrix.multiply(new Matrix4().fromArray(j.mount)) : matrix;
+}
 export type Driver = { active: number; coords: number[] };
 export type JointConfig = Record<string, Joint>;
 export const defaultJoint = (): Joint => ({
@@ -173,9 +199,7 @@ export function assemblyCamReadings(
         { X: 0, Y: 1, Z: 2 }[joint.axis],
         1,
       );
-      return joint.mount
-        ? axis.transformDirection(new Matrix4().fromArray(joint.mount))
-        : axis;
+      return axis.transformDirection(jointMount(joint, values));
     };
     if (
       driver.parent !== follower.parent ||
@@ -385,7 +409,7 @@ export function buildPoses(
       .multiply(
         new Matrix4().makeTranslation(-origin[0], -origin[1], -origin[2]),
       );
-    if (j.mount) mat.premultiply(new Matrix4().fromArray(j.mount));
+    if (j.mount || j.placement) mat.premultiply(jointMount(j, values));
     if (j.parent) {
       if (!ids.includes(j.parent))
         throw Error(

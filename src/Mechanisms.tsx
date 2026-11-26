@@ -1,4 +1,6 @@
 import { observeJoints } from "../tests/hook/observe";
+import { Matrix4, type Vector3 } from "three";
+import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
 import CamStudy from "./CamStudy";
@@ -21,6 +23,10 @@ import {
   Boxes,
   FolderOpen,
   Activity,
+  Move3d,
+  Lock,
+  Unlock,
+  RotateCcw,
 } from "lucide-react";
 import { createStudio } from "./studio";
 import {
@@ -29,6 +35,11 @@ import {
   limits,
   specs,
   defaultJoint,
+  isFloating,
+  originPlacement,
+  placementMatrix,
+  placementFromMatrix,
+  type Placement,
   jointKinds,
   screwLead,
   assemblyCamReadings,
@@ -42,10 +53,12 @@ import { twistPenProject } from "./projects";
 
 function ExprField({
   label,
+  caption,
   value,
   onCommit,
 }: {
   label: string;
+  caption?: string;
   value: string;
   onCommit: (s: string) => boolean | void;
 }) {
@@ -53,7 +66,7 @@ function ExprField({
   useEffect(() => set(value), [value]);
   return (
     <label className="joint-field">
-      <span>{label}</span>
+      <span>{caption ?? label}</span>
       <input
         aria-label={label}
         value={s}
@@ -74,9 +87,40 @@ export type LiveAssembly = {
   drivers: Record<string, number[]>;
   problem: string;
 };
+type PartNavigation = { onOpenPart?: (bodyId: string) => void };
+
+type FreeDrag = {
+  id: string;
+  x: number;
+  y: number;
+  pointer: number;
+  project: Project;
+  placement: Placement;
+  right: Vector3;
+  down: Vector3;
+  next?: Placement;
+};
+
+function translatePlacement(start: Placement, delta: Vector3): Placement {
+  const position = start.position.map((value, i) => {
+    const step = Number(delta.getComponent(i).toFixed(9));
+    if (step === 0) return value;
+    try {
+      return String(Number((evaluate(value, {}) + step).toFixed(9)));
+    } catch {
+      // Preserve named dimensions and accumulate the drag offset across gestures.
+      const previous = /^\((.+)\) ([+-]) ([0-9.eE+-]+) mm$/.exec(value);
+      const base = previous ? previous[1] : value;
+      const offset = previous ? Number(previous[2] + previous[3]) : 0;
+      const total = Number((offset + step).toFixed(9));
+      return total === 0 ? base : `(${base}) ${total < 0 ? "-" : "+"} ${Math.abs(total)} mm`;
+    }
+  }) as Placement["position"];
+  return { ...start, position };
+}
 
 export default function Mechanisms(
-  props: WorkspaceProps & { onImport: () => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?: number },
+  props: WorkspaceProps & PartNavigation & { onImport: () => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?: number },
 ) {
   const [frameCache, cacheFrames] = useState<{
     features: WorkspaceProps["features"];
@@ -84,27 +128,41 @@ export default function Mechanisms(
   }>();
   const ids = bodyIds(props.features),
     [tab, setTab] = useState<"motion" | "study" | "cam">("motion");
-  useEffect(()=>{ if(props.guideAssist && penGuide(props.project) && !penGuide(props.project)?.paused) setTab("motion"); },[props.guideAssist]);
+  const [guideRequest, setGuideRequest] = useState<number>();
+  const lastAssist = useRef(props.guideAssist);
+  useEffect(() => {
+    if (props.guideAssist === lastAssist.current) return;
+    lastAssist.current = props.guideAssist;
+    const guide = penGuide(props.project);
+    if (props.guideAssist && guide && !guide.paused) {
+      setTab("motion");
+      setGuideRequest(props.guideAssist);
+    }
+  }, [props.guideAssist]);
+  function selectTab(next: typeof tab) {
+    setGuideRequest(undefined);
+    setTab(next);
+  }
   return (
     <div className="mech-space">
       <div className="mech-tabs">
         <button
           className={tab === "motion" ? "selected" : ""}
-          onClick={() => setTab("motion")}
+          onClick={() => selectTab("motion")}
         >
           <Boxes size={15} />
           3D assembly
         </button>
         <button
           className={tab === "study" ? "selected" : ""}
-          onClick={() => setTab("study")}
+          onClick={() => selectTab("study")}
         >
           <Activity size={15} />
           Coaxial fit study
         </button>
         <button
           className={tab === "cam" ? "selected" : ""}
-          onClick={() => setTab("cam")}
+          onClick={() => selectTab("cam")}
         >
           Cam & spring
         </button>
@@ -125,7 +183,7 @@ export default function Mechanisms(
         />
       ) : tab === "study" ? (
         <Assembly {...props} />
-      ) : ids.length < 2 ? (
+      ) : !ids.length ? (
         <div className="tm-empty">
           <Boxes size={34} />
           <h2>Assemble two or more bodies</h2>
@@ -143,6 +201,7 @@ export default function Mechanisms(
         <JointStudio
           {...props}
           key={props.project.id}
+          guideAssist={guideRequest}
           onFrames={(frames) =>
             cacheFrames({ features: props.features, frames })
           }
@@ -159,13 +218,20 @@ function JointStudio({
   onFrames,
   guideAssist,
   liveAssembly,
-}: WorkspaceProps & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
+  onOpenPart,
+}: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
   const guidedProbe=useRef<Project | null>(null);
   const ids = bodyIds(features),
     bodies = features.filter((f) => f.operation === "new");
   const raw = (project.workspaces?.joints || {}) as JointConfig;
+  const [freePreview, setFreePreview] = useState<{ id: string; placement: Placement; project: Project } | null>(null);
+  const [menu, setMenu] = useState<{ anchor: MenuAnchor; id?: string } | null>(null);
+  const positionPanel = useRef<HTMLDetailsElement>(null);
+  const freeDrag = useRef<FreeDrag | null>(null);
+  const savedByStudio = useRef<Record<string, number[]> | null>(null);
+  const selectionMenu = useRef<(anchor:MenuAnchor, which:number | null)=>void>(()=>{});
   const [threadFrames, setThreadFrames] = useState<ThreadFrame[]>([]),
     [fitSurfaces, setFitSurfaces] = useState<FitSurface[][]>([]);
   const [mateOpen, setMateOpen] = useState(false),
@@ -196,17 +262,6 @@ function JointStudio({
     }
     oldIds.current = ids;
   }, [JSON.stringify(ids)]);
-  useEffect(()=>{
-    const guide=penGuide(project);
-    if (!guideAssist || !guide || guide.paused || !["motion","clearance"].includes(guide.stage)) return;
-    setSel("pen-cap");setCompare(guide.barrelId);setComponent(0);play(false);
-    const frame=requestAnimationFrame(()=>{
-      const control = document.querySelector<HTMLElement>(guide.stage==="motion" ? '.joint-driver input[aria-label="Drive value"]' : '[data-guide-clearance]');
-      control?.scrollIntoView({block:"center"});
-      control?.focus({preventScroll:true});
-    });
-    return ()=>cancelAnimationFrame(frame);
-  },[guideAssist]);
   const [playing, play] = useState(false),
     [recording, record] = useState(false),
     [status, setStatus] = useState("Building assembly…"),
@@ -238,15 +293,18 @@ function JointStudio({
       pointer: number;
     } | null>(null);
   const [meshVersion, setMeshVersion] = useState(0),
-    [driveDrag, setDriveDrag] = useState(false);
+    [driveDrag, setDriveDrag] = useState(true);
   let config = raw,
     problem = "";
   try {
     config = resolveThreadMates(raw, threadFrames, values, ids);
+    if (freePreview?.project === project && isFloating(raw[freePreview.id]))
+      config = { ...config, [freePreview.id]: { ...defaultJoint(), floating: true, placement: freePreview.placement } };
   } catch (e) {
     problem = (e as Error).message;
   }
   const joint = config[selected] || defaultJoint(),
+    floating = isFloating(raw[selected]),
     doFs = specs(joint.kind),
     d = Math.min(component, Math.max(0, doFs.length - 1)),
     spec = doFs[d],
@@ -278,9 +336,61 @@ function JointStudio({
       return ()=>observeJoints();
     }
   });
+  const twistFrame = useRef<number | null>(null);
+  const signature = useMemo(() => JSON.stringify(features), [features]);
+  const handledAssist = useRef<number | undefined>(undefined);
+  function stopGuideTwist() {
+    if (twistFrame.current !== null) cancelAnimationFrame(twistFrame.current);
+    twistFrame.current = null;
+  }
+  useEffect(() => {
+    const stop = () => stopGuideTwist();
+    document.addEventListener("pointerdown", stop, true);
+    document.addEventListener("keydown", stop, true);
+    return () => {
+      document.removeEventListener("pointerdown", stop, true);
+      document.removeEventListener("keydown", stop, true);
+      stopGuideTwist();
+    };
+  }, [project]);
+  useEffect(() => {
+    if (!guideAssist || guideAssist === handledAssist.current || !meshVersion) return;
+    const guide = penGuide(project);
+    if (!guide || guide.paused || !["motion", "clearance"].includes(guide.stage)) return;
+    if (displayedGeometry.current !== signature || !ids.includes("pen-refill")) return;
+    handledAssist.current = guideAssist;
+    stopGuideTwist();
+    setSel("pen-cap");
+    setCompare(guide.barrelId);
+    setComponent(0);
+    play(false);
+    const control = requestAnimationFrame(() => {
+      const input = document.querySelector<HTMLElement>(guide.stage === "motion"
+        ? '.joint-driver input[aria-label="Drive value"]' : '[data-guide-clearance]');
+      input?.scrollIntoView({ block: "center" });
+      input?.focus({ preventScroll: true });
+    });
+    if (guide.stage === "motion" && !problem && config["pen-cap"]?.kind === "screw"
+        && config["pen-refill"]?.cam?.driver === "pen-cap") {
+      const [lo, hi] = limits(config["pen-cap"], 0, values);
+      const start = Math.min(hi, Math.max(lo, poses["pen-cap"]?.[0] ?? 0));
+      const extended = Math.min(hi, Math.max(lo, 180));
+      const target = start >= extended - 0.001 ? Math.min(hi, Math.max(lo, 0)) : extended;
+      const begin = performance.now();
+      const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700;
+      function tick(time: number) {
+        const fraction = duration ? Math.min(1, (time - begin) / duration) : 1;
+        const eased = fraction * fraction * (3 - 2 * fraction);
+        const angle = fraction === 1 ? target : start + (target - start) * eased;
+        setPoses((prev) => ({ ...prev, "pen-cap": [angle] }));
+        twistFrame.current = fraction < 1 ? requestAnimationFrame(tick) : null;
+      }
+      twistFrame.current = requestAnimationFrame(tick);
+    }
+    return () => cancelAnimationFrame(control);
+  }, [guideAssist, meshVersion, signature]);
   const running = useRef({ min, max, current, selected, d });
   running.current = { min, max, current, selected, d };
-  const signature = useMemo(() => JSON.stringify(features), [features]);
   const pickBody = useRef((index: number) => {});
   pickBody.current = (index) => {
     if (ids[index] && ids[index] !== selected) {
@@ -290,7 +400,16 @@ function JointStudio({
       setInputError("");
     }
   };
+  selectionMenu.current = (anchor, which) => {
+    const id = which === null ? undefined : ids[which];
+    if (id) pickBody.current(which!);
+    setMenu({ anchor, id });
+  };
   useEffect(() => {
+    if (savedByStudio.current && savedByStudio.current === project.workspaces?.jointPose) {
+      savedByStudio.current = null;
+      return;
+    }
     setPoses(project.workspaces?.jointPose || {});
     play(false);
   }, [project.workspaces?.jointPose]);
@@ -299,7 +418,9 @@ function JointStudio({
     try {
       studio.current = createStudio(viewer.current, (_, index) => {
         if (index !== null) pickBody.current(index);
-      });
+      }, (anchor, index) => selectionMenu.current(anchor, index));
+      viewer.current.querySelector("canvas")?.setAttribute("aria-label",
+        "3D assembly. Drag a free part to move it or drag the background to orbit. Right-click a part for actions.");
     } catch {
       setStatus("Enable WebGL 2 to view the assembly.");
     }
@@ -373,8 +494,15 @@ function JointStudio({
     };
   }, [signature, generation]);
   useEffect(() => {
-    studio.current?.setOrbitEnabled(!driveDrag);
-  }, [driveDrag]);
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && freeDrag.current) {
+        freeDrag.current = null;
+        setFreePreview(null);
+      }
+    };
+    window.addEventListener("keydown", cancel);
+    return () => window.removeEventListener("keydown", cancel);
+  }, []);
   const colors = bodies.map(
     (b) =>
       (
@@ -390,9 +518,9 @@ function JointStudio({
   const mountingKey = JSON.stringify(
     ids.map((id) => [
       id,
-      config[id]?.parent,
+      config[id]?.parent ?? "",
       config[id]?.mount,
-      config[id]?.offset,
+      config[id]?.offset ?? ["0", "0", "0"],
     ]),
   );
   const lastFraming = useRef("");
@@ -443,21 +571,14 @@ function JointStudio({
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [playing, selected, d, min, max, problem, manualDrive]);
-  function patch(p: Partial<Joint>) {
-    play(false);
-    const next = { ...(raw[selected] || defaultJoint()), ...p };
-    if (p.kind && p.kind !== "slider") {
-      delete next.cam;
-      delete next.spring;
-    }
-    if ((p.kind && p.kind !== "screw") || p.parent !== undefined)
-      delete next.threadMate;
-    const nextConfig = { ...raw, [selected]: next };
+  function saveJoint(id: string, next: Joint, resetDrive = false) {
+    const nextConfig = { ...raw, [id]: next };
+    const nextPoses = resetDrive ? { ...poses, [id]: [] } : poses;
     try {
       buildPoses(
         ids,
         resolveThreadMates(nextConfig, threadFrames, values, ids),
-        poses,
+        nextPoses,
         values,
       );
     } catch (error) {
@@ -465,14 +586,56 @@ function JointStudio({
       return false;
     }
     setInputError("");
+    play(false);
+    const workspaces = { ...project.workspaces, joints: nextConfig };
+    if (resetDrive) {
+      setPoses(nextPoses);
+      if (project.workspaces?.jointPose?.[id]) {
+        const saved = { ...project.workspaces.jointPose };
+        delete saved[id];
+        savedByStudio.current = saved;
+        Object.assign(workspaces, { jointPose: saved });
+      }
+    }
     onChange({
-      ...project,
-      workspaces: {
-        ...project.workspaces,
-        joints: nextConfig,
-      },
+      ...project, workspaces,
     });
     return true;
+  }
+  function patch(p: Partial<Joint>) {
+    const next = { ...(raw[selected] || defaultJoint()), ...p };
+    if (p.kind || p.parent !== undefined) delete next.floating;
+    if (p.kind && p.kind !== "slider") {
+      delete next.cam;
+      delete next.spring;
+    }
+    if ((p.kind && p.kind !== "screw") || p.parent !== undefined)
+      delete next.threadMate;
+    // Mount a freely placed component at its current world pose. Its placement
+    // subsequently follows the parent in the same way as any connected child.
+    if (p.parent && matrices.length && !raw[selected]?.parent) {
+      const parent = new Matrix4().fromArray(matrices[ids.indexOf(p.parent)]);
+      if (!parent.equals(new Matrix4())) {
+        const local = parent.invert().multiply(placementMatrix(next.placement ?? originPlacement(), values));
+        next.placement = placementFromMatrix(local);
+      }
+    }
+    return saveJoint(selected, next);
+  }
+  function changeAttachment(id: string, float: boolean) {
+    const index = ids.indexOf(id);
+    if (!matrices[index]) return;
+    const placement = isFloating(raw[id])
+      ? raw[id]?.placement ?? originPlacement()
+      : placementFromMatrix(new Matrix4().fromArray(matrices[index]));
+    saveJoint(id, { ...defaultJoint(), floating: float, placement }, true);
+  }
+  function showPosition() {
+    if (!positionPanel.current) return;
+    positionPanel.current.open = true;
+    const input = positionPanel.current.querySelector("input");
+    input?.focus();
+    input?.select();
   }
   const limitText =
     d === 0
@@ -570,6 +733,35 @@ function JointStudio({
       range,
     });
   }
+  const menuItems: MenuItem[] = [];
+  const targetId = menu?.id;
+  const targetBody = bodies.find((body) => body.id === targetId);
+  if (targetId && targetBody) {
+    const free = isFloating(raw[targetId]);
+    if (onOpenPart)
+      menuItems.push({ label: "Open part tab", icon: FolderOpen, run: () => onOpenPart(targetId) });
+    if (free)
+      menuItems.push({ label: "Position…", icon: Move3d, run: showPosition });
+    menuItems.push({
+      label: free ? "Fix at current position" : "Float at current position",
+      icon: free ? Lock : Unlock,
+      disabled: !!problem,
+      run: () => changeAttachment(targetId, !free),
+    });
+    if (free)
+      menuItems.push({
+        label: "Reset position", icon: RotateCcw, disabled: !raw[targetId]?.placement,
+        run: () => saveJoint(targetId, { ...defaultJoint(), floating: true, placement: originPlacement() }),
+      });
+  }
+  menuItems.push({ label: "Fit assembly", icon: Scan, divider: !!targetBody, run: () => studio.current?.fit() });
+  function cancelDrag(pointer: number) {
+    if (freeDrag.current?.pointer === pointer) {
+      freeDrag.current = null;
+      setFreePreview(null);
+    }
+    if (drag.current?.pointer === pointer) drag.current = null;
+  }
   return (
     <div className="tm-workspace joint-studio">
       <div className="joint-stage">
@@ -587,16 +779,26 @@ function JointStudio({
               problem ||
               !view ||
               !meshVersion ||
-              e.button !== 0
+              e.button !== 0 || !e.isPrimary || e.shiftKey || e.ctrlKey || e.metaKey
             )
               return;
-            const which = view.bodyAt(e.nativeEvent),
+            const which = view.pickBodyAt(e.nativeEvent),
               id = ids[which];
             if (!id) return;
             const j = config[id] || defaultJoint(),
               coord = id === selected ? d : 0,
               degree = specs(j.kind)[coord];
-            pickBody.current(which);
+            if (isFloating(raw[id])) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              freeDrag.current = {
+                id, project, placement: raw[id]?.placement ?? originPlacement(),
+                x: e.clientX, y: e.clientY, pointer: e.pointerId, ...view.dragAxes(),
+              };
+              play(false);
+              return;
+            }
             if (!degree || j.cam) return;
             const [lo, hi] = limits(j, coord, values),
               value = Math.min(hi, Math.max(lo, poses[id]?.[coord] ?? 0));
@@ -646,6 +848,15 @@ function JointStudio({
             play(false);
           }}
           onPointerMoveCapture={(e) => {
+            const free = freeDrag.current;
+            if (free && free.pointer === e.pointerId && free.project === project) {
+              const dx = e.clientX - free.x, dy = e.clientY - free.y;
+              if (!free.next && Math.hypot(dx, dy) < 3) return;
+              const delta = free.right.clone().multiplyScalar(dx).addScaledVector(free.down, dy);
+              free.next = translatePlacement(free.placement, delta);
+              setFreePreview({ id: free.id, placement: free.next, project });
+              return;
+            }
             const g = drag.current;
             if (!g || g.pointer !== e.pointerId) return;
             const value = Math.min(
@@ -662,15 +873,26 @@ function JointStudio({
             });
           }}
           onPointerUpCapture={(e) => {
-            if (drag.current) {
+            const free = freeDrag.current;
+            if (free?.pointer === e.pointerId) {
+              freeDrag.current = null;
+              setFreePreview(null);
+              if (free.project === project && Math.hypot(e.clientX - free.x, e.clientY - free.y) >= 3) {
+                const delta = free.right.clone().multiplyScalar(e.clientX - free.x)
+                  .addScaledVector(free.down, e.clientY - free.y);
+                saveJoint(free.id, { ...defaultJoint(), floating: true, placement: translatePlacement(free.placement, delta) });
+              }
+              if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+              return;
+            }
+            if (drag.current?.pointer === e.pointerId) {
               drag.current = null;
               if (e.currentTarget.hasPointerCapture(e.pointerId))
                 e.currentTarget.releasePointerCapture(e.pointerId);
             }
           }}
-          onPointerCancel={() => {
-            drag.current = null;
-          }}
+          onLostPointerCapture={(e) => cancelDrag(e.pointerId)}
+          onPointerCancel={(e) => cancelDrag(e.pointerId)}
         />
         {status && (
           <div className="joint-message">
@@ -684,10 +906,11 @@ function JointStudio({
           <button
             aria-pressed={driveDrag}
             disabled={!meshVersion || !!problem}
-            title="Drag a movable part along its joint"
+            aria-label="Drag part"
+            title="Drag a free part in the view plane or move a connected part along its joint. Drag the background to orbit."
             onClick={() => setDriveDrag((x) => !x)}
           >
-            {driveDrag ? "Drag enabled" : "Drag part"}
+            Drag part
           </button>
           <button
             title="Fit assembly"
@@ -719,6 +942,7 @@ function JointStudio({
           <select
             aria-label="Component"
             value={selected}
+            {...menuTrigger((anchor) => setMenu({ anchor, id: selected }))}
             onChange={(e) => {
               setSel(e.target.value);
               setComponent(0);
@@ -733,7 +957,7 @@ function JointStudio({
             ))}
           </select>
         </label>
-        {(threadFrames.some((f) => f.bodyId === selected) ||
+        {ids.length > 1 && (threadFrames.some((f) => f.bodyId === selected) ||
           joint.threadMate) && (
           <button
             className="outline-btn mate-threads"
@@ -748,8 +972,12 @@ function JointStudio({
             Joint
             <select
               aria-label="Joint"
-              value={joint.kind}
+              value={floating ? "free" : joint.kind}
               onChange={(e) => {
+                if (e.target.value === "free") {
+                  changeAttachment(selected, true);
+                  return;
+                }
                 const kind = e.target.value as Joint["kind"];
                 const t = specs(kind)[0]?.unit;
                 patch({
@@ -761,6 +989,7 @@ function JointStudio({
                 setComponent(0);
               }}
             >
+              <option value="free">Free</option>
               {jointKinds.map((k) => (
                 <option key={k} value={k}>
                   {k[0].toUpperCase() + k.slice(1)}
@@ -773,7 +1002,7 @@ function JointStudio({
             <select
               aria-label="Axis"
               value={joint.axis}
-              disabled={!!joint.threadMate}
+              disabled={!!joint.threadMate || floating}
               onChange={(e) => patch({ axis: e.target.value as Joint["axis"] })}
             >
               {["X", "Y", "Z"].map((a) => (
@@ -789,7 +1018,7 @@ function JointStudio({
             value={joint.parent}
             onChange={(e) => patch({ parent: e.target.value })}
           >
-            <option value="">Ground</option>
+            <option value="">{floating ? "World" : "Ground"}</option>
             {bodies
               .filter((b) => {
                 let at = b.id;
@@ -808,6 +1037,27 @@ function JointStudio({
               ))}
           </select>
         </label>
+        {floating && (
+          <details ref={positionPanel}>
+            <summary>Position &amp; rotation</summary>
+            {(["position", "rotation"] as const).map((key) => (
+              <div key={key}>
+                <small>{key === "position" ? "Position (mm)" : "Rotation (°)"}</small>
+                <div className="joint-triple">
+                  {([0, 1, 2] as const).map((i) => {
+                    const placement = joint.placement ?? originPlacement();
+                    return <ExprField key={i} label={`${key === "position" ? "Position" : "Rotation"} ${"XYZ"[i]}`}
+                      caption={"XYZ"[i]} value={placement[key][i]} onCommit={(v) => {
+                        const next = [...placement[key]] as Placement["position"];
+                        next[i] = v;
+                        return saveJoint(selected, { ...defaultJoint(), floating: true, placement: { ...placement, [key]: next } });
+                      }} />;
+                  })}
+                </div>
+              </div>
+            ))}
+          </details>
+        )}
         {!!doFs.length && (
           <>
             <div className="joint-pair">
@@ -937,14 +1187,20 @@ function JointStudio({
           className="outline-btn"
           disabled={!meshVersion || !!problem}
           onClick={() => {
-            const next={...project,workspaces:{...project.workspaces,jointPose:poses}};
-            onChange(recordGuideMotion(next,selected,current,lead,joint.kind==="screw" && !!joint.threadMate && joint.threadMate.mating.featureId===penGuide(project)?.barrelId));
+            const next = { ...project, workspaces: { ...project.workspaces, jointPose: poses } };
+            const follower = readings.find((r) => r.followerId === "pen-refill" && r.driverId === "pen-cap");
+            const link = config["pen-refill"]?.cam;
+            const refillTravel = !problem && follower && !follower.error && link
+              ? follower.position - evaluate(link.datum, values) : 0;
+            const mated = joint.kind === "screw" && !!joint.threadMate
+              && joint.threadMate.mating.featureId === penGuide(project)?.barrelId;
+            onChange(recordGuideMotion(next, selected, current, lead, mated, refillTravel));
             setReport("Current joint positions saved with the project.");
           }}
         >
           Save current pose
         </button>
-        {!joint.threadMate && (
+        {!floating && !joint.threadMate && (
           <details>
             <summary>Joint frame</summary>
             {(["origin", "offset"] as const).map((k) => (
@@ -972,7 +1228,7 @@ function JointStudio({
             ))}
           </details>
         )}
-        <div className="joint-check">
+        {ids.length > 1 && <div className="joint-check">
           <h3>Clearance</h3>
           <ExprField
             label="Required clearance"
@@ -1089,7 +1345,7 @@ function JointStudio({
           {!checkerReady && !!meshVersion && !status && (
             <small role="status">Preparing the clearance checker…</small>
           )}
-        </div>
+        </div>}
         <MatingFits
           project={project}
           onChange={onChange}
@@ -1098,6 +1354,8 @@ function JointStudio({
         />
         <AssemblyBom project={project} features={features} />
       </aside>
+      {menu && <ContextMenu anchor={menu.anchor} title={targetBody?.name || "Assembly"}
+        items={menuItems} onClose={() => setMenu(null)} />}
       {mateOpen && (
         <ThreadMateDialog
           selected={selected}

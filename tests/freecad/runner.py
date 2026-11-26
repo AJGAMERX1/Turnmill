@@ -53,7 +53,11 @@ def run(script, case):
 
 if __name__ == "__main__":
     for case in sys.argv[1:]:
-        if case == "references":
+        if case == "part-workspaces":
+            run("part_workspaces.py", case)
+        elif case == "ruler-export":
+            run("ruler_export.py", case)
+        elif case == "references":
             run("create_references.py", "references")
         else:
             run("inspect_case.py", case)

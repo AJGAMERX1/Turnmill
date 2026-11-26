@@ -3,7 +3,6 @@ import { Download, Printer, Ruler } from "lucide-react";
 import { ScaleAttachmentPanel } from "./ScaleAttachmentPanel";
 import { boldCadFont, cadFont, isCadFont } from "./secondaryInk";
 import {
-  getScaleLayout,
   isScaleFeature,
   scaleDefaults as defaults,
   scaleKind as unitType,
@@ -12,25 +11,31 @@ import {
 } from "./secondaryEngraving";
 import {
   changeWorkspace,
-  dxfFile,
-  fileName,
   NumberField,
   printSheet,
-  saveAs,
   SheetView,
-  svgFile,
   type WorkspaceProps,
-  type Sheet,
 } from "./secondaryVector";
 import {
-  makeScale,
-  outlinedGraduations,
   scaleUnits,
   type ScaleLayout,
   type ScaleUnit,
 } from "./secondaryScale";
+import type { RulerExport, RulerExportOptions, RulerTool } from "./rulerExport";
+
 export default function Scale(
-  props: WorkspaceProps & { rebuilding?: boolean },
+  props: WorkspaceProps & {
+    rebuilding?: boolean;
+    vectors: RulerExport;
+    exportOptions: RulerExportOptions;
+    onExportOptions: (options: RulerExportOptions) => void;
+    tool: RulerTool;
+    onTool: (tool: RulerTool) => void;
+    solidReady: boolean;
+    hasEngraving: boolean;
+    onVector: (format: "svg" | "dxf") => void;
+    onStep: () => void;
+  },
 ) {
   const cfg = props.project.workspaces?.scale || {},
     patch = (data: Record<string, unknown>) =>
@@ -59,10 +64,7 @@ export default function Scale(
       !f.suppressed &&
       !isScaleFeature(props.project, f.id),
   );
-  const [tool, setTool] = useState<"part" | "stock">(
-    !attachable || (stock && !cfg.appliedId) ? "stock" : "part",
-  );
-  const attach = tool === "part" && attachable;
+  const attach = props.tool === "part" && attachable;
   function changeCutDimension(key: "thickness" | "depth", amount: string) {
     const id = key === "thickness" ? cfg.modelId : cfg.appliedId;
     if (!props.project.features.some((f) => f.id === id)) {
@@ -80,27 +82,8 @@ export default function Scale(
       },
     });
   }
-  const [include, setInclude] = useState(false);
-  const [centerlines, setCenterlines] = useState(false);
-  let exported: Sheet | undefined;
-  let scaleLayout,
-    results,
-    preview,
-    err = "";
-  try {
-    scaleLayout = getScaleLayout(cfg, props.values);
-    const made = makeScale(scaleLayout);
-    preview = outlinedGraduations(made.preview, scaleLayout);
-    const source = include ? made.preview : made.geometry;
-    exported = centerlines ? source : outlinedGraduations(source, scaleLayout);
-    results = made;
-  } catch (e) {
-    err = (e as Error).message;
-  }
-  const base =
-    fileName(props.project.name) +
-    "-" +
-    (layout === "arc" ? "protractor" : "ruler");
+  const { include, centerlines } = props.exportOptions;
+  const { layout: scaleLayout, results, preview, sheet: exported, error: err, base } = props.vectors;
   const cadLabels =
     isCadFont(font) &&
     (!scaleLayout?.bottomLabels || isCadFont(scaleLayout.bottomLabels.font));
@@ -200,29 +183,26 @@ export default function Scale(
         <div className="tm-export-line">
           <button
             className="tm-btn accent"
-            disabled={props.rebuilding || !exported}
-            onClick={() =>
-              exported &&
-              saveAs(svgFile(exported), "image/svg+xml", base + ".svg")
-            }
+            disabled={!exported}
+            onClick={() => props.onVector("svg")}
           >
             <Download size={14} />
             Export SVG
           </button>
           <button
             className="tm-btn"
-            disabled={props.rebuilding || !exported}
-            onClick={() =>
-              exported &&
-              saveAs(dxfFile(exported), "application/dxf", base + ".dxf")
-            }
+            disabled={!exported}
+            onClick={() => props.onVector("dxf")}
           >
             <Download size={14} />
             Export DXF
           </button>
+          <button className="tm-btn" disabled={!props.solidReady} onClick={props.onStep}>
+            <Download size={14} /> Export STEP
+          </button>
           <button
             className="tm-btn"
-            disabled={props.rebuilding || !exported}
+            disabled={!exported}
             onClick={() => {
               if (exported && !printSheet(exported, base))
                 setNotice("Allow the print window and choose Save as PDF.");
@@ -232,25 +212,30 @@ export default function Scale(
             Print / PDF
           </button>
         </div>
+        {!props.hasEngraving && (
+          <p className="tm-help">For STEP, {attach ? "apply graduations to a part" : "create engraved stock"} in{" "}
+            <a className="ruler-settings-link" href="#scale-engraving-settings">3D engraving</a>.
+          </p>
+        )}
         <label className="tm-check tm-export-opt">
           <input
             type="checkbox"
+            data-command-key="include-blank-outline-in-export"
             checked={include}
-            onChange={(e) => setInclude(e.target.checked)}
+            onChange={(e) => props.onExportOptions({ include: e.target.checked, centerlines })}
           />
-          Include blank outline in export
+          {attach ? "Include layout outline in export" : "Include blank outline in export"}
         </label>
         <label className="tm-check tm-export-opt">
           <input
             type="checkbox"
             checked={centerlines}
-            onChange={(e) => setCenterlines(e.target.checked)}
+            onChange={(e) => props.onExportOptions({ centerlines: e.target.checked, include })}
           />
           Export tick centerlines
         </label>
         <p className="tm-work-note">
-          Exports use 1:1 layout coordinates in millimetres. Part placement
-          applies only to the 3D cut.{" "}
+          SVG and DXF use 1:1 layout coordinates in millimetres. STEP includes the solid and its engraved cuts.{" "}
           {cadLabels
             ? "Numerals export as closed outlines."
             : "System-font labels export as editable text."}{" "}
@@ -352,13 +337,13 @@ export default function Scale(
             "mm",
           )}
         </details>
-        <h3>3D engraving</h3>
+        <h3 id="scale-engraving-settings" tabIndex={-1}>3D engraving</h3>
         {attachable && (
           <div className="tm-segment">
-            <button aria-pressed={attach} onClick={() => setTool("part")}>
+            <button aria-pressed={attach} onClick={() => props.onTool("part")}>
               Existing part
             </button>
-            <button aria-pressed={!attach} onClick={() => setTool("stock")}>
+            <button aria-pressed={!attach} onClick={() => props.onTool("stock")}>
               Ruler stock
             </button>
           </div>

@@ -18,7 +18,9 @@ for (name, local), actual in zip(source.items(), placed):
     assert local.isValid() and actual.isValid()
     assert abs(actual.Volume - local.Volume) < 0.001
     shift = actual.CenterOfMass - local.CenterOfMass
-    expected = 0.75 if name in ["Threaded cap", "Pocket clip"] else 0
+    # At one full turn the cam is back on its base circle. The refill sits
+    # at its 2 mm home datum plus the cap screw's 0.75 mm axial advance.
+    expected = {"Threaded cap": 0.75, "Pocket clip": 0.75, "Refill": 2.75, "Barrel": 0}[name]
     assert (shift - App.Vector(expected, 0, 0)).Length < 0.0001, (name, shift)
     centers[name] = list(shift)
 

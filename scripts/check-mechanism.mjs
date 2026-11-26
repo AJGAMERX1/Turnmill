@@ -15,6 +15,9 @@ try {
     defaultJoint,
     limits,
     buildPoses,
+    placementMatrix,
+    placementFromMatrix,
+    isFloating,
     assemblyCamReadings,
     camTravelSpeed,
     jointTravelProblem,
@@ -36,6 +39,26 @@ try {
   function at(m, point, expected, label) {
     const xyz = new Vector3(...point).applyMatrix4(m).toArray();
     xyz.forEach((n, i) => near(n, expected[i], label));
+  }
+  assert.equal(isFloating(), true, "A new, unconnected body can be moved");
+  assert.equal(isFloating(defaultJoint()), false, "Existing explicit fixed joints stay grounded");
+  const placement = { position: ["span / 2", "2 mm", "-1 mm"], rotation: ["0", "0", "90 deg"] };
+  const placed = {
+    base: joint("fixed", { floating: true, placement }),
+    slide: joint("slider", { parent: "base", axis: "X" }),
+  };
+  const positioned = buildPoses(["base", "slide"], placed, { slide: [3] }, { span: 20 })
+    .map((v) => new Matrix4().fromArray(v));
+  at(positioned[0], [1, 0, 0], [10, 3, -1], "free world position and rotation");
+  at(positioned[1], [0, 0, 0], [10, 5, -1], "slider travels along the rotated parent's axis");
+  at(placementMatrix(placement, { span: 40 }), [1, 0, 0], [20, 3, -1], "placement follows a named dimension");
+  const release = placementFromMatrix(positioned[1]);
+  const detached = matrix(joint("fixed", { floating: true, placement: release }), []);
+  detached.elements.forEach((v, i) => near(v, positioned[1].elements[i], "detaching preserves a driven world pose"));
+  for (const rotation of [["23", "-67", "89"], ["8", "90", "-28"], ["-31", "-90", "12"]]) {
+    const m = placementMatrix({ position: ["1", "2", "3"], rotation }, {});
+    const roundTrip = placementMatrix(placementFromMatrix(m), {});
+    roundTrip.elements.forEach((n, i) => near(n, m.elements[i], "round-trip arbitrary XYZ rotation"));
   }
   at(
     matrix(joint("fixed", { offset: ["1", "2", "3"] }), [7]),

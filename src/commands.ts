@@ -223,12 +223,13 @@ export function surfaceCommands(
       el instanceof HTMLSelectElement
         ? [...el.options].map((o) => o.text).join(" ")
         : "";
+    const stableKey = el.getAttribute("data-command-key");
     const disabled = !available(el);
     commands.push({
       title,
       group: trail ? group + " · " + trail : group,
-      key: commandKey(title),
-      keywords: [description, options].join(" "),
+      key: stableKey || commandKey(title),
+      keywords: [description, options, stableKey].filter(Boolean).join(" "),
       disabled,
       reason: disabled ? disabledReason(el, root, name) : undefined,
       run: () => activate(el),

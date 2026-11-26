@@ -112,12 +112,15 @@ const { join } = require("node:path");
     );
     await width.fill("0.22 mm");
     await width.press("Enter");
-    await open(":include-blank-outline-in-export");
-    await input.press("Enter");
-    assert.equal(
-      await page.getByLabel("Include blank outline in export").isChecked(),
-      true,
-    );
+    const outline = page.getByRole("checkbox", { name: "Include layout outline in export", exact: true });
+    assert.equal(await outline.isChecked(), false);
+    await run(":include-blank-outline-in-export", /Include layout outline in export/);
+    assert.equal(await outline.isChecked(), true);
+    await run("include layout outline", /Include layout outline in export/);
+    assert.equal(await outline.isChecked(), false);
+    await page.getByRole("button", { name: "Ruler stock", exact: true }).click();
+    await run(":include-blank-outline-in-export", /Include blank outline in export/);
+    assert.equal(await page.getByRole("checkbox", { name: "Include blank outline in export" }).isChecked(), true);
     await open("width");
     const ids = await palette
       .getByRole("option")

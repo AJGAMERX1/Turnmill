@@ -123,7 +123,7 @@ kbd {
   gap: 9px;
   font-weight: 700;
   font-size: 23px;
-  letter-spacing: -1.25px;
+  letter-spacing: 0.025em;
 }
 .brand img {
   width: 32px;
@@ -1674,4 +1674,26 @@ button.primary {
   .app-header .project-trigger {
     max-width: 100%;
   }
+}
+
+.selection-dimensions {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.selection-dimensions .dimension-note {
+  margin: 5px 0 9px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.profile-coordinates > button {
+  padding: 5px 0;
+  font-size: 12px;
+  color: #b8c9c4;
+}
+.profile-coordinates select {
+  width: 90px;
+  padding: 4px 7px;
 }
