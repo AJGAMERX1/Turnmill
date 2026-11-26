@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import {
   Check,
@@ -6,6 +6,7 @@ import {
   Crosshair,
   Diamond,
   Box,
+  Cylinder,
   Hand,
   Maximize,
   Minus,
@@ -29,6 +30,9 @@ import {
   type SketchSolution,
   type XY,
 } from "./solveSketch";
+import { evaluate } from "./expressions";
+import { changeProfileRange, profileRange, type ProfileRange } from "./profileSizing";
+import SketchStock from "./SketchStock";
 import "./sketch.css";
 
 type Props = {
@@ -39,13 +43,14 @@ type Props = {
   onClose: () => void;
   onFeature: (kind: "extrude" | "revolve", sketchId: string) => void;
 };
-type Tool = "select" | "polygon" | "rectangle" | "pan";
+type Tool = "select" | "polygon" | "rectangle" | "blank" | "pan";
 type Camera = { cx: number; cy: number; scale: number };
 type Operand = "Point" | "Edge" | "Axis edge";
 const operands: Record<string, Operand[]> = {
   horizontal: ["Edge"],
   vertical: ["Edge"],
   length: ["Edge"],
+  angle: ["Edge"],
   distance: ["Point", "Point"],
   x: ["Point"],
   y: ["Point"],
@@ -195,6 +200,10 @@ export default function SketchEditor({
     [status, setStatus] = useState("");
   const [entry, setEntry] = useState<Point>({ x: "0", y: "0" }),
     sources = useRef<Point[]>([]);
+  const segmentRules = useRef<Constraint[]>([]);
+  const undonePoints = useRef<{ point: XY; source: Point; rules: Constraint[] }[]>([]);
+  const [segmentLength, setSegmentLength] = useState("10 mm");
+  const [segmentAngle, setSegmentAngle] = useState("0 deg");
   const [size, setSize] = useState({ width: 760, height: 510 }),
     [camera, setCamera] = useState<Camera | null>(null);
   const [dragPoint, setDragPoint] = useState<{ i: number; point: XY } | null>(
@@ -210,9 +219,21 @@ export default function SketchEditor({
     world: XY;
     moved: boolean;
   } | null>(null);
-  const drawingMode = tool === "polygon" || tool === "rectangle",
+  const drawingMode = tool === "polygon" || tool === "rectangle" || tool === "blank",
     gridId = useId().replace(/:/g, "");
   const labels = { x: turned ? "Axial X" : "X", y: turned ? "Radius R" : "Y" };
+
+  const radialProfile = turned || draft.sizing?.y?.radial === true;
+  const ranges = useMemo(() => {
+    try {
+      return (["x", "y"] as const).map(axis => profileRange(draft, axis, radialProfile, parameters))
+        .filter((r): r is ProfileRange => !!r);
+    } catch { return []; }
+  }, [draft, parameters, radialProfile]);
+  function resize(range: ProfileRange, field: "size" | "lower", expr: string) {
+    try { change(changeProfileRange(draft, range, field, expr, parameters)); }
+    catch (error) { setStatus(readError(error)); }
+  }
 
   useLayoutEffect(() => {
     const bounds = svg.current;
@@ -284,6 +305,26 @@ export default function SketchEditor({
     setStatus("");
   };
   function history(back: boolean) {
+    if (drawingMode && drawing.length && back) {
+      const last = drawing.length - 1;
+      undonePoints.current.push({
+        point: drawing[last], source: sources.current[last],
+        rules: segmentRules.current.filter(rule => rule.indices[0] === last - 1),
+      });
+      sources.current = sources.current.slice(0, last);
+      segmentRules.current = segmentRules.current.filter(rule => rule.indices[0] < last - 1);
+      setDrawing(drawing.slice(0, last));
+      setStatus("");
+      return;
+    }
+    if (drawingMode && !back && undonePoints.current.length) {
+      const next = undonePoints.current.pop()!;
+      sources.current.push(next.source);
+      segmentRules.current.push(...next.rules);
+      setDrawing([...drawing, next.point]);
+      setStatus("");
+      return;
+    }
     const stack = back ? undo : redo;
     if (!stack.length) return;
     const other = back ? setRedo : setUndo,
@@ -291,17 +332,36 @@ export default function SketchEditor({
     other((s) => [...s, draft]);
     current((s) => s.slice(0, -1));
     setDraft(stack[stack.length - 1]);
+    sources.current = [];
+    segmentRules.current = [];
+    undonePoints.current = [];
+    setCamera(null);
     setDrawing([]);
     setTool("select");
     setStatus("");
   }
   function changeTool(t: Tool) {
     sources.current = [];
+    segmentRules.current = [];
+    undonePoints.current = [];
+    setEntry({ x: "0", y: "0" });
     setCamera(scaleView);
     setTool(t);
     setDrawing([]);
     setHover(null);
     setStatus("");
+  }
+  function commitProfile(next: Sketch) {
+    change(next);
+    sources.current = [];
+    segmentRules.current = [];
+    undonePoints.current = [];
+    setTool("select");
+    setDrawing([]);
+    setHover(null);
+    setCamera(null);
+    setSelected({ kind: "Point", i: 0 });
+    setTab("vertices");
   }
   function replace(
     points: XY[],
@@ -311,24 +371,24 @@ export default function SketchEditor({
     if (points.length < 3) return;
     const constraints: Constraint[] = rectangle
       ? ["horizontal", "vertical", "horizontal", "vertical"].map((type, i) => ({
-          id: makeId(),
-          type,
-          indices: [i],
+          id: makeId(), type, indices: [i],
         }))
-      : [];
-    change({
-      ...draft,
-      points: points.map((p, i) => expressions[i] || toPoint(p)),
-      constraints,
-    });
-    sources.current = [];
-    setTool("select");
-    setDrawing([]);
-    setHover(null);
-    setSelected({ kind: "Point", i: 0 });
-    setTab("vertices");
+      : [...segmentRules.current];
+    if (constraints.some(c => c.type === "angle" && c.indices[0] === 0)) {
+      for (const axis of ["x", "y"] as const) {
+        const value = expressions[0][axis];
+        if (!isExpression(value)) constraints.push({ id: makeId(), type: axis, indices: [0], value });
+      }
+    }
+    const next = { ...draft, points: points.map((p, i) => expressions[i] || toPoint(p)), constraints };
+    delete next.sizing;
+    commitProfile(next);
   }
-  function place(point: XY, expression = toPoint(point)) {
+  function place(point: XY, expression = toPoint(point), pointer = false) {
+    if (tool === "blank") {
+      setEntry({ x: expression.x, y: "0" });
+      return;
+    }
     if (tool === "rectangle" && drawing.length) {
       const a = drawing[0],
         b = point;
@@ -348,16 +408,34 @@ export default function SketchEditor({
     if (
       tool === "polygon" &&
       drawing.length > 2 &&
-      Math.hypot(drawing[0].x - point.x, drawing[0].y - point.y) *
-        scaleView.scale <
-        9
+      Math.hypot(drawing[0].x - point.x, drawing[0].y - point.y) <
+        (pointer ? 9 / scaleView.scale : 1e-8)
     ) {
       replace(drawing);
       return;
     }
+    undonePoints.current = [];
     sources.current = [...sources.current, expression];
     setDrawing([...drawing, point]);
     setStatus("");
+  }
+  function addSegment() {
+    try {
+      const length = evaluate(segmentLength, parameters);
+      if (length <= 0) throw Error("Enter a segment length greater than zero.");
+      const radians = (evaluate(segmentAngle, parameters, "angle") % 360) * Math.PI / 180;
+      const start = drawing[drawing.length - 1];
+      const i = drawing.length - 1;
+      const point = { x: start.x + length * Math.cos(radians), y: start.y + length * Math.sin(radians) };
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) throw Error("Choose a shorter segment.");
+      segmentRules.current.push(
+        { id: makeId(), type: "length", indices: [i], value: segmentLength.trim() },
+        { id: makeId(), type: "angle", indices: [i], value: segmentAngle.trim() },
+      );
+      const seed = (value: number) => String(Math.abs(value) < 1e-12 ? 0 : value);
+      place(point, { x: seed(point.x), y: seed(point.y) });
+      setCamera(fitCamera([...drawing, point], size.width, size.height));
+    } catch (error) { setStatus(readError(error)); }
   }
   function locked(i: number, axis: "x" | "y") {
     return (
@@ -384,7 +462,8 @@ export default function SketchEditor({
       return;
     }
     if (drawingMode) {
-      place(snapped(world(loc)));
+      const point = snapped(world(loc));
+      place(point, toPoint(point), true);
       return;
     }
     if (index < 0) return;
@@ -490,10 +569,11 @@ export default function SketchEditor({
     setTab("relations");
     if (verts[i] && verts[b]) {
       const len = Math.hypot(verts[b].x - verts[i].x, verts[b].y - verts[i].y);
-      setDimension(fmt(t === "x" ? verts[i].x : t === "y" ? verts[i].y : len));
+      const angle = Math.atan2(verts[b].y - verts[i].y, verts[b].x - verts[i].x) * 180 / Math.PI;
+      setDimension(fmt(t === "x" ? verts[i].x : t === "y" ? verts[i].y : t === "angle" ? angle : len));
     }
   }
-  const valueRule = ["length", "distance", "arc", "x", "y"].includes(ruleType);
+  const valueRule = ["length", "angle", "distance", "arc", "x", "y"].includes(ruleType);
   function addRule() {
     const rule: Constraint = {
       id: makeId(),
@@ -542,6 +622,12 @@ export default function SketchEditor({
   const rough = dragPoint
     ? verts.map((p, i) => (i === dragPoint.i ? dragPoint.point : p))
     : preview;
+  const lastPoint = drawing.at(-1);
+  const cursorMeasure = lastPoint && hover && tool === "polygon" ? {
+    position: screen(hover),
+    length: Math.hypot(hover.x - lastPoint.x, hover.y - lastPoint.y),
+    angle: Math.atan2(hover.y - lastPoint.y, hover.x - lastPoint.x) * 180 / Math.PI,
+  } : undefined;
   const origin = screen({ x: 0, y: 0 }),
     pow = Math.pow(10, Math.floor(Math.log10(60 / scaleView.scale)));
   const stride =
@@ -553,12 +639,14 @@ export default function SketchEditor({
       scale: Math.max(0.0001, Math.min(100000, scaleView.scale * mult)),
     });
   const help =
-    tool === "rectangle"
+    tool === "blank"
+      ? "Enter the blank dimensions. Click the sketch to set the axial start."
+      : tool === "rectangle"
       ? drawing.length
-        ? "Choose the opposite corner."
-        : "Choose the first corner of the new rectangular profile."
+        ? "Choose the opposite corner, or enter width and height."
+        : "Enter width and height, or place two opposite corners."
       : tool === "polygon"
-        ? "Place each vertex. Select the first vertex or Close profile to finish."
+        ? drawing.length ? "Place a point, or enter the length and angle of the next edge." : "Click a starting point or enter its coordinates."
         : tool === "pan"
           ? "Drag to pan the sketch."
           : "Select a vertex to edit its coordinates, or an edge to add a constraint.";
@@ -668,6 +756,9 @@ export default function SketchEditor({
                   <Square size={15} />
                   Rectangle
                 </ToolButton>
+                <ToolButton label="Draw a turned blank profile" active={tool === "blank"} onClick={() => changeTool("blank")}>
+                  <Cylinder size={15} /> Turned blank
+                </ToolButton>
                 <ToolButton
                   label="Pan sketch"
                   active={tool === "pan"}
@@ -679,14 +770,14 @@ export default function SketchEditor({
               <div className="sk-buttonset">
                 <ToolButton
                   label="Undo sketch edit"
-                  disabled={!undo.length}
+                  disabled={!undo.length && !drawing.length}
                   onClick={() => history(true)}
                 >
                   <Undo2 size={16} />
                 </ToolButton>
                 <ToolButton
                   label="Redo sketch edit"
-                  disabled={!redo.length}
+                  disabled={!undonePoints.current.length && (!redo.length || drawing.length > 0)}
                   onClick={() => history(false)}
                 >
                   <Redo2 size={16} />
@@ -708,14 +799,14 @@ export default function SketchEditor({
                 }}
               >
                 <label>
-                  {labels.x}
+                  {tool === "blank" ? "Axial start · mm" : labels.x}
                   <input
                     aria-label="Place vertex X"
                     value={entry.x}
                     onChange={(e) => setEntry({ ...entry, x: e.target.value })}
                   />
                 </label>
-                <label>
+                {tool !== "blank" && <><label>
                   {labels.y}
                   <input
                     aria-label="Place vertex Y"
@@ -726,7 +817,7 @@ export default function SketchEditor({
                 <button type="submit">
                   <Plus size={13} />
                   Place point
-                </button>
+                </button></>}
               </form>
             )}
             <div className="sk-plot" tabIndex={0} aria-label="Sketch canvas" {...menuTrigger(setMenu)}>
@@ -889,6 +980,12 @@ export default function SketchEditor({
                       </g>
                     );
                   })}
+                {cursorMeasure && cursorMeasure.length > 0 && <text
+                  x={Math.max(5, Math.min(size.width - 122, cursorMeasure.position.x + 12))}
+                  y={Math.max(14, Math.min(size.height - 6, cursorMeasure.position.y - 12))}
+                  className="sk-vlabel">
+                  {fmt(cursorMeasure.length)} mm · {fmt(cursorMeasure.angle)}°
+                </text>}
                 {drawing.length > 0 && (
                   <>
                     <path
@@ -934,7 +1031,7 @@ export default function SketchEditor({
               </span>
               <span>
                 {hover
-                  ? "X " +
+                  ? (hover.y === 0 ? "On X axis · " : "") + "X " +
                     fmt(hover.x) +
                     " · " +
                     (turned ? "R " : "Y ") +
@@ -964,7 +1061,21 @@ export default function SketchEditor({
             </div>
           </section>
           <aside className="sk-inspector">
-            <div className="sk-tabs">
+            {drawingMode ? <div className="sk-scroll">
+              {tool === "blank" || tool === "rectangle" ? <SketchStock key={tool} turned={tool === "blank"}
+                sketch={draft} parameters={parameters} start={sources.current[0] || entry}
+                onCreate={commitProfile} onError={setStatus} /> :
+                <form className="sk-size-form" onSubmit={e => { e.preventDefault(); if (drawing.length) addSegment(); }}>
+                  <h3>{drawing.length ? "Next edge" : "Polygon"}</h3>
+                  {drawing.length > 0 ? <>
+                    <p>From P{drawing.length}. Angles run counterclockwise from the positive X axis.</p>
+                    <label>Edge length<input value={segmentLength} onChange={e => setSegmentLength(e.target.value)} /></label>
+                    <label>Angle from X<input value={segmentAngle} onChange={e => setSegmentAngle(e.target.value)} /></label>
+                    <button type="submit" className="sk-size-apply">Add edge</button>
+                  </> : <p>Place the first point to enter an edge by length and angle.</p>}
+                </form>}
+              <p className="sk-note">Dimension fields accept units and formulas such as 1/2 in or barrel_length / 2.</p>
+            </div> : <><div className="sk-tabs">
               <button
                 aria-pressed={tab === "vertices"}
                 onClick={() => setTab("vertices")}
@@ -981,6 +1092,16 @@ export default function SketchEditor({
             <div className="sk-scroll">
               {tab === "vertices" ? (
                 <>
+                  {!!ranges.length && <section className="sk-size-form sk-profile-size" aria-label="Profile dimensions">
+                    <h3>Profile dimensions</h3>
+                    {ranges.map(range => {
+                      const label = range.axis === "x" ? (radialProfile ? "Axial length" : "Width") : (range.radial ? "Outside diameter" : "Height");
+                      return <div className="sk-size-pair" key={range.axis}>
+                        <label>{label}<Field label={"Sketch " + label.toLowerCase()} value={range.size} onCommit={v => resize(range, "size", v)} /></label>
+                        {range.radial && <label>{range.hasBore ? "Bore diameter" : "Minimum inside diameter"}<Field label="Sketch minimum diameter" value={range.lower} onCommit={v => resize(range, "lower", v)} /></label>}
+                      </div>;
+                    })}
+                  </section>}
                   <p className="sk-note">
                     Enter a number or expression to fix that coordinate. Drag
                     free vertices in the sketch.
@@ -1106,7 +1227,7 @@ export default function SketchEditor({
                         <label>
                           {ruleType === "arc"
                             ? "Signed radius · mm"
-                            : "Value · mm"}
+                            : ruleType === "angle" ? "Angle from X · deg" : "Value · mm"}
                           <input
                             aria-label="Constraint dimension"
                             value={dimension}
@@ -1190,7 +1311,7 @@ export default function SketchEditor({
                   ))}
                 </>
               )}
-            </div>
+            </div></>}
           </aside>
         </div>
         <footer className="sk-foot">

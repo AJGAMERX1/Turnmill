@@ -621,3 +621,50 @@
   padding: 5px 7px;
   font-size: 11px;
 }
+.sk-size-form,
+.sk-size-pair {
+  display: grid;
+  gap: 9px;
+}
+.sk-size-form h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--sk-text);
+}
+.sk-size-form p {
+  margin: 0 0 3px;
+  line-height: 1.45;
+  color: var(--sk-mute);
+  font-size: 12px;
+}
+.sk-size-form label {
+  display: grid;
+  grid-template-columns: minmax(75px, 1fr) minmax(88px, 1.2fr);
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+.sk-dialog .sk-size-form input {
+  width: 100%;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+.sk-dialog .sk-size-apply {
+  padding: 9px;
+  border: 1px solid #675638;
+  border-radius: 5px;
+  background: #393227;
+  color: #ffdb9d;
+  font-weight: 600;
+}
+.sk-profile-size {
+  margin-bottom: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--sk-line);
+}
+.sk-bar, .sk-bar .sk-buttonset {
+  flex-wrap: wrap;
+}
+.sk-canvas.mode-blank {
+  cursor: crosshair;
+}

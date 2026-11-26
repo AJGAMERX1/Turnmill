@@ -5,6 +5,7 @@ import type { EvaluatedFeature, Project } from "./types";
 import { evaluate, resolveParameters } from "./expressions";
 import { evaluateFinish } from "./finishingTypes";
 import { solveSketch } from "./solveSketch";
+import { prepareRefillSketch } from "./refills";
 export async function evaluateModel(
   p: Project,
 ): Promise<{ features: EvaluatedFeature[]; values: Record<string, number> }> {
@@ -60,7 +61,7 @@ export async function evaluateModel(
       );
     let solved = cache.get(sketch.id);
     if (!solved) {
-      solved = await solveSketch(sketch, values);
+      solved = await solveSketch(prepareRefillSketch(p, feature.id, sketch, values), values);
       cache.set(sketch.id, solved);
     }
     const amount = evaluate(

@@ -1,6 +1,6 @@
 import type { MenuAnchor } from "./ContextMenu";
 import { observeGeometry } from "../tests/hook/observe";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { createStudio, type View } from "./studio";
 import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
@@ -8,6 +8,7 @@ import type { EvaluatedFeature } from "./types";
 
 export type KernelStatus = {
   signature?: string;
+  threadFrames?: import("./threadMates").ThreadFrame[];
   busy: boolean;
   error: string;
   volume: number;
@@ -30,6 +31,10 @@ type Props = {
   exportRequest: ExportRequest | null;
   appearances?: number[];
   visibleBodyId?: string;
+  photoMode?: boolean;
+  photoMatrices?: number[][];
+  ghostIds?: string[];
+  savePhoto?: RefObject<(() => Promise<Blob>) | null>;
   onBodyContextMenu?: (anchor: MenuAnchor, bodyId: string | null) => void;
   onBodyPick?: (bodyId: string) => void;
   onStatus: (status: KernelStatus) => void;
@@ -41,6 +46,7 @@ export type KernelReply = { revision: number } & (
       | { type: "updated"; keys: number[]; changes: MeshChange[] }
     ) & {
       volume: number;
+      threadFrames?: import("./threadMates").ThreadFrame[];
       area: number;
       bodyProperties: import("./materials").BodyProps[];
       center?: [number, number, number];
@@ -75,7 +81,7 @@ export function Viewport({
   onStatus,
   takeFinishBody,
   appearances = [],
-  visibleBodyId,
+  visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto,
   onBodyContextMenu,
   onBodyPick,
 }: Props) {
@@ -94,12 +100,22 @@ export function Viewport({
   cb.current = onStatus;
   const revision = useRef(0),
     lastExport = useRef<number | undefined>(undefined);
-  const presentation = useRef({ appearances, visibleBodyId, onBodyContextMenu, onBodyPick });
-  presentation.current = { appearances, visibleBodyId, onBodyContextMenu, onBodyPick };
+  const presentation = useRef({ appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, onBodyContextMenu, onBodyPick });
+  presentation.current = { appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, onBodyContextMenu, onBodyPick };
   const showing = useRef<string[]>([]);
   const building = useRef<string[]>([]);
   const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
-  function displayInstalled() {
+  const photographed = useRef(false);
+  function stylePhoto(reframe: boolean) {
+    const { photoMode: on, photoMatrices: pose, ghostIds: ghost } = presentation.current;
+    if (!on && !photographed.current) return;
+    studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)));
+    const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+    const matrices = showing.current.map((id) => (on && pose?.[installed.current.ids.indexOf(id)]) || identity);
+    studio.current?.setTransforms(matrices, reframe || on !== photographed.current);
+    photographed.current = on;
+  }
+  function displayInstalled(reframe = true) {
     const { visibleBodyId: scope, appearances: colors } = presentation.current;
     const { ids, meshes } = installed.current;
     const index = scope === undefined ? -1 : ids.indexOf(scope);
@@ -108,6 +124,7 @@ export function Viewport({
       scope === undefined ? meshes : index < 0 ? [] : [meshes[index]],
       scope === undefined ? colors : index < 0 ? [] : [colors[index]],
     );
+    stylePhoto(reframe);
   }
   const signature = useMemo(
     () => inputSignature ?? JSON.stringify(features),
@@ -145,9 +162,11 @@ export function Viewport({
         const id = index === null ? undefined : showing.current[index];
         if (id !== undefined) presentation.current.onBodyPick?.(id);
       }, (anchor, index) => {
+        if (presentation.current.photoMode) return;
         const id = index === null ? null : showing.current[index];
         if (id !== undefined) presentation.current.onBodyContextMenu?.(anchor, id);
       });
+      if (savePhoto) savePhoto.current = () => studio.current!.captureProduct();
     } catch {
       setDisplayError(
         "The 3D view needs WebGL 2. Enable hardware acceleration in your browser, then reload.",
@@ -190,6 +209,7 @@ export function Viewport({
           error: "",
           volume: data.volume,
           area: data.area,
+          threadFrames: data.threadFrames,
           bodyProperties: data.bodyProperties,
           center: data.center,
         });
@@ -240,6 +260,7 @@ export function Viewport({
       pendingBuild.current = null;
       studio.current?.dispose();
       studio.current = undefined;
+      if (savePhoto) savePhoto.current = null;
     };
   }, []);
   useEffect(() => {
@@ -253,8 +274,9 @@ export function Viewport({
     dispatchBuild();
   }, [signature]);
   useEffect(() => {
-    displayInstalled();
+    displayInstalled(false);
   }, [visibleBodyId, appearances.join(",")]);
+  useEffect(() => { stylePhoto(false); }, [photoMode, JSON.stringify(photoMatrices), ghostIds.join(",")]);
   useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {
     studio.current?.setView(view);
@@ -283,7 +305,7 @@ export function Viewport({
       }}
     >
       <div ref={node} style={{ position: "absolute", inset: 0 }} />
-      {(displayError || selected) && (
+      {(displayError || (!photoMode && selected)) && (
         <div
           role="status"
           style={{

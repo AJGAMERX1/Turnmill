@@ -99,29 +99,15 @@ const { join } = require("node:path");
     assert.equal(await drawingNo.inputValue(), "TM-LOCAL:");
     assert.equal(await palette.isVisible(), false);
     await drawingNo.press("Escape");
-    await run("ruler svg", /Go to Ruler SVG export/);
-    await page.waitForFunction(
-      () => document.querySelector(".tm-app").dataset.workspace === "Scales",
-    );
-    await run(":edit-major-line-width", /Edit Major line width/);
-    const width = page.getByLabel("Major line width");
-    assert(
-      await width.evaluate(
-        (el) => el.closest("details").open && document.activeElement === el,
-      ),
-    );
-    await width.fill("0.22 mm");
-    await width.press("Enter");
-    const outline = page.getByRole("checkbox", { name: "Include layout outline in export", exact: true });
-    assert.equal(await outline.isChecked(), false);
-    await run(":include-blank-outline-in-export", /Include layout outline in export/);
-    assert.equal(await outline.isChecked(), true);
-    await run("include layout outline", /Include layout outline in export/);
-    assert.equal(await outline.isChecked(), false);
-    await page.getByRole("button", { name: "Ruler stock", exact: true }).click();
-    await run(":include-blank-outline-in-export", /Include blank outline in export/);
-    assert.equal(await page.getByRole("checkbox", { name: "Include blank outline in export" }).isChecked(), true);
-    await open("width");
+    await run("pen balance", /Go to Pen balance/);
+    await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Grip station");
+    const grip = page.getByLabel("Grip station");
+    await grip.fill("1/2 in");
+    await grip.press("Enter");
+    assert.equal(await grip.inputValue(), "1/2 in");
+    await run(":edit-grip-station", /Edit Grip station/);
+    assert(await grip.evaluate(el => document.activeElement === el));
+    await open("pen");
     const ids = await palette
       .getByRole("option")
       .evaluateAll((es) => es.map((e) => e.id));
@@ -152,7 +138,7 @@ const { join } = require("node:path");
     await sketch.waitFor();
     await run("rectangle", /rectangle/i);
     await sketch
-      .getByText("Choose the first corner", { exact: false })
+      .getByRole("form", { name: "Rectangle dimensions" })
       .first()
       .waitFor();
     await open("remove selected item");

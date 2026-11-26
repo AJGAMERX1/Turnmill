@@ -1,11 +1,11 @@
-"""Check the two Scales export entry points with an independent STEP reader."""
+"""Check the legacy graduated solid before and after a native file round-trip."""
 import os
 from pathlib import Path
 
 import Part
 
 directory = Path(os.environ["QA_OUT"])
-for name in ["ruler.step", "panel.step"]:
+for name in ["ruler.step", "reopened.step"]:
     shape = Part.read(str(directory / name))
     assert shape.isValid() and len(shape.Solids) == 1, name
     box = shape.BoundBox

@@ -22,7 +22,13 @@ import {
 } from "./commands";
 import CommandPalette from "./CommandPalette";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
-import type { JointConfig } from "./kinematics";
+import { buildPoses, type JointConfig } from "./kinematics";
+import { resolveThreadMates } from "./threadMates";
+import PenBench from "./PenBench";
+import RefillDialog from "./RefillDialog";
+import { refillComponents, refillMassGrams } from "./refills";
+import { boltPenProject } from "./boltPen";
+import "./penBench.css";
 import PartTabBar from "./PartTabBar";
 import { bindHistoryTargets, bodyOwners, organizePartInsertion, partFeatures, partSketches, projectPartTabs, savePartFeature } from "./partTabs";
 import type { LiveAssembly } from "./Mechanisms";
@@ -48,7 +54,8 @@ import {
   SlidersHorizontal,
   RotateCw,
   SquarePen,
-  Ruler,
+  Aperture,
+  Camera,
   Component,
   FileText,
   Scan,
@@ -92,8 +99,6 @@ import FinishPreview from "./FinishPreview";
 import { useFinishPreview } from "./useFinishPreview";
 import ExchangeDialog from "./exchangeDialog";
 import { isScaleFeature } from "./secondaryEngraving";
-import { downloadRulerVector, prepareRulerExport, rulerSolidId, type RulerExportOptions, type RulerTool } from "./rulerExport";
-import rulerTemplate from "../examples/pocket-ruler.turnmill?raw";
 import {
   Modal,
   FeatureDialog,
@@ -104,9 +109,8 @@ import {
 
 const Assembly = lazy(() => import("./Mechanisms"));
 const Drawing = lazy(() => import("./Drawing"));
-const Scale = lazy(() => import("./Scale"));
 
-type Mode = "Part" | "Assembly" | "Drawing" | "Scales";
+type Mode = "Part" | "Assembly" | "Drawing" | "Pen Studio";
 type View = "iso" | "front" | "top" | "side";
 type DialogName =
   | "new"
@@ -118,6 +122,7 @@ type DialogName =
   | "rename"
   | "import"
   | "advanced"
+  | "refill"
   | "hardware"
   | "part-name"
   | null;
@@ -125,7 +130,7 @@ const modes = [
   { name: "Part", Icon: Box },
   { name: "Assembly", Icon: Component },
   { name: "Drawing", Icon: FileText },
-  { name: "Scales", Icon: Ruler },
+  { name: "Pen Studio", Icon: Aperture },
 ] as const;
 import { materials, parseDensity, massProperties } from "./materials";
 const number = (n: number, d = 2) =>
@@ -271,18 +276,9 @@ export default function App() {
     [rename, setRename] = useState(""),
     [helpStep, setHelpStep] = useState(0);
   const scaleConfig = project.workspaces?.scale;
-  const [rulerOptions, setRulerOptions] = useState<RulerExportOptions>({ include: false, centerlines: false });
-  const [rulerToolChoice, setRulerToolChoice] = useState<{ projectId: string; tool: RulerTool }>();
-  const hasAttachablePart = project.features.some((f) => f.operation === "new" && !f.suppressed && !isScaleFeature(project, f.id));
-  const rulerTool: RulerTool = !hasAttachablePart ? "stock"
-    : rulerToolChoice?.projectId === project.id ? rulerToolChoice.tool
-    : scaleConfig?.modelId && !scaleConfig.appliedId ? "stock" : "part";
-  const rulerBodyId = rulerSolidId(project, rulerTool);
-  const showRulerVectors = mode === "Scales" || (!!scaleConfig && (!activePart ||
-    activePart.id === scaleConfig.modelId || activePart.id === scaleConfig.attachment?.targetBodyId));
-  const prepareVectors = mode === "Scales" || (showRulerVectors && menu === "export");
-  const rulerVectors = useMemo(() => prepareVectors ? prepareRulerExport(project, rulerOptions) : undefined,
-    [prepareVectors, project.name, project.parameters, scaleConfig, rulerOptions]);
+  const showcasing = mode === "Pen Studio";
+  const [showInternals, setShowInternals] = useState(false);
+  const savePhoto = useRef<(() => Promise<Blob>) | null>(null);
   const modeledScale =
     scaleConfig?.modelId || scaleConfig?.appliedId ? scaleConfig : undefined;
   const geoSignature = useMemo(
@@ -392,23 +388,46 @@ export default function App() {
   const densityOf = (id: string) =>
     project.workspaces?.bodyDensities?.[id] ??
     materials[materialOf(id)].density;
+  const cartridges = refillComponents(project);
+  const effectiveDensities = solidFeatures.map((f, i) => {
+    if (!cartridges.some((r) => r.bodyId === f.id)) return densityOf(f.id);
+    const volume = kernel.bodyProperties?.[i]?.volume;
+    try { return volume ? 1000 * (refillMassGrams(project, f.id) ?? 0) / volume : 0; }
+    catch { return 0; }
+  });
   const appearances = solidFeatures.map(
     (f) => materials[materialOf(f.id)].color,
   );
+  const studioPose = useMemo(() => {
+    if (!showcasing) return {};
+    try {
+      const ids = model.features.filter((f) => f.operation === "new").map((f) => f.id);
+      const joints = resolveThreadMates(project.workspaces?.joints ?? {}, kernel.threadFrames ?? [], model.values, ids);
+      return { matrices: buildPoses(ids, joints, project.workspaces?.jointPose ?? {}, model.values) };
+    } catch (e) { return { error: (e as Error).message }; }
+  }, [showcasing, model, kernel.threadFrames, project.workspaces?.joints, project.workspaces?.jointPose]);
+  const ghostIds = showcasing && showInternals && project.workspaces?.boltPen
+    ? [project.workspaces.boltPen.barrelId, project.workspaces.boltPen.noseId] : [];
+  async function downloadPhoto() {
+    try {
+      if (!savePhoto.current) throw Error("The studio render is still opening.");
+      downloadFile(project.name.replace(/[/\\:*?"<>|]/g, "-") + ".png", await savePhoto.current());
+    } catch (e) { setNotice((e as Error).message); }
+  }
   const measuringSingle =
     !!activePart || (measureScope === "selected" && solidFeatures.length > 1);
-  const exportBodyId = mode === "Scales" ? rulerBodyId : activePart?.id;
-  const canExport = valid && (mode !== "Scales" || !!rulerBodyId) &&
+  const exportBodyId = activePart?.id;
+  const canExport = valid &&
     (!exportBodyId || solidFeatures.some((f) => f.id === exportBodyId));
   const inScope = (_: unknown, i: number) =>
     !measuringSingle || solidFeatures[i]?.id === selectedBodyId;
   const measured = massProperties(
     (valid ? kernel.bodyProperties || [] : []).filter(inScope),
-    solidFeatures.filter(inScope).map((f) => densityOf(f.id)),
+    effectiveDensities.filter(inScope),
   );
   useEffect(()=>{
     if(import.meta.env.VITE_CAD_QA==="1") observeModel(()=>{
-      const total=massProperties(valid ? kernel.bodyProperties || [] : [],solidFeatures.map((f)=>densityOf(f.id)));
+      const total=massProperties(valid ? kernel.bodyProperties || [] : [],effectiveDensities);
       return {project, features:project.features,parameters:project.parameters,values:model.values,mode,busy,error,
         volume:valid?kernel.volume:0,area:valid?kernel.area:0,mass:total.mass,centerOfMass:total.center,selected,saveState};
     });
@@ -460,8 +479,7 @@ export default function App() {
   const changeP = (p: Project) => {
     commit(p);
     setPartSelection(undefined);
-    setRulerOptions({ include: false, centerlines: false });
-    setRulerToolChoice(undefined);
+    setShowInternals(false);
     const nextGuide = penGuide(p);
     setMode(
       nextGuide && !nextGuide.paused ? guideMode(nextGuide.stage) : "Part",
@@ -487,7 +505,7 @@ export default function App() {
   };
   const createFeature = (kind: Feature["kind"], initial?: Feature, sourceSketchId?: string) => {
     if (initial && isScaleFeature(project, initial.id)) {
-      switchMode("Scales");
+      setNotice("This is a saved v1 engraving. Its solid can be measured and exported.");
       return;
     }
     if (kind === "import") {
@@ -502,7 +520,7 @@ export default function App() {
   };
   const editSketchItem = (sketch: Sketch) => {
     if (project.features.some((f) => isScaleFeature(project, f.id) && f.sketchId === sketch.id)) {
-      switchMode("Scales");
+      setNotice("This is a saved v1 engraving. Its solid can be measured and exported.");
       return;
     }
     if (activePart && !sketches.some((s) => s.id === sketch.id)) {
@@ -536,7 +554,7 @@ export default function App() {
         (ref) => ref.featureId === featureId && (finishId === undefined || ref.finishId === finishId)));
   function withoutPartRecords(id: string) {
     const workspaces = { ...project.workspaces };
-    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents"]) {
+    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents", "refills"]) {
       if (workspaces[key] && Object.hasOwn(workspaces[key], id)) {
         workspaces[key] = { ...workspaces[key] };
         delete workspaces[key][id];
@@ -610,7 +628,7 @@ export default function App() {
     const sketch = project.sketches.find((s) => s.id === f.sketchId);
     const scale = isScaleFeature(project, f.id);
     openContext(anchor, f.name, [
-      ...(f.kind === "import" ? [] : [{ label: scale ? "Edit scale" : "Edit feature",
+      ...(f.kind === "import" || scale ? [] : [{ label: "Edit feature",
         icon: Pencil, run: () => createFeature(f.kind, f) }]),
       ...(sketch && !scale ? [
         { label: "Edit sketch", icon: SquarePen, shortcut: "E", run: () => editSketchItem(sketch) },
@@ -677,15 +695,6 @@ export default function App() {
     );
     setMenu(null);
   };
-  const exportRulerVector = (format: "svg" | "dxf") => {
-    if (!rulerVectors?.sheet) return;
-    try {
-      downloadRulerVector(rulerVectors, format);
-      setNotice("Downloading " + rulerVectors.base + "." + format);
-    } catch (e) {
-      setNotice((e as Error).message);
-    }
-  };
   const runExport = (format: ExportRequest["format"]) => {
     setMenu(null);
     if (!canExport) {
@@ -694,6 +703,7 @@ export default function App() {
     }
     const inAssembly = mode === "Assembly";
     const live = inAssembly ? liveAssembly.current : null;
+    if (showcasing && studioPose.error) { setNotice(studioPose.error); return; }
     const id = exportBodyId ?? live?.selected ?? bodyFor(currentF);
     const i = solidFeatures.findIndex((f) => f.id === id);
     const single = !!exportBodyId || (exportScope === "selected" && solidFeatures.length > 1);
@@ -709,8 +719,8 @@ export default function App() {
       id: Date.now(),
       format,
       bodyIndex: single ? i : undefined,
-      name: mode === "Scales" ? rulerVectors?.base ?? project.name : single ? solidFeatures[i].name : project.name,
-      assembly: inAssembly && !single ? {
+      name: single ? solidFeatures[i].name : project.name,
+      assembly: (inAssembly || showcasing) && !single ? {
         ids: solidFeatures.map((f) => f.id),
         joints: project.workspaces?.joints ?? {},
         drivers: live?.drivers ?? project.workspaces?.jointPose ?? {},
@@ -792,6 +802,7 @@ export default function App() {
     }
   }
   const knownCommands: Command[] = [
+    { title: "Insert refill", group: "Components", shortcut: "Alt J", keywords: "Parker G2 EnerGel Pentel BIC Cristal ink cartridge donor", run: () => setDialog("refill") },
     { title: "New part", group: "Project", shortcut: "Alt B", run: () => namePart() },
     {
       title: "Insert hardware · screw, nut, washer, pin, spring, O-ring",
@@ -1016,8 +1027,7 @@ export default function App() {
       let reason = c.reason;
       if (c.disabled && !reason) {
         if (c.group === "Export")
-          reason = (mode === "Scales" && !rulerBodyId ? "Create engraved stock or apply the graduations to a part in Scales." : "") ||
-            error ||
+          reason = error ||
             (busy
               ? "Wait for the solid to finish rebuilding."
               : "Create a valid solid first.");
@@ -1035,7 +1045,7 @@ export default function App() {
         )
           reason =
             currentF && isScaleFeature(project, currentF.id)
-              ? "Edit this generated feature in Scales."
+              ? "This saved v1 engraving is read-only."
               : "Select a solid feature in the model browser.";
         else if (c.group === "History")
           reason = "Select a sketch or feature in the model browser.";
@@ -1176,7 +1186,7 @@ export default function App() {
       <header className="app-header" inert={!ready}>
         <div className="brand">
           <img src="./mark.svg" alt="" />
-          <span>Turnmill</span>
+          <span>Turnmill</span><small className="release-version">v2</small>
         </div>
         <div className="header-rule" />
         <div
@@ -1219,6 +1229,7 @@ export default function App() {
                 () => setDialog("hardware"),
                 "Alt H",
               )}
+              {menuItem("Insert refill…", PenTool, () => setDialog("refill"), "Alt J")}
               {menuItem("Save project file", Save, save, "⌘ S")}
               {menuItem("Rename project", Pencil, () => {
                 setRenameItem(null);
@@ -1250,18 +1261,7 @@ export default function App() {
           </button>
           {menu === "export" && (
             <div className="dropdown align-right">
-              {showRulerVectors && rulerVectors && <>
-                {menuItem("Ruler engraving SVG", Ruler, () => exportRulerVector("svg"), ".svg", !rulerVectors.sheet)}
-                {menuItem("Ruler engraving DXF", Ruler, () => exportRulerVector("dxf"), ".dxf", !rulerVectors.sheet)}
-                {rulerVectors.error && <p className="ruler-export-hint" role="alert">{rulerVectors.error}</p>}
-              </>}
-              {mode === "Scales" && !rulerBodyId && (
-                <p className="ruler-export-hint">
-                  {rulerTool === "stock" ? "Create engraved stock" : "Apply graduations to a part"} in{" "}
-                  <a href="#scale-engraving-settings" onClick={() => setMenu(null)}>3D engraving</a> to export a solid.
-                </p>
-              )}
-              {mode !== "Scales" && !activePart && solidFeatures.length > 1 && (
+              {!activePart && solidFeatures.length > 1 && (
                 <label className="scope-field">
                   Export geometry
                   <select
@@ -1271,13 +1271,13 @@ export default function App() {
                       setExportScope(e.target.value as typeof exportScope)
                     }
                   >
-                    <option value="all">{mode === "Assembly" ? "Assembly at current pose" : "All bodies"}</option>
+                    <option value="all">{(mode === "Assembly" || showcasing) ? "Assembly at current pose" : "All bodies"}</option>
                     <option value="selected">Selected body (local coordinates)</option>
                   </select>
                 </label>
               )}
               {menuItem(
-                mode === "Scales" ? "Engraved ruler STEP" : "STEP solid",
+                "STEP solid",
                 Box,
                 () => runExport("step"),
                 ".step",
@@ -1317,6 +1317,7 @@ export default function App() {
           ))}
         </nav>
         <div className="workspace-right">
+          {(mode === "Assembly" || mode === "Part") && <button className="refill-entry" onClick={() => setDialog("refill")}><PenTool size={15}/> Refills</button>}
           {mode === "Assembly" && (
             <button
               className="toolbar-hardware"
@@ -1344,7 +1345,7 @@ export default function App() {
         inert={!ready}
         className={
           "work-area " +
-          (mode !== "Part" ? "secondary-area" : "") +
+          (showcasing ? "pen-studio-area" : mode !== "Part" ? "secondary-area" : "") +
           " " +
           (!treeVisible ? "no-tree " : "") +
           (!inspect ? "no-inspector" : "")
@@ -1396,7 +1397,7 @@ export default function App() {
                         onClick={() => setSelected(s.id)}
                         onDoubleClick={() => {
                           if (isScaleFeature(project, f.id))
-                            switchMode("Scales");
+                            setNotice("This is a saved v1 engraving. Its solid can be measured and exported.");
                           else setEditingSketch(s.id);
                         }}
                       >
@@ -1508,10 +1509,10 @@ export default function App() {
           </aside>
         )}
         <section
-          className={"model-space " + (mode !== "Part" ? "offscreen" : "")}
-          aria-hidden={mode !== "Part"}
+          className={"model-space " + (mode !== "Part" && !showcasing ? "offscreen" : "")}
+          aria-hidden={mode !== "Part" && !showcasing}
         >
-          <div className="model-tools">
+          {showcasing ? <div className="photo-tools"><span><Aperture size={16}/> Studio render</span><button disabled={!valid || !!studioPose.error} onClick={downloadPhoto}><Camera size={15}/> Save PNG</button></div> : <div className="model-tools">
             {!treeVisible &&
               iconButton("Show model browser", Menu, () => toggleTree(true))}
             <button onClick={newSketch}>
@@ -1548,13 +1549,14 @@ export default function App() {
               iconButton("Show inspector", PanelRightOpen, () =>
                 setInspect(true),
               )}
-          </div>
+          </div>}
           <div className="stage">
             <Viewport
               signature={modelSignature}
               visibleBodyId={activePart?.id}
               features={model.features}
               view={view}
+              photoMode={showcasing} photoMatrices={studioPose.matrices} ghostIds={ghostIds} savePhoto={savePhoto}
               fitToken={fit}
               exportRequest={exportRequest}
               onStatus={setKernel}
@@ -1567,7 +1569,7 @@ export default function App() {
               <div>
                 <div className="overline">
                   <span className="model-dot" />
-                  Part studio
+                  {showcasing ? "Pen studio" : "Part studio"}
                 </div>
                 <h1>{activePart?.name ?? project.name}</h1>
               </div>
@@ -1623,12 +1625,12 @@ export default function App() {
                 Rebuilding model…
               </div>
             )}
-            {error && (
+            {(error || studioPose.error) && (
               <div className="stage-error" role="alert">
                 <TriangleAlert size={20} />
                 <div>
                   <b>Rebuild needs attention</b>
-                  <p>{error}</p>
+                  <p>{error || studioPose.error}</p>
                   {failedSketch && <button className="outline-btn" onClick={() => editSketchItem(failedSketch)}>Edit {failedSketch.name}</button>}
                 </div>
               </div>
@@ -1829,7 +1831,7 @@ export default function App() {
               <div className="ins-section properties">
                 <SectionHeading>Physical properties</SectionHeading>
                 <label>
-                  <span>Material</span>
+                  <span>{cartridges.some(r => r.bodyId === selectedBodyId) ? "Refill appearance" : "Material"}</span>
                   <select
                     aria-label="Material"
                     value={material}
@@ -1857,7 +1859,7 @@ export default function App() {
                     ))}
                   </select>
                 </label>
-                <dl>
+                {!cartridges.some((r) => r.bodyId === selectedBodyId) && <dl>
                   <div>
                     <dt>Density</dt>
                     <dd className="density">
@@ -1885,7 +1887,7 @@ export default function App() {
                       g/cm³
                     </dd>
                   </div>
-                </dl>
+                </dl>}
                 {!activePart && solidFeatures.length > 1 && (
                   <label>
                     <span>Measure</span>
@@ -1913,6 +1915,8 @@ export default function App() {
                     </dd>
                   </div>
                 </dl>
+                {solidFeatures.some((f, i) => inScope(f, i) && cartridges.some((r) => r.bodyId === f.id)) &&
+                  <p className="refill-mass-note">Refills use their filled mass at the envelope centroid. Weigh and enter any unmeasured refill to include it.</p>}
                 <details className="balance-coordinates">
                   <summary>Center of mass</summary>
                   <dl>
@@ -1959,15 +1963,11 @@ export default function App() {
               rebuilding={model.key !== geoSignature || model.pending}
             />
           )}
-          {mode === "Scales" && rulerVectors && (
-            <Scale
-              {...props}
-              vectors={rulerVectors} exportOptions={rulerOptions} onExportOptions={setRulerOptions}
-              tool={rulerTool} onTool={(tool) => setRulerToolChoice({ projectId: project.id, tool })}
-              solidReady={canExport} hasEngraving={!!rulerBodyId} onVector={exportRulerVector} onStep={() => runExport("step")}
-              rebuilding={model.key !== geoSignature || model.pending}
-            />
-          )}
+          {showcasing && <PenBench project={project} commit={commit} solidFeatures={solidFeatures}
+            properties={valid && !studioPose.error ? kernel.bodyProperties : undefined} matrices={studioPose.matrices}
+            densities={effectiveDensities} onRefill={() => setDialog("refill")}
+            onProject={() => setDialog("new")} onAssembly={() => switchMode("Assembly")}
+            onParameters={() => setDialog("parameters")} showInternals={showInternals} setShowInternals={setShowInternals} />}
         </Suspense>
       </main>
       {ready && (mode === "Part" || mode === "Assembly") && (
@@ -2110,10 +2110,9 @@ export default function App() {
           onChoose={(m) => {
             if (m === "guided") {
               startGuide();
-            } else if (m === "ruler") {
-              const sample = validateProject(JSON.parse(rulerTemplate));
-              changeP({ ...sample, id: uid() });
-              switchMode("Scales");
+            } else if (m === "bolt") {
+              changeP(boltPenProject());
+              switchMode("Assembly");
             } else {
               changeP(
                 m === "turned"
@@ -2174,6 +2173,10 @@ export default function App() {
           }}
         />
       )}
+      {dialog === "refill" && <RefillDialog project={project} onClose={close} onSave={(next, id) => {
+        commit(next); setSelected(id); setPartSelection(undefined); setFit((n) => n + 1); close();
+        if (mode === "Drawing") switchMode("Part");
+      }} />}
       {dialog === "import" && (
         <ExchangeDialog
           project={project}

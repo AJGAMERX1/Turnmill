@@ -1,5 +1,6 @@
 import { Euler, Matrix4, Vector3, Quaternion } from "three";
 import type { EvaluatedFeature } from "./types";
+import { boltTrackPosition, resolveBoltTrack, type BoltTrack } from "./boltTrack";
 import { evaluate } from "./expressions";
 import { springReading, type CompressionSpring } from "./springForce";
 import {
@@ -16,6 +17,7 @@ export const jointKinds = [
   "ball",
   "planar",
   "screw",
+  "bolt",
 ] as const;
 export type JointKind = (typeof jointKinds)[number];
 type Triple = [string, string, string];
@@ -57,6 +59,7 @@ export type Joint = {
   starts: string;
   hand: 1 | -1;
   bounds?: Record<string, [string, string]>;
+  bolt?: BoltTrack;
   cam?: CamLink;
   spring?: CompressionSpring;
   threadMate?: import("./threadMates").ThreadMate;
@@ -92,6 +95,8 @@ export function specs(
     case "revolute":
     case "screw":
       return [{ label: "Rotation", unit: "angle", axis: 0 }];
+    case "bolt":
+      return [{ label: "Bolt travel", unit: "length", axis: 0 }];
     case "slider":
       return [{ label: "Position", unit: "length", axis: 0 }];
     case "cylindrical":
@@ -118,6 +123,7 @@ export function limits(
   k: number,
   values: Record<string, number>,
 ): [number, number] {
+  if (j.kind === "bolt" && k === 0) return [0, resolveBoltTrack(j.bolt, values).total];
   const u = specs(j.kind)[k]?.unit;
   if (!u) return [0, 0];
   const range =
@@ -387,6 +393,12 @@ export function buildPoses(
       if (j.kind === "slider" && j.spring && !j.cam) {
         const issue = springReading(j.spring, value, values).error;
         if (issue) throw Error(issue);
+      }
+      if (j.kind === "bolt") {
+        const pose = boltTrackPosition(resolveBoltTrack(j.bolt, values), value);
+        displacement.addScaledVector(axes[0], pose.axial);
+        rotation.setFromAxisAngle(axes[0], pose.angle);
+        return;
       }
       if (spec.unit === "angle")
         rotation.multiply(

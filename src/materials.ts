@@ -3,7 +3,7 @@ export const materials: Record<string, { density: number; color: number }> = {
   Aluminum: { density: 2.7, color: 0xc0c9cc },
   Steel: { density: 7.85, color: 0x9da6a9 },
   Nitrile: { density: 1.2, color: 0x383b3a },
-  Titanium: { density: 4.51, color: 0x948f98 },
+  Titanium: { density: 4.51, color: 0x999e9e },
   Acetal: { density: 1.41, color: 0x50585a },
 };
 export type BodyProps = { volume: number; center: [number, number, number] };

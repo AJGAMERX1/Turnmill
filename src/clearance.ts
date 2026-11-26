@@ -13,6 +13,7 @@ import {
   jointTravelProblem,
 } from "./kinematics";
 import type { Body } from "./geometry";
+import { resolveBoltTrack } from "./boltTrack";
 import { threadClearanceBound } from "./threadClearance";
 
 export type Probe = {
@@ -65,7 +66,7 @@ function speedBound(
   let speed = 0;
   if (!fixed.includes(id)) {
     const spec = specs(j.kind)[coordinate];
-    if (spec.unit === "length") speed = 1;
+    if (spec.unit === "length" && j.kind !== "bolt") speed = 1;
     else {
       const box = shape.boundingBox;
       try {
@@ -76,7 +77,9 @@ function speedBound(
         );
         if (j.kind !== "ball") extents[{ X: 0, Y: 1, Z: 2 }[j.axis]] = 0;
         const degrees = Math.PI / 180;
-        speed = Math.hypot(
+        speed = j.kind === "bolt"
+          ? Math.max(1, Math.hypot(...extents) / resolveBoltTrack(j.bolt, values).radius)
+          : Math.hypot(
           degrees * Math.hypot(...extents),
           j.kind === "screw" ? screwLead(j, values) / 360 : 0,
         );

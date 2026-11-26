@@ -111,6 +111,10 @@ export function createStudio(
     hasFramed = false;
   let selected: FaceHit | null = null,
     hover: FaceHit | null = null;
+  let productView = false;
+  const translucent = new THREE.MeshStandardMaterial({
+    color: 0xaac3c4, roughness: 0.31, metalness: 0.18, transparent: true, opacity: 0.17, depthWrite: false,
+  });
   const colors = new Map<number, THREE.MeshStandardMaterial>();
   const meshes: THREE.Mesh[] = [];
   type Instance = { body: RenderBody; root: THREE.Group; mesh: THREE.Mesh };
@@ -144,7 +148,7 @@ export function createStudio(
     const target = bounds.getCenter(new THREE.Vector3());
     const diagonal = Math.max(bounds.min.distanceTo(bounds.max), 1e-3);
     const directions = {
-      iso: [1.13, -1.63, 1.02],
+      iso: productView ? [-0.92, -1.63, 1.02] : [1.13, -1.63, 1.02],
       front: [0, -1, 0],
       top: [0, -0.000001, 1],
       side: [1, 0, 0],
@@ -172,8 +176,8 @@ export function createStudio(
           xExtent = Math.max(xExtent, Math.abs(p.x));
           yExtent = Math.max(yExtent, Math.abs(p.y));
         }
-    fittedWidth = xExtent * 1.43;
-    fittedHeight = Math.max(yExtent, diagonal * 0.045) * 1.43;
+    fittedWidth = xExtent * (productView ? 1.22 : 1.43);
+    fittedHeight = Math.max(yExtent, diagonal * 0.045) * (productView ? 1.35 : 1.43);
     updateProjection();
     // A camera change already draws through the OrbitControls change listener.
     if (!controls.update()) render();
@@ -246,17 +250,18 @@ export function createStudio(
     let changed = false;
     meshes.forEach((mesh, i) => {
       const color = tones[i];
-      if (!color) return;
+      if (color === undefined) return;
       let mat = colors.get(color);
       if (!mat) {
         mat = bodyMaterial.clone();
         mat.color.setHex(color);
-        if (color === 0x50585a) {
+        if (color === 0x50585a || color === 0x383b3a) {
           mat.metalness = 0.05;
           mat.roughness = 0.5;
         }
         colors.set(color, mat);
       }
+      mesh.userData.finish = mat;
       if (Array.isArray(mesh.material) && mesh.material[0] === mat) return;
       mesh.material = [mat, hoverMaterial, chosenMaterial];
       changed = true;
@@ -377,7 +382,7 @@ export function createStudio(
     handledContext = gesture.context;
     if (gesture.moved || Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y) > 4) return;
     if (gesture.context) openContext(e.clientX, e.clientY, hit(e));
-    else pickFace(hit(e));
+    else if (!productView) pickFace(hit(e));
   }
   function cancel(e: PointerEvent) {
     if (press?.id === e.pointerId) press = null;
@@ -401,7 +406,7 @@ export function createStudio(
   function move(e: PointerEvent) {
     if (press?.id === e.pointerId && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4)
       press.moved = true;
-    if (e.buttons) return;
+    if (e.buttons || productView) return;
     const next = hit(e);
     if (next?.body === hover?.body && next?.face === hover?.face) return;
     const previous = hover;
@@ -429,6 +434,39 @@ export function createStudio(
   orient(view);
   return {
     updateMeshes,
+    setProductView(enabled: boolean, ghosts: boolean[]) {
+      productView = enabled;
+      if (grid) grid.visible = !enabled;
+      for (const [i, { root, mesh, body }] of instances.entries()) {
+        for (const object of root.children) if (object instanceof THREE.LineSegments) object.visible = !enabled;
+        const finish = mesh.userData.finish ?? bodyMaterial;
+        mesh.material = [enabled && ghosts[i] ? translucent : finish, hoverMaterial, chosenMaterial];
+        setFaceHighlights(mesh.geometry, body.faces, !enabled && hover?.body === i + 1 ? hover.face : -1,
+          !enabled && selected?.body === i + 1 ? selected.face : -1);
+      }
+      render();
+    },
+    async captureProduct(): Promise<Blob> {
+      const frame = document.createElement("canvas");
+      const size = renderer.getSize(new THREE.Vector2());
+      const ratio = renderer.getPixelRatio();
+      const outWidth = size.x >= size.y ? 1920 : Math.max(1, Math.round(1920 * size.x / size.y));
+      const outHeight = Math.max(1, Math.round(outWidth * size.y / size.x));
+      frame.width = outWidth; frame.height = outHeight;
+      const context = frame.getContext("2d");
+      if (!context) throw Error("Your browser could not create the render image.");
+      try {
+        renderer.setPixelRatio(1); renderer.setSize(outWidth, outHeight, false); render();
+        const fill = context.createRadialGradient(outWidth * .48, outHeight * .38, 0, outWidth * .48, outHeight * .38, Math.max(outWidth, outHeight) * .7);
+        fill.addColorStop(0, "#465153"); fill.addColorStop(.44, "#2b3538"); fill.addColorStop(1, "#161d20");
+        context.fillStyle = fill; context.fillRect(0, 0, outWidth, outHeight);
+        context.drawImage(canvas, 0, 0);
+      } finally {
+        renderer.setPixelRatio(ratio); renderer.setSize(size.x, size.y, false); render();
+      }
+      return new Promise((resolve, reject) => frame.toBlob((blob) => blob ? resolve(blob)
+        : reject(Error("The browser could not save the render.")), "image/png"));
+    },
     setColors(tones: number[]) {
       if (applyColors(tones)) render();
     },
@@ -494,6 +532,7 @@ export function createStudio(
         bodyMaterial,
         hoverMaterial,
         chosenMaterial,
+        translucent,
         edgeMaterial,
         guideMaterial,
       ])

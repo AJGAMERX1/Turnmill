@@ -15,6 +15,7 @@ function driverLabel(c: Constraint) {
   const [i, j] = c.indices;
   switch (c.type) {
     case "arc": return `Edge ${i + 1} signed radius`;
+    case "angle": return `Edge ${i + 1} angle from X`;
     case "length": return `Edge ${i + 1} length`;
     case "distance": return `P${i + 1}–P${j + 1} distance`;
     default: return "";
@@ -35,7 +36,7 @@ export default function SelectionDimensions({ project, sketch, feature, onChange
   const values = useMemo(() => {
     try { return resolveParameters(project.parameters); } catch { return undefined; }
   }, [project.parameters]);
-  const turned = feature?.kind === "revolve";
+  const turned = feature?.kind === "revolve" || (!feature && sketch?.sizing?.y?.radial === true);
   const ranges = useMemo(() => {
     if (!sketch || !values) return [];
     try {

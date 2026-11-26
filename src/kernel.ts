@@ -96,7 +96,7 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         }
       }
       worker.postMessage(
-        { ...output, revision: data.revision, previewBody, ...properties },
+        { ...output, revision: data.revision, previewBody, ...properties, threadFrames: model.bodies.flatMap((b) => b.threadFrames ?? []) },
         meshes.flatMap(buffers),
       );
       currentRevision = data.revision;

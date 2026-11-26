@@ -15,7 +15,7 @@ export type PaletteContext = {
   opener: Element | null;
   initialQuery?: string;
 };
-export type Workspace = "Part" | "Assembly" | "Drawing" | "Scales";
+export type Workspace = "Part" | "Assembly" | "Drawing" | "Pen Studio";
 
 const plain = (text: string) =>
   text
@@ -50,7 +50,7 @@ const synonyms: [RegExp, string][] = [
     /drawing workspace/,
     "drafting blueprints manufacturing drawing shop drawings",
   ],
-  [/scales workspace/, "ruler graduations ticks laser engraving"],
+  [/pen studio workspace/, "product render balance photo machined ballpoint"],
   [/assembly workspace/, "assemble mechanism joints mates movement"],
   [/add dimension/, "measure length distance dimension tolerance"],
   [
@@ -484,36 +484,8 @@ const destinations: WorkspaceDestination[] = [
     words: "coaxial mechanism shaft bore clearance",
     tab: "Coaxial fit study",
   },
-  {
-    mode: "Scales",
-    title: "Ruler graduations",
-    control: "Top edge",
-    words: "metric imperial fractional ruler inches scale ticks units",
-  },
-  {
-    mode: "Scales",
-    title: "Protractor layout",
-    control: "Protractor",
-    words: "angular degree arc scale",
-  },
-  {
-    mode: "Scales",
-    title: "Graduation labels",
-    control: "Number labels",
-    words: "numbers font typography rotation frequency",
-  },
-  {
-    mode: "Scales",
-    title: "Ruler SVG export",
-    control: "Export SVG",
-    words: "laser engraving artwork vector",
-  },
-  {
-    mode: "Scales",
-    title: "Ruler DXF export",
-    control: "Export DXF",
-    words: "CNC engraving full size tick contours",
-  },
+  { mode: "Pen Studio", title: "Pen balance", control: "Grip station", words: "weight center gravity writing grip distance balance" },
+
 ];
 
 function findControl(root: Element, name: string) {
@@ -561,7 +533,7 @@ export function workspaceCommands(
             return;
           }
           const workspace = app.querySelector(
-            d.mode === "Assembly" ? ".mech-space" : ".tm-workspace",
+            d.mode === "Assembly" ? ".mech-space" : d.mode === "Pen Studio" ? ".pen-bench" : ".tm-workspace",
           );
           if (!workspace) return;
           if (d.mode === "Assembly") {

@@ -33,6 +33,7 @@ export const ruleNames: Record<string, string> = {
   coincident: "Coincident points",
   distance: "Point distance",
   length: "Edge length",
+  angle: "Edge angle from X",
   tangent: "Tangent",
   arc: "Arc radius",
   x: "Fix X coordinate",
@@ -200,6 +201,7 @@ export async function solveSketch(
       horizontal: 1,
       vertical: 1,
       length: 1,
+      angle: 1,
       parallel: 2,
       equal: 2,
       tangent: 2,
@@ -217,7 +219,7 @@ export async function solveSketch(
       p2_id = pointId(b),
       l1_id = edgeId(a),
       l2_id = edgeId(b);
-    const straight = ["horizontal", "vertical", "length", "parallel", "equal"];
+    const straight = ["horizontal", "vertical", "length", "angle", "parallel", "equal"];
     if (
       straight.includes(rule.type) &&
       (arcs.has(a) ||
@@ -256,6 +258,12 @@ export async function solveSketch(
         break;
       case "coincident":
         primitive = { id, type: "p2p_coincident", p1_id, p2_id };
+        break;
+      case "angle":
+        primitive = {
+          id, type: "p2p_angle", p1_id, p2_id: pointId(next(a)),
+          angle: (evaluate(rule.value || "", parameters, "angle") % 360) * Math.PI / 180,
+        };
         break;
       case "length":
       case "distance": {
