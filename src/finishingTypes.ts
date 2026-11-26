@@ -181,6 +181,7 @@ export const threadPresets = [
     [14, 1],
     [16, 1],
     [18, 1.5],
+    [18, 1],
     [20, 1.5],
   ].map(metricPreset),
   ...(

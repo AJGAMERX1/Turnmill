@@ -429,15 +429,13 @@ export function buildBodies(
   }
 }
 
-export function displayBodies(bodies: Body[]) {
+export function displayBodies(bodies: Body[], renderMeshes = true) {
   const bodyProperties: import("./materials").BodyProps[] = [];
   let totalVolume = 0,
     totalArea = 0;
   const moment: [number, number, number] = [0, 0, 0];
-  const meshes = bodies.map(({ shape, guides }): RenderBody => {
-    const { vertices, normals, triangles, faceGroups } =
-      shape.mesh(DISPLAY_MESH);
-    const { lines } = shape.meshEdges(DISPLAY_MESH);
+  const meshes: RenderBody[] = [];
+  for (const { shape, guides } of bodies) {
     const mass = measureShapeVolumeProperties(shape);
     try {
       const centroid = mass.centerOfMass,
@@ -454,7 +452,10 @@ export function displayBodies(bodies: Body[]) {
     } finally {
       properties.delete();
     }
-    return {
+    if (!renderMeshes) continue;
+    const { vertices, normals, triangles, faceGroups } = shape.mesh(DISPLAY_MESH);
+    const { lines } = shape.meshEdges(DISPLAY_MESH);
+    meshes.push({
       vertices: Float32Array.from(vertices),
       normals: Float32Array.from(normals),
       triangles: Uint32Array.from(triangles),
@@ -463,8 +464,8 @@ export function displayBodies(bodies: Body[]) {
         ? Float32Array.from(guides.flatMap((guide) => Array.from(guide)))
         : undefined,
       faces: faceGroups,
-    };
-  });
+    });
+  }
   const center =
     totalVolume > 0
       ? (moment.map((value) => value / totalVolume) as [number, number, number])

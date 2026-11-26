@@ -142,6 +142,40 @@ try {
     committed.clear();
   }
 
+  // Headless validation builds exact, unmeshed B-reps. The viewport can take
+  // both changed bodies, while independently rejecting a stale one on edit.
+  const headless = new ModelBodies(), viewport = new ModelBodies();
+  try {
+    const history = [plate, bore, tube];
+    const checked = headless.build(history, [], undefined, false);
+    assert.equal(checked.changes.length, 0);
+    const snapshots = headless.snapshots([tube.id, plate.id, tube.id, "missing"]);
+    assert.deepEqual(snapshots.map(s => s.bodyId), [tube.id, plate.id]);
+    const reads = new Set();
+    const tracked = snapshots.map(s => ({ ...s, get brep() { reads.add(s.bodyId); return s.brep; } }));
+    const installed = viewport.build(history, [], tracked);
+    assert.deepEqual(reads, new Set([plate.id, tube.id]));
+    assert.equal(installed.changes.length, 2);
+    assert.equal(installed.bodyProperties.length, checked.bodyProperties.length);
+    installed.bodyProperties.forEach((body, i) => {
+      const expected = checked.bodyProperties[i];
+      near(body.volume, expected.volume, 1e-10);
+      body.center.forEach((coordinate, axis) => near(coordinate, expected.center[axis], 1e-10));
+    });
+    near(installed.area, checked.area);
+    viewport.clear();
+    reads.clear();
+    const amended = viewport.build([plate, { ...bore, amount: 4 }, tube], [], tracked);
+    assert.deepEqual(reads, new Set([tube.id]));
+    near(amended.bodyProperties[0].volume, 984);
+    const redisplay = headless.build(history);
+    assert.equal(redisplay.changes.length, 2);
+    assert.deepEqual(redisplay.keys, checked.keys);
+  } finally {
+    headless.clear();
+    viewport.clear();
+  }
+
   const a = model.build([plate, bore, tube]);
   assert.equal(a.changes.length, 2);
   const [plateKey, tubeKey] = a.keys;

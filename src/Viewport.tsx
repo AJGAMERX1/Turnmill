@@ -58,11 +58,11 @@ type Props = {
   onBodyContextMenu?: (anchor: MenuAnchor, bodyId: string | null) => void;
   onBodyPick?: (bodyId: string) => void;
   onStatus: (status: KernelStatus) => void;
-  takeFinishBody?: () => FinishBodySnapshot | undefined;
+  takeFinishBody?: () => FinishBodySnapshot | FinishBodySnapshot[] | undefined;
 };
 export type KernelReply = { revision: number } & (
   | ((
-      | { type: "built"; meshes: RenderBody[]; previewBody?: PreviewSolid }
+      | { type: "built"; meshes: RenderBody[]; previewBody?: PreviewSolid; checkedBodies?: FinishBodySnapshot[] }
       | { type: "updated"; keys: number[]; changes: MeshChange[] }
     ) & {
       volume: number;
@@ -174,7 +174,7 @@ export function Viewport({
   const pendingBuild = useRef<{
     revision: number;
     features: EvaluatedFeature[];
-    finishBody?: FinishBodySnapshot;
+    finishBody?: FinishBodySnapshot | FinishBodySnapshot[];
     measureRefillFit: boolean;
     measureCapSeats: boolean;
   } | null>(null);

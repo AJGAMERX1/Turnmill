@@ -77,7 +77,6 @@ function gripStock(request: GripRequest): GripStock {
 
 type Request =
   | GripRequest
-  | { type: "validate"; revision: number; features: EvaluatedFeature[] }
   | {type:"inspect-qa";revision:number;port:MessagePort}
   | {
       type: "build";
@@ -88,7 +87,8 @@ type Request =
       measureCapSeats?: boolean;
       capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number };
       previewBodyIndex?: number;
-      finishBody?: FinishBodySnapshot;
+      finishBody?: FinishBodySnapshot | FinishBodySnapshot[];
+      snapshotBodyIds?: string[];
     }
   | {
       type: "export";
@@ -126,12 +126,6 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       return;
     }
     await ready;
-    if (data.type === "validate") {
-      const solids = buildBodies(data.features);
-      releaseBodies(solids);
-      worker.postMessage({ type: "validated", revision: data.revision });
-      return;
-    }
     if (data.type === "inspect-qa") {
       if (import.meta.env.VITE_CAD_QA === "1") {
         try {
@@ -150,6 +144,7 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         data.features,
         data.retainedMeshes,
         data.finishBody,
+        data.snapshotBodyIds === undefined,
       );
       const meshes = changes.map((change) => change.mesh);
       // One-shot preview workers receive the complete mesh list, as before.
@@ -157,8 +152,7 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         data.retainedMeshes === undefined
           ? { type: "built", meshes }
           : { type: "updated", keys, changes };
-      // Only finish preview workers return editable geometry. Ordinary viewport
-      // rebuilds, exports and inexpensive previews avoid serializing another copy.
+      // A preview can return its validated solid for reuse when the edit is committed.
       let previewBody: PreviewSolid | undefined;
       if (
         data.previewBodyIndex !== undefined &&
@@ -211,8 +205,9 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
           });
         }
       }
+      const checkedBodies = data.snapshotBodyIds && model.snapshots(data.snapshotBodyIds);
       worker.postMessage(
-        { ...output, revision: data.revision, previewBody, ...properties, fitSurfaces, capSurfaces, threadFrames: solids.flatMap((b) => b.threadFrames ?? []) },
+        { ...output, revision: data.revision, previewBody, checkedBodies, ...properties, fitSurfaces, capSurfaces, threadFrames: solids.flatMap((b) => b.threadFrames ?? []) },
         meshes.flatMap(buffers),
       );
       currentRevision = data.revision;

@@ -13,6 +13,7 @@ import { solidBounds } from "./secondaryProjection";
 import type { EvaluatedFeature } from "./types";
 
 interface CachedBody {
+  history: EvaluatedFeature[];
   signature: string;
   key: number;
   body: Body;
@@ -23,6 +24,21 @@ interface CachedBody {
 export interface MeshChange {
   key: number;
   mesh: RenderBody;
+}
+
+function bodyHistories(features: EvaluatedFeature[]): EvaluatedFeature[][] {
+  const histories: EvaluatedFeature[][] = [];
+  for (const feature of features) {
+    if (feature.operation === "new") histories.push([]);
+    const history = histories.at(-1);
+    if (!history)
+      throw Error(
+        feature.name +
+          " — Add a New body earlier in the timeline, or set this operation to New body.",
+      );
+    history.push(feature);
+  }
+  return histories;
 }
 
 /**
@@ -45,23 +61,30 @@ export class ModelBodies {
     this.entries.clear();
   }
 
+  /** Hand off exact solids after a successful geometry check. A missing snapshot falls back to rebuilding. */
+  snapshots(bodyIds: string[]): FinishBodySnapshot[] {
+    const result: FinishBodySnapshot[] = [];
+    for (const id of new Set(bodyIds)) {
+      const entry = this.entries.get(id);
+      if (!entry) continue;
+      try {
+        result.push({ bodyId: id, history: JSON.stringify(entry.history), brep: entry.body.shape.serialize(),
+          volume: entry.properties.volume, guides: entry.body.guides, threadFrames: entry.body.threadFrames });
+      } catch {
+        // This exact body can still be rebuilt directly in the viewport.
+      }
+    }
+    return result;
+  }
+
   build(
     features: EvaluatedFeature[],
     retainedMeshes: number[] = [],
-    finishBody?: FinishBodySnapshot,
+    finishBody?: FinishBodySnapshot | FinishBodySnapshot[],
+    renderMeshes = true,
   ) {
-    const histories: EvaluatedFeature[][] = [];
-    for (const feature of features) {
-      if (feature.operation === "new") histories.push([]);
-      const history = histories.at(-1);
-      if (!history)
-        throw Error(
-          feature.name +
-            " — Add a New body earlier in the timeline, or set this operation to New body.",
-        );
-      history.push(feature);
-    }
-
+    const histories = bodyHistories(features);
+    const snapshots = Array.isArray(finishBody) ? finishBody : finishBody ? [finishBody] : [];
     const known = new Set(retainedMeshes);
     const next = new Map<string, CachedBody>();
     const created: Body[] = [],
@@ -85,16 +108,22 @@ export class ModelBodies {
             previous.body.name === name
               ? previous.body
               : { ...previous.body, name };
-          const entry =
-            body === previous.body ? previous : { ...previous, body };
+          const entry = { ...previous, body, history };
           next.set(id, entry);
-          if (!known.has(entry.key))
+          if (renderMeshes && !known.has(entry.key))
             changes.push({
               key: entry.key,
               mesh: displayBodies([body]).meshes[0],
             });
           continue;
         }
+        // Preview snapshots are private to one body, including its downstream features.
+        // The full evaluated history must still match at commit, including names and IDs.
+        const snapshot = snapshots.find(s => s.bodyId === id);
+        const restored =
+          snapshot && snapshot.history === JSON.stringify(history)
+            ? restoreFinishBody(snapshot, name)
+            : undefined;
         // Keep one immutable state immediately before the final feature. Repeated
         // edits to that feature can start there without replaying earlier booleans.
         let prefix: CachedBody["prefix"];
@@ -102,7 +131,7 @@ export class ModelBodies {
           const prefixSignature = signatures.slice(0, -1).join(",");
           if (previous?.prefix?.signature === prefixSignature) {
             prefix = previous.prefix;
-          } else {
+          } else if (!restored) {
             const prefixBody =
               previous?.signature === prefixSignature
                 ? cloneBody(previous.body)
@@ -111,13 +140,6 @@ export class ModelBodies {
             created.push(prefixBody);
           }
         }
-        // A finish preview may cover only this solid, including its downstream features.
-        // The full evaluated history must still match at commit, including names and IDs.
-        const restored =
-          finishBody?.bodyId === id &&
-          finishBody.history === JSON.stringify(history)
-            ? restoreFinishBody(finishBody, name)
-            : undefined;
         const body =
           restored ??
           (prefix
@@ -125,7 +147,7 @@ export class ModelBodies {
             : buildBodies(history))[0];
         body.name = name;
         created.push(body);
-        const { meshes, bodyProperties, area } = displayBodies([body]);
+        const { meshes, bodyProperties, area } = displayBodies([body], renderMeshes);
         const properties = bodyProperties[0];
         if (history.some(f => f.kind === "import" || f.kind === "merge")) {
           const [lo, hi] = solidBounds(body.shape);
@@ -133,6 +155,7 @@ export class ModelBodies {
         }
         const key = ++this.serial;
         next.set(id, {
+          history,
           key,
           signature,
           prefix,
@@ -140,7 +163,7 @@ export class ModelBodies {
           properties,
           area,
         });
-        changes.push({ key, mesh: meshes[0] });
+        if (renderMeshes) changes.push({ key, mesh: meshes[0] });
       }
     } catch (error) {
       releaseBodies(created);

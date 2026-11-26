@@ -1,4 +1,4 @@
-import { makeCylinder, measureVolume, type Shape3D } from "replicad";
+import { cast, getOC, isShape3D, makeCylinder, measureVolume, type Shape3D } from "replicad";
 import { Matrix4, Vector3 } from "three";
 import { threadMinorDiameter } from "./finishingTypes";
 import { isRigidTransform } from "./rigidTransform";
@@ -39,6 +39,22 @@ function cosmeticTeeth(socket: ThreadFrame, tenon: ThreadFrame, hostToCap: Matri
     core = makeCylinder(minor - margin, hi - lo + 2 * margin, start, dir);
     return outer.cut(core);
   } finally { core?.delete(); outer.delete(); }
+}
+
+// The two-shape OCCT constructor performs the Boolean immediately. Contact checks
+// only need the exact overlap volume and extent, including when the overlap is empty.
+function capOverlap(cap: Shape3D, part: Shape3D): Shape3D {
+  const common = new (getOC().BRepAlgoAPI_Common)(cap.wrapped, part.wrapped);
+  try {
+    if (!common.IsDone()) throw Error("Could not check where the cap and part intersect.");
+    const raw = common.Shape();
+    try {
+      const overlap = cast(raw);
+      if (isShape3D(overlap)) return overlap;
+      overlap.delete();
+      throw Error("Could not measure the cap intersection.");
+    } finally { raw.delete(); }
+  } finally { common.delete(); }
 }
 
 function interferenceVolume(overlap: Shape3D, socket: ThreadFrame | undefined, tenon: ThreadFrame | undefined, relative: Matrix4) {
@@ -83,7 +99,7 @@ export function verifyCapMount(bodies: Body[], ids: string[], capId: string, mat
       try {
         const otherBox = placed.boundingBox;
         try { if (capBox.isOut(otherBox)) continue; } finally { otherBox.delete(); }
-        overlap = cap.shape.intersect(placed);
+        overlap = capOverlap(cap.shape, placed);
         const tenon = joint?.parent === ids[i] ? findThread(other.threadFrames ?? [], ids[i], joint.threadMate?.mating) : undefined;
         const volume = interferenceVolume(overlap, socket, tenon, relative);
         if (!Number.isFinite(volume)) throw Error("Turnmill could not measure the cap against " + other.name + ".");

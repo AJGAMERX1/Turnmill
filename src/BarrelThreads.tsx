@@ -8,6 +8,7 @@ import { isSleeveDonor, refillComponents, refillDimensions, type RefillComponent
 import { isScaleFeature } from "./secondaryEngraving";
 import { stockProfile } from "./SketchStock";
 import { barrelAxis, barrelEnd } from "./threadedCone";
+import type { FinishBodySnapshot } from "./geometry";
 import type { Project } from "./types";
 
 type Props = Pick<ComponentProps<typeof ThreadsDialog>, "project" | "measurementError" | "onClose" | "onParameters"> & {
@@ -15,7 +16,7 @@ type Props = Pick<ComponentProps<typeof ThreadsDialog>, "project" | "measurement
   solids: { id: string; name: string }[];
   surfaces?: FitSurface[][];
   onCreateBarrel: (project: Project, id: string) => void;
-  onSave: (project: Project, newId: string, showAssembly: boolean, hostId: string, adjustments?: string[], restoredBarrelId?: string) => void;
+  onSave: (project: Project, newId: string, showAssembly: boolean, hostId: string, adjustments?: string[], restoredBarrelId?: string, checkedBodies?: FinishBodySnapshot[]) => void;
   onSingle: (hostId: string) => void;
   onEdit: (featureId: string, finishId: string, hostId: string) => void;
 };
@@ -99,5 +100,5 @@ export default function BarrelThreads({ project, sourceId, solids, surfaces, mea
     initialPart={part} onPartChange={setPart} surfaces={surfaces?.[solids.findIndex(f => f.id === host.id)]} measurementError={measurementError}
     onClose={onClose} onParameters={onParameters} onSingle={() => onSingle(host.id)}
     onEdit={(featureId, finishId) => onEdit(featureId, finishId, host.id)}
-    onSave={(next, id, showAssembly, adjustments, restoredBarrelId) => onSave(next, id, showAssembly, host.id, adjustments, restoredBarrelId)}/>;
+    onSave={(next, id, showAssembly, adjustments, restoredBarrelId, checkedBodies) => onSave(next, id, showAssembly, host.id, adjustments, restoredBarrelId, checkedBodies)}/>;
 }

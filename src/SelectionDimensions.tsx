@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import InputValue from "./InputValue";
+import type { FinishBodySnapshot } from "./geometry";
+import type { KernelReply } from "./Viewport";
 import { evaluate, resolveParameters } from "./expressions";
 import { changeProfileRange, profileRange, type ProfileRange } from "./profileSizing";
 import { isExpression, solveSketch, type XY } from "./solveSketch";
@@ -50,27 +52,28 @@ async function checkConeBuild(project: Project, sketchId: string, signal: AbortS
   if (!affected.size) return;
   const { features } = await evaluateModel({ ...project, features: project.features.filter(f => affected.has(owners.get(f.id))) });
   if (!features.length || signal.aborted) return;
-  await new Promise<void>((resolve, reject) => {
+  return new Promise<FinishBodySnapshot[] | undefined>((resolve, reject) => {
     const engine = new Worker(new URL("./kernel.ts", import.meta.url), { type: "module", name: "turnmill-cone-edit" });
-    const finish = (message?: string) => {
+    const finish = (message?: string, bodies?: FinishBodySnapshot[]) => {
       engine.terminate();
       signal.removeEventListener("abort", cancel);
-      if (message) reject(Error(message)); else resolve();
+      if (message) reject(Error(message)); else resolve(bodies);
     };
     const cancel = () => finish();
     signal.addEventListener("abort", cancel, { once: true });
     engine.onerror = () => finish("The geometry engine stopped. Try the diameter edit again.");
-    engine.onmessage = ({ data }: MessageEvent<{ type: "validated" } | { type: "error"; message: string }>) => {
-      if (data.type === "validated") finish();
+    engine.onmessage = ({ data }: MessageEvent<KernelReply>) => {
+      if (data.type === "built") finish(undefined, data.checkedBodies);
       if (data.type === "error") finish(data.message);
     };
-    try { engine.postMessage({ type: "validate", revision: 1, features }); }
+    const snapshotBodyIds = features.filter(f => f.operation === "new").map(f => f.id);
+    try { engine.postMessage({ type: "build", revision: 1, features, snapshotBodyIds }); }
     catch (cause) { finish(cause instanceof Error ? cause.message : "Could not check the diameter. Try again."); }
   });
 }
 
 export default function SelectionDimensions({ project, sketch, feature, sketchSelected, turnedProfile, onChange }: {
-  project: Project; sketch?: Sketch; feature?: Feature; sketchSelected?: boolean; turnedProfile?: boolean; onChange: (p: Project) => void;
+  project: Project; sketch?: Sketch; feature?: Feature; sketchSelected?: boolean; turnedProfile?: boolean; onChange: (p: Project, bodies?: FinishBodySnapshot[]) => void;
 }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -134,10 +137,11 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
         const result = await solveSketch(nextSketch, values);
         if (turned && crossesRevolveAxis(result.points.map((p) => [p.x, p.y]))) throw Error(axisCrossingMessage);
       }
-      if (checkSolid && sketch && latest.current === project) await checkConeBuild(candidate, sketch.id, request.signal);
+      const bodies = checkSolid && sketch && latest.current === project
+        ? await checkConeBuild(candidate, sketch.id, request.signal) : undefined;
       if (!request.signal.aborted && latest.current === project) {
         if (checkSolid && nextSketch) setConeEdge(nextSketch.coneEdge?.edge);
-        onChange(candidate);
+        onChange(candidate, bodies);
       }
     } catch (e) {
       if (!request.signal.aborted && latest.current === project) setError((e as Error).message);

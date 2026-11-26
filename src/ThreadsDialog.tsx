@@ -18,6 +18,7 @@ import {
   shoulderOutside, suggestCapFit, type BarrelEnd, type CapConeFit, type CapSettings, type PairSettings,
 } from "./threadedCone";
 import type { Project } from "./types";
+import type { FinishBodySnapshot } from "./geometry";
 import type { KernelReply } from "./Viewport";
 import "./threadsDialog.css";
 
@@ -28,7 +29,7 @@ type Props = {
   project: Project; bodyId: string; surfaces?: FitSurface[]; measurementError?: string; targetPicker?: ReactNode;
   initialPart?: Attachment; onPartChange?: (kind: Attachment) => void;
   onSingle: () => void; onParameters: () => void; onEdit: (featureId: string, finishId: string) => void;
-  onSave: (next: Project, id: string, showAssembly: boolean, adjustments?: string[], restoredBarrelId?: string) => void; onClose: () => void;
+  onSave: (next: Project, id: string, showAssembly: boolean, adjustments?: string[], restoredBarrelId?: string, checkedBodies?: FinishBodySnapshot[]) => void; onClose: () => void;
 };
 
 function seatedRefillFront(project: Project, bodyId: string, axis: BarrelEnd["axis"]): PairSettings["end"] | undefined {
@@ -130,8 +131,12 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const [capLengthInput, setCapLength] = useState<string>(), [outside, setOutside] = useState<string>();
   const [crown, setCrown] = useState<CapSettings["crown"]>("domed");
   const [crownInput, setCrownLength] = useState<string>(), [wall, setWall] = useState("1.5 mm");
+  const values = useMemo(() => {
+    try { return resolveParameters(draft.parameters); } catch { return undefined; }
+  }, [draft.parameters]);
   function read(expression: string) {
-    try { return evaluate(expression, resolveParameters(draft.parameters)); }
+    if (!values) return;
+    try { return evaluate(expression, values); }
     catch { return undefined; }
   }
   const allowanceMm = read(allowance), threadLengthMm = read(length);
@@ -139,8 +144,9 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const backShoulder = rear && threadLengthMm && threadLengthMm > 0 ? shoulderOutside(rear, threadLengthMm) : undefined;
   const capDiameter = outside ?? (shoulder ? mmField(shoulder) : "");
   const capOD = read(capDiameter);
-  const candidates = stock && allowanceMm !== undefined && allowanceMm >= 0 && threadLengthMm !== undefined
-    ? compatiblePairSizes(draft, bodyId, stock, part, rear, allowanceMm, threadLengthMm) : [];
+  const candidates = useMemo(() => stock && values && allowanceMm !== undefined && allowanceMm >= 0 && threadLengthMm !== undefined
+    ? compatiblePairSizes(draft, bodyId, stock, part, rear, allowanceMm, threadLengthMm) : [],
+  [draft, bodyId, stock, part, rear, values, allowanceMm, threadLengthMm]);
   const compatibleSizes = cap ? candidates.filter(label => {
     const preset = threadPresets.find(p => p.label === label);
     return preset && capOD !== undefined && capOD > evaluate(preset.diameter, {}) + 1e-5;
@@ -151,6 +157,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         (outside !== undefined && capOD === undefined)) return;
     return suggestCapFit(draft, bodyId, stock, rear, threadLengthMm, allowanceMm, outside === undefined ? undefined : capOD);
   }, [cap, stock, rear, size, measurementError, allowanceMm, threadLengthMm, outside, capOD, draft, bodyId]);
+  const proposedShoulder = suggestion && stock ? shoulderOutside(stock, suggestion.length) : undefined;
   const preset = threadPresets.find(p => p.label === size);
   const capLength = capLengthInput ?? (hasAttachments ? "28 mm" : "18 mm");
   const major = preset && evaluate(preset.diameter, {});
@@ -170,7 +177,9 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
     } else if (threadLengthMm === undefined || threadLengthMm <= 0) {
       stockIssue = "Enter a positive thread length.";
     } else if (cap && (!Number.isFinite(shoulder) || !Number.isFinite(backShoulder))) {
-      stockIssue = "Choose a thread length that ends on a round shoulder at both ends of the barrel.";
+      const interrupted = !Number.isFinite(shoulder) && !Number.isFinite(backShoulder) ? "at both ends"
+        : !Number.isFinite(shoulder) ? "at the front" : "at the back";
+      stockIssue = `There is no continuous round shoulder ${mmField(threadLengthMm)} in ${interrupted}. Move the grip or leave a longer round section for the cap seat.`;
     } else if (cap && candidates.length && !size) {
       stockIssue = "Increase the cap outside diameter to leave a wall around its threaded opening.";
     } else if (!size) {
@@ -180,8 +189,8 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   }
   const capSettings = { end, size, length, mode, allowance, capLength, capDiameter, crown, crownLength, wall, matchBarrel: outside === undefined };
   let previewFit: ReturnType<typeof fitCapEnvelope> | undefined;
-  if (cap && major) {
-    try { previewFit = fitCapEnvelope(capSettings, resolveParameters(draft.parameters), major); }
+  if (cap && major && values) {
+    try { previewFit = fitCapEnvelope(capSettings, values, major); }
     catch { /* Incomplete inputs stay editable. */ }
   }
   const [busy, setBusy] = useState<"create" | "restore" | null>(null), [error, setError] = useState("");
@@ -203,7 +212,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       const host = restore ? repairHost : bodyId;
       const checkingCap = restore || cap;
       let revision = 0;
-      async function build(next: Project, options: { measureCapSeats?: boolean; capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number } } = {}) {
+      async function build(next: Project, options: { snapshotBodyIds?: string[]; measureCapSeats?: boolean; capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number } } = {}) {
         const model = await evaluateModel(next);
         if (token.current !== request) throw Error("Thread operation closed.");
         const rev = ++revision;
@@ -213,7 +222,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
           engine.onmessage = ({ data }: MessageEvent<KernelReply>) => {
             if (data.revision === rev && (data.type === "built" || data.type === "error")) resolve(data);
           };
-          engine.postMessage({ type: "build", revision: rev, features: model.features, ...options });
+          engine.postMessage({ type: "build", revision: rev, features: model.features, snapshotBodyIds: [], ...options });
         });
         return { reply, model };
       }
@@ -239,8 +248,10 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       }
       async function check(fitCavityDepth?: number) {
         const history = checkingCap ? next.features : next.features.filter(f => f.id === partId || features.some(s => f.id === s.id));
-        const { reply, model } = await build({ ...next, features: history }, checkingCap
-          ? { capPostingCheck: { project: next, capId: partId, fitCavityDepth } } : {});
+        const { reply, model } = await build({ ...next, features: history }, {
+          snapshotBodyIds: !restore && checkingCap && coneFit ? [host, partId, coneFit.bodyId] : [host, partId],
+          capPostingCheck: checkingCap ? { project: next, capId: partId, fitCavityDepth } : undefined,
+        });
         if (reply.type === "built") resolveThreadMates({ [partId]: next.workspaces!.joints[partId] },
           reply.threadFrames ?? [], model.values, [host, partId]);
         return reply;
@@ -261,7 +272,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       if (verified.type === "error") throw Error(verified.message);
       if (!restore && cap && coneFit) changes.push(coneFit.name + " base changed to Ø" + mmField(coneFit.to) + ".");
       onSave(next, partId, !restore && (stock!.axis !== "X" || stock!.centerline.some(n => Math.abs(n) > 1e-6)), changes,
-        restore ? host : undefined);
+        restore ? host : undefined, verified.checkedBodies);
     } catch (cause) {
       if (token.current === request) setError((cause as Error).message);
     } finally {
@@ -270,8 +281,8 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       }
     }
   }
-  function input(label: string, v: string, edit: (s: string) => void) {
-    return <label>{label}<input aria-label={label} value={v} onChange={e => edit(e.target.value)}/></label>;
+  function input(label: string, v: string, edit: (s: string) => void, placeholder?: string) {
+    return <label>{label}<input aria-label={label} value={v} placeholder={placeholder} onChange={e => edit(e.target.value)}/></label>;
   }
   function choosePart(kind: "cone" | "cap") {
     if (kind === part) return;
@@ -317,17 +328,17 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         {previewFit && previewFit.changes.length > 0 && <p className="helper" role="status">Automatic fit · {previewFit.changes.join(" ")}</p>}
         <fieldset disabled={!!busy}>
           <div className="thread-pair-grid">
-            <label>{cap ? "Front end" : "Barrel end"}<select aria-label={cap ? "Front end" : "Barrel end"} value={end} onChange={e => { setEnd(e.target.value as PairSettings["end"]); setSize(""); }}>
+            <label>{cap ? "Front end" : "Barrel end"}<select aria-label={cap ? "Front end" : "Barrel end"} value={end} onChange={e => { setEnd(e.target.value as PairSettings["end"]); setSize(""); setConeFit(undefined); }}>
               <option value="start">Start · min {axis}</option><option value="end">End · max {axis}</option>
             </select></label>
             <label>Thread size<select aria-label="Thread size" disabled={!compatibleSizes.length} value={size} onChange={e => setSize(e.target.value)}>
-              {!size && <option value="">{surfaces ? "No compatible size" : "Measuring…"}</option>}
+              {!size && <option value="">{suggestion ? suggestion.size + " · suggested" : surfaces ? "No compatible size" : "Measuring…"}</option>}
               {compatibleSizes.map(label => <option key={label}>{label}</option>)}
             </select></label>
             {input("Thread length", length, setLength)}
             {cap ? <>
               {input("Cap length", capLength, setCapLength)}
-              <div>{input("Cap outside diameter", capDiameter, setOutside)}
+              <div>{input("Cap outside diameter", capDiameter, setOutside, proposedShoulder && Number.isFinite(proposedShoulder) ? mmField(proposedShoulder) + " suggested" : undefined)}
                 {outside !== undefined && <button className="thread-shared" type="button" onClick={() => setOutside(undefined)}>Match barrel</button>}</div>
               <label>Cap profile<select aria-label="Cap profile" value={crown} onChange={e => setCrown(e.target.value as CapSettings["crown"])}>
                 <option value="flat">Flat</option><option value="domed">Domed</option><option value="tapered">Tapered</option>
@@ -361,9 +372,11 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       <div className="thread-pair-footer">
         {(error || measurementError || (!suggestion && stockIssue)) && <p role="alert" className="error-text">{error || measurementError || stockIssue}</p>}
         {suggestion && <div className="thread-fit-suggestion">
-          <p>{suggestion.size} can seat {mmField(suggestion.length)} in from both ends.
+          <p><strong>{outside === undefined && proposedShoulder !== undefined && Number.isFinite(proposedShoulder)
+            ? "Flush fit at Ø" + mmField(proposedShoulder) : "Suggested cap fit"}</strong><br/>
+            {suggestion.size} seats {mmField(suggestion.length)} in from both ends.
             {suggestion.cone && <> Narrow the {suggestion.cone.name} base from Ø{mmField(suggestion.cone.from)} to Ø{mmField(suggestion.cone.to)} so the cap can pass over it.</>}</p>
-          <button type="button" className="outline-btn" disabled={!!busy} onClick={() => {
+          <button type="button" className="primary" disabled={!!busy} onClick={() => {
             if (suggestion.cone) setConeFit(suggestion.cone);
             if (Math.abs(suggestion.length - threadLengthMm!) > 1e-6) setLength(mmField(suggestion.length));
             setSize(suggestion.size); setError("");

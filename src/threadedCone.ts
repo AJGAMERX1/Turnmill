@@ -66,8 +66,8 @@ function checkBarrel(project: Project, bodyId: string, ...rims: BarrelEnd[]) {
     throw Error("The thread needs a flat, round end with material around its center. Select a barrel or change the pointed end to a flat shoulder.");
 }
 
-export type CapConeFit = { parameter: string; from: number; to: number; name: string };
-type Clearance = { name: string; diameter: number; cone?: { parameter: string; minimum: number } };
+export type CapConeFit = { bodyId: string; parameter: string; from: number; to: number; name: string };
+type Clearance = { name: string; diameter: number; cone?: { bodyId: string; parameter: string; minimum: number } };
 
 function attachedClearance(project: Project, host: string, values: Record<string, number>): Clearance | undefined {
   const joints = (project.workspaces?.joints ?? {}) as Record<string, Joint>;
@@ -103,7 +103,7 @@ function attachedClearance(project: Project, host: string, values: Record<string
             a.x === b.x && c.x === d.x && c.x === a.x + (socket.end === "end" ? " + " : " - ") + prefix + "_length") {
           const minimum = Math.max(evaluate(male.diameter, values), evaluate(socket.diameter, values),
             values[prefix + "_tip"]) + 0.3;
-          cone = { parameter, minimum };
+          cone = { bodyId: id, parameter, minimum };
         }
       }
     }
@@ -338,7 +338,7 @@ export function suggestCapFit(project: Project, bodyId: string, front: BarrelEnd
   if (direct) return direct;
   const obstacle = attachedClearance(project, bodyId, resolveParameters(project.parameters));
   if (!obstacle?.cone) return;
-  const { minimum, parameter } = obstacle.cone;
+  const { bodyId: coneBodyId, minimum, parameter } = obstacle.cone;
   const from = obstacle.diameter, name = obstacle.name;
   // A user may have reused the cone base in another part or assembly driver.
   // Limit this automatic offer to the generator's own lone profile reference.
@@ -352,14 +352,14 @@ export function suggestCapFit(project: Project, bodyId: string, front: BarrelEnd
   // The trial checks all remaining attachments and both ends of the same barrel.
   const clearance = 0.2;
   if (!(minimum + clearance < from)) return;
-  const trial = applyCapConeFit(project, { parameter, from, to: minimum + clearance, name });
+  const trial = applyCapConeFit(project, { bodyId: coneBodyId, parameter, from, to: minimum + clearance, name });
   const proposed = recommendCapSeat(trial, bodyId, front, rear, length, allowance, capOutside, true);
   const preset = presets.find(p => p.label === proposed?.size);
   if (!proposed || !preset) return;
   const upper = threadMinorDiameter(preset.major, preset.step) - clearance;
   const to = Math.max(Number(minimum.toFixed(6)), Math.floor(upper * 10) / 10);
   if (!(to < from && to <= upper)) return;
-  return { ...proposed, cone: { parameter, from, to, name } };
+  return { ...proposed, cone: { bodyId: coneBodyId, parameter, from, to, name } };
 }
 
 export function capAttachmentIssue(project: Project, bodyId: string): string | undefined {

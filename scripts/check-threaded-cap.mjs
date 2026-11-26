@@ -134,6 +134,28 @@ try {
   assert.equal(suggestCapFit({...fullNose, parameters:[...fullNose.parameters,{name:"other",expression:"cone_base + 1 mm"}]},
     "barrel",front,back,4.5),undefined,"a shared cone driver cannot be automatically narrowed");
   assert.equal(suggestCapFit(fullNose,"barrel",front,back,4.5,0.1,10),undefined,"respect intentionally smaller cap dimensions");
+  // A wide nose with an M16 socket needs a fine-pitch cap to clear its base
+  // while keeping both the nose shoulder and the original 20 mm barrel outline.
+  const largeHost = project([{ ...barrel.sketches[0],
+    points: [[0,5],[0,10],[70,10],[70,5]].map(([x,y]) => ({ x:String(x), y:String(y) })) }], barrel.features);
+  const withLargeNose = createThreadedCone(largeHost, "barrel",
+    { ...endStock("end"), station:70, outside:20, bore:10 },
+    { ...coneSettings, size:"M16 × 1", length:"4.5 mm", opening:"2.27 mm", tipDiameter:"4 mm" }).project;
+  const largeLands = [land(0,51,20), land(61,61.5,19.6), land(68,70,20), { ...land(0,70,10), side:"bore" }];
+  const largeFront = barrelEnd(largeLands, "X", "end"), largeBack = barrelEnd(largeLands, "X", "start");
+  const fineFit = suggestCapFit(withLargeNose, "barrel", largeFront, largeBack, 4.5);
+  assert(fineFit?.cone, "offer a flush seat and a removable nose that fits through the cap");
+  assert.equal(fineFit.size, "M18 × 1", "fine-pitch cap preserves a wall around the M16 socket");
+  assert(fineFit.length >= 1 && fineFit.length < 2, "use the intact front shoulder before the grip");
+  assert(fineFit.cone.to >= 16.3 && fineFit.cone.to + 0.2 <= threadMinorDiameter(18, 1),
+    "preserve the cone's M16 seating shoulder and clearance through the threaded cap");
+  const fittedNose = applyCapConeFit(withLargeNose, fineFit.cone);
+  const flush = createThreadedCap(fittedNose, "barrel", largeFront, { ...settings, matchBarrel:true,
+    capDiameter:"20 mm", size:fineFit.size, length:fineFit.length + " mm" }, largeBack);
+  const dimensions = resolveParameters(flush.project.parameters);
+  assert.equal(dimensions.cap_diameter, 20);
+  assert.equal(dimensions.cone_opening, 2.27);
+  assert.deepEqual(flush.project.sketches[0], largeHost.sketches[0], "a flush fit preserves the barrel sketch");
   const outer = makeCylinder(5,50,[13,-7,0],[0,0,1]), bore = makeCylinder(3.5,50,[13,-7,0],[0,0,1]);
   const ring = outer.cut(bore);
   const zBarrel = project([], [{id:"barrel",name:"Offset Z sleeve",kind:"import",sketchId:"",suppressed:false,

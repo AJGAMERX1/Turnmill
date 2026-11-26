@@ -5,6 +5,11 @@ on:
   pull_request:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      package_pages:
+        description: Upload the release build that passed the Pages smoke test
+        type: boolean
+        default: false
   schedule:
     - cron: "23 7 * * *"
 # Every pushed revision runs. A newer revision may supersede only its duplicate PR preview.
@@ -58,6 +63,11 @@ jobs:
           QA_FUZZ_MS: ${{ github.event_name == 'schedule' && '3660000' || '540000' }}
           QA_SEED: ${{ github.event_name == 'schedule' && github.run_id || '539365669' }}
         run: xvfb-run -a -s "-screen 0 1920x1200x24" npm run qa
+      - name: Package the tested public release
+        if: inputs.package_pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
       - name: Preserve measured results and failing cases
         uses: actions/upload-artifact@v4
         if: always()

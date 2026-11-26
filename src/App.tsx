@@ -1,4 +1,5 @@
 import InputValue from "./InputValue";
+import type { FinishBodySnapshot } from "./geometry";
 import SelectionDimensions from "./SelectionDimensions";
 import BarrelThreads from "./BarrelThreads";
 import { legacyCapForBarrel } from "./threadedCone";
@@ -214,6 +215,14 @@ export default function App() {
     canRedo,
   } = useJournal();
   const finishing = useFinishPreview(project);
+  const checkedSolids = useRef<{ project: Project; bodies: FinishBodySnapshot[] } | null>(null);
+  useEffect(() => {
+    if (checkedSolids.current && checkedSolids.current.project !== project) checkedSolids.current = null;
+  }, [project]);
+  function commitChecked(next: Project, bodies?: FinishBodySnapshot[]) {
+    const committed = commit(next);
+    checkedSolids.current = bodies?.length ? { project: committed, bodies } : null;
+  }
   const [measureScope, setMeasureScope] = useState<"selected" | "all">("all");
   const [search, setSearch] = useState<PaletteContext | null>(null);
   const [mode, setMode] = useState<Mode>("Part"),
@@ -1750,7 +1759,14 @@ export default function App() {
               fitToken={fit}
               exportRequest={exportRequest}
               onStatus={setKernel}
-              takeFinishBody={finishing.takeFinishBody}
+              takeFinishBody={() => {
+                const checked = checkedSolids.current;
+                if (checked?.project === project && model.key === geoSignature) {
+                  checkedSolids.current = null;
+                  return checked.bodies;
+                }
+                return finishing.takeFinishBody();
+              }}
               onBodyContextMenu={viewportMenu}
               onBodyPick={setSelected}
               appearances={appearances}
@@ -1959,7 +1975,7 @@ export default function App() {
                 {!isScaleFeature(project, currentF?.id) && <SelectionDimensions
                   key={selectedSketch?.id || currentF?.id || selectedS?.id}
                   project={project} sketch={selectedS} sketchSelected={!!selectedSketch} turnedProfile={turnedProfile}
-                  feature={currentF} onChange={commit} />}
+                  feature={currentF} onChange={commitChecked} />}
                 {legacyCapForBarrel(project, project.workspaces?.capMounts?.[selectedBodyId]?.barrelId ?? selectedBodyId) &&
                   <button className="outline-btn" onClick={() => openThreads(selectedBodyId)}><Nut size={15}/> Fit cap flush to barrel…</button>}
                 {otherTurns.map(f => <button key={f.sketchId} className="outline-btn" onClick={() => setSelected(f.sketchId)}>
@@ -2440,16 +2456,17 @@ export default function App() {
             selectThreadFeature(hostId, featureId);
             setEntryId(finishId); setPresetFinish(undefined); setDialog("finish");
           }}
-          onSave={(next, id, showAssembly, hostId, adjustments, restoredBarrelId) => {
+          onSave={(next, id, showAssembly, hostId, adjustments, restoredBarrelId, checkedBodies) => {
+            commitChecked(next, checkedBodies);
             if (restoredBarrelId) {
-              commit(next); close();
+              close();
               if (mode === "Part") selectThreadFeature(restoredBarrelId);
               setNotice(adjustments?.join(" ") || "Cap fitted flush to the barrel.");
               return;
             }
             const posedBarrel = arranged?.[solidFeatures.findIndex(f => f.id === hostId)]
               ?.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-8);
-            commit(next); switchMode(showAssembly || mode === "Assembly" || posedBarrel ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
+            switchMode(showAssembly || mode === "Assembly" || posedBarrel ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
             close();
             const partName = next.features.find(f => f.id === id)?.name || "Threaded part";
             const fitted = adjustments?.length ? " " + adjustments.join(" ") : "";
