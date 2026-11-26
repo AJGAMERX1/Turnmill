@@ -73,7 +73,7 @@ Object.assign(env, {
 try {
   await run("baseline", ["npm", "test"]);
   await run("test-hook", ["node", "tests/qa/hook.mjs"]);
-  for (const name of ["precision-sketch", "pen-studio", "grip-milling", "thread-ends", "bic-donor", "refill-snap", "merge-parts"]) await run(name, ["node", "tests/qa/" + name + ".mjs"]);
+  for (const name of ["precision-sketch", "pen-studio", "grip-milling", "thread-ends", "refill-threads", "native-import", "bic-donor", "refill-snap", "merge-parts"]) await run(name, ["node", "tests/qa/" + name + ".mjs"]);
   await run("bolt-pen-controls", ["node", "tests/browser/bolt-pen.mjs"]);
   await run("inspector-dimensions", ["node", "tests/qa/inspector-dimensions.mjs"]);
   await run("projects", ["node", "tests/projects/run.mjs"], {}, 65 * 60000);

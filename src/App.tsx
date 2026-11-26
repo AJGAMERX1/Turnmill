@@ -1,6 +1,6 @@
 import InputValue from "./InputValue";
 import SelectionDimensions from "./SelectionDimensions";
-import ThreadsDialog from "./ThreadsDialog";
+import BarrelThreads from "./BarrelThreads";
 import { allPartsMatrices, applyAllPartsPose } from "./allPartsPose";
 import { remainingCapMounts } from "./capProfile";
 import { observeModel } from "../tests/hook/observe";
@@ -94,7 +94,7 @@ import {
   turnedProject,
   twistPenProject,
   uid,
-  validateProject,
+  readProjectFile,
 } from "./projects";
 import { resolveParameters } from "./expressions";
 import { evaluateModel } from "./buildModel";
@@ -755,9 +755,14 @@ export default function App() {
     setThreadSession({ project, posedProject, bodyId });
     setDialog("threads");
   }
-  const threadsBody = (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
-  const threadsEnabled = !!threadsBody && mode !== "Drawing" && solidFeatures.some(f => f.id === threadsBody) &&
-    !isScaleFeature(project, threadsBody);
+  const currentThreadsBody = () => (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
+  const threadsEnabled = mode !== "Drawing" && solidFeatures.some(f =>
+    (mode === "Assembly" || f.id === selectedBodyId) && !isScaleFeature(project, f.id));
+  function selectThreadFeature(hostId: string, featureId?: string) {
+    if (activePart && activePart.id !== hostId) setPartSelection({ projectId: project.id, id: hostId });
+    const target = featureId ?? partFeatures(project, hostId).filter(f => !f.suppressed).at(-1)?.id;
+    if (target) setSelected(target);
+  }
   function threadMenuItem(bodyId: string): MenuItem {
     return { label: "Threads", icon: Nut, shortcut: "T", run: () => openThreads(bodyId) };
   }
@@ -987,7 +992,7 @@ export default function App() {
       run: () => fileRef.current?.click(),
     },
     {
-      title: "Import STEP, STL, DXF, or SVG",
+      title: "Import Turnmill, STEP, STL, DXF, or SVG",
       group: "Project",
       shortcut: "Alt I",
       run: () => setDialog("import"),
@@ -1098,7 +1103,7 @@ export default function App() {
     },
     { key: "add-thread", title: "Threads", group: "Finishing", shortcut: "T",
       keywords: "add thread screw-on cone cap threaded socket tenon external internal tap tapping die helical pitch closed back barrel",
-      disabled: !threadsEnabled, run: () => openThreads(threadsBody) },
+      disabled: !threadsEnabled, run: () => openThreads(currentThreadsBody()) },
     ...Object.entries(finishLabels).filter(([k]) => k !== "thread").map(([k, label]) => ({
       key: "add-" + k,
       title: k === "grip" ? "Mill grip" : "Add " + label,
@@ -1711,7 +1716,7 @@ export default function App() {
               <Wrench size={15} />
               Finish
             </button>
-            <button aria-label="Threads" title="Threads (T)" disabled={!threadsEnabled} onClick={() => openThreads(threadsBody)}>
+            <button aria-label="Threads" title="Threads (T)" disabled={!threadsEnabled} onClick={() => openThreads(currentThreadsBody())}>
               <Nut size={16}/> Threads
             </button>
             <button
@@ -2225,14 +2230,14 @@ export default function App() {
         aria-label="Open Turnmill project file"
         ref={fileRef}
         type="file"
-        accept=".turnmill,.json"
+        accept=".turnmill,.turnmil,.json"
         hidden
         onChange={async (e) => {
           const f = e.target.files?.[0];
           e.target.value = "";
           if (!f) return;
           try {
-            const p = validateProject(JSON.parse(await f.text()));
+            const p = await readProjectFile(f);
             changeP(p);
             setNotice("Opened " + p.name);
           } catch (e) {
@@ -2356,6 +2361,7 @@ export default function App() {
       {dialog === "import" && (
         <ExchangeDialog
           project={project}
+          onOpenProject={p => { changeP(p); setNotice("Opened " + p.name); }}
           onSave={(p) => {
             const addedSolid = saveInsertion(p);
             switchMode(mode === "Assembly" && addedSolid ? "Assembly" : "Part");
@@ -2411,13 +2417,27 @@ export default function App() {
           setNotice("Parts merged into " + (next.features.find(f => f.id === keepId)?.name ?? "one solid") + ".");
         }}/>}
       {dialog === "threads" && threadSession?.project === project && (
-        <ThreadsDialog project={threadSession.posedProject} bodyId={threadSession.bodyId}
-          surfaces={valid ? kernel.fitSurfaces?.[solidFeatures.findIndex(f => f.id === threadSession.bodyId)] : undefined}
-          measurementError={error || undefined}
-          onClose={close} onParameters={() => setDialog("parameters")} onSingle={() => { setEntryId(undefined); setPresetFinish("thread"); setDialog("finish"); }}
-          onEdit={(featureId, finishId) => { setSelected(featureId); setEntryId(finishId); setPresetFinish(undefined); setDialog("finish"); }}
-          onSave={(next, id, showAssembly) => {
-            const posedBarrel = arranged?.[solidFeatures.findIndex(f => f.id === threadSession.bodyId)]
+        <BarrelThreads key={threadSession.bodyId} project={threadSession.posedProject} sourceId={threadSession.bodyId}
+          solids={solidFeatures} surfaces={valid ? kernel.fitSurfaces : undefined} measurementError={error || undefined}
+          onCreateBarrel={(next, id) => {
+            const saved = commit(next);
+            switchMode("Part");
+            setPartSelection({ projectId: next.id, id });
+            setSelected(id);
+            setFit(n => n + 1);
+            setThreadSession({ project: saved, posedProject: saved, bodyId: id });
+          }}
+          onClose={close} onParameters={() => setDialog("parameters")}
+          onSingle={hostId => {
+            selectThreadFeature(hostId);
+            setEntryId(undefined); setPresetFinish("thread"); setDialog("finish");
+          }}
+          onEdit={(featureId, finishId, hostId) => {
+            selectThreadFeature(hostId, featureId);
+            setEntryId(finishId); setPresetFinish(undefined); setDialog("finish");
+          }}
+          onSave={(next, id, showAssembly, hostId) => {
+            const posedBarrel = arranged?.[solidFeatures.findIndex(f => f.id === hostId)]
               ?.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-8);
             commit(next); switchMode(showAssembly || mode === "Assembly" || posedBarrel ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
             close();

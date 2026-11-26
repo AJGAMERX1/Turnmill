@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { FileUp, FileBox } from "lucide-react";
 import { Modal } from "./Dialogs";
-import { uid } from "./projects";
+import { readProjectFile, uid } from "./projects";
+import { insertNativeParts } from "./nativePartImport";
 import { importPlanar } from "./exchangePlanar";
 import {
+  asBase64,
   fileFormat,
   type FileUnit,
   type ImportedFile,
@@ -14,28 +16,14 @@ import type { SolidImportReply } from "./exchangeWorker";
 import type { Feature, Project } from "./types";
 import "./exchange.css";
 
-function asBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const raw = String(reader.result);
-      resolve(raw.slice(raw.indexOf(",") + 1));
-    };
-    reader.onerror = () =>
-      reject(
-        new Error("The selected file could not be read. Choose it again."),
-      );
-    reader.readAsDataURL(file);
-  });
-}
-
 type Props = {
   project: Project;
   onSave: (updated: Project) => void;
+  onOpenProject: (restored: Project) => void;
   onClose: () => void;
 };
 
-export default function ExchangeDialog({ project, onSave, onClose }: Props) {
+export default function ExchangeDialog({ project, onSave, onOpenProject, onClose }: Props) {
   const [file, setFile] = useState<File | null>(null),
     [format, setFormat] = useState<ImportFormat | null>(null);
   const [unit, setUnit] = useState<FileUnit>("mm"),
@@ -44,14 +32,22 @@ export default function ExchangeDialog({ project, onSave, onClose }: Props) {
     [over, setOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null),
     worker = useRef<Worker | null>(null),
+    nativeImport = useRef<AbortController | null>(null),
     alive = useRef(true);
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
+      nativeImport.current?.abort();
       worker.current?.terminate();
     };
   }, []);
+  function dismiss() {
+    alive.current = false;
+    nativeImport.current?.abort();
+    worker.current?.terminate();
+    onClose();
+  }
   const choose = (next: File | undefined) => {
     if (!next || busy) return;
     setError("");
@@ -85,11 +81,24 @@ export default function ExchangeDialog({ project, onSave, onClose }: Props) {
       w.postMessage({ file: selected, format: kind, unit });
     });
   }
-  async function accept() {
+  async function accept(action: "open" | "insert") {
     if (!file || !format || busy) return;
     setBusy(true);
     setError("");
     try {
+      if (format === "turnmill") {
+        const source = await readProjectFile(file);
+        if (!alive.current) return;
+        if (action === "open") {
+          onOpenProject(source);
+        } else {
+          const controller = new AbortController();
+          nativeImport.current = controller;
+          const next = await insertNativeParts(project, source, file, controller.signal);
+          if (alive.current && !controller.signal.aborted) onSave(next);
+        }
+        return;
+      }
       const source: ImportedFile = {
         id: uid(),
         name: file.name,
@@ -144,22 +153,25 @@ export default function ExchangeDialog({ project, onSave, onClose }: Props) {
     } finally {
       worker.current?.terminate();
       worker.current = null;
+      nativeImport.current = null;
       if (alive.current) setBusy(false);
     }
   }
   const details: Record<ImportFormat, string> = {
+    turnmill: "Insert the saved solids into your current design, or open the project to restore its editable feature history, parameters and assembly.",
     step: "Import closed STEP solids as body features with their surfaces and edges.",
     stl: "Import watertight STL meshes as faceted solids. Each triangle becomes a face.",
     dxf: "Import supported closed 2D contours as editable sketches. Extrude or revolve a sketch to make a body.",
     svg: "Import supported closed vector outlines as editable sketches. Page units and the SVG viewBox determine their size.",
   };
   return (
-    <Modal title="Import geometry" onClose={onClose}>
+    <Modal title="Import geometry" onClose={dismiss}>
       <input
         type="file"
         ref={fileInput}
         hidden
-        accept=".stp,.step,.stl,.dxf,.svg"
+        accept=".turnmill,.turnmil,.stp,.step,.stl,.dxf,.svg"
+        aria-label="Choose file to import"
         onChange={(e) => {
           choose(e.target.files?.[0]);
           e.target.value = "";
@@ -189,7 +201,7 @@ export default function ExchangeDialog({ project, onSave, onClose }: Props) {
               ? Intl.NumberFormat(undefined, {
                   maximumFractionDigits: 1,
                 }).format(file.size / 1024) + " KB · Change file"
-              : "STEP, STL, DXF, or SVG"}
+              : "Turnmill (.turnmill or .turnmil), STEP, STL, DXF, or SVG"}
           </small>
         </span>
       </button>
@@ -220,14 +232,11 @@ export default function ExchangeDialog({ project, onSave, onClose }: Props) {
         </p>
       )}
       <div className="dialog-actions">
-        <button onClick={onClose}>Cancel</button>
-        <button className="primary" disabled={!file || busy} onClick={accept}>
-          Import{" "}
-          {format === "svg" || format === "dxf"
-            ? "sketches"
-            : format
-              ? "bodies"
-              : "geometry"}
+        <button onClick={dismiss}>Cancel</button>
+        {format === "turnmill" && <button disabled={busy} onClick={() => void accept("open")}>Open project</button>}
+        <button className="primary" disabled={!file || busy} onClick={() => void accept("insert")}>
+          {format === "turnmill" ? "Insert parts" : format === "svg" || format === "dxf"
+            ? "Import sketches" : format ? "Import bodies" : "Import geometry"}
         </button>
       </div>
     </Modal>

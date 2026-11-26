@@ -1,4 +1,4 @@
-export type ImportFormat = "step" | "stl" | "dxf" | "svg";
+export type ImportFormat = "step" | "stl" | "dxf" | "svg" | "turnmill";
 export type FileUnit = "mm" | "in";
 export type StoredBody = { name: string; brep: string };
 export type ImportedFile = {
@@ -12,11 +12,27 @@ export type ImportedFile = {
   sketchIds?: string[];
 };
 
+export function asBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const raw = String(reader.result);
+      resolve(raw.slice(raw.indexOf(",") + 1));
+    };
+    reader.onerror = () =>
+      reject(
+        new Error("The selected file could not be read. Choose it again."),
+      );
+    reader.readAsDataURL(file);
+  });
+}
+
 export function fileFormat(filename: string): ImportFormat {
   const ext = filename.split(".").at(-1)?.toLowerCase();
+  if (ext === "turnmil" || ext === "turnmill") return "turnmill";
   if (ext === "stp" || ext === "step") return "step";
   if (ext === "stl" || ext === "svg" || ext === "dxf") return ext;
-  throw new Error("Choose a STEP, STL, DXF, or SVG file.");
+  throw new Error("Choose a Turnmill project (.turnmill or .turnmil), STEP, STL, DXF, or SVG file.");
 }
 
 export function validateImportedFiles(
@@ -35,7 +51,7 @@ export function validateImportedFiles(
       typeof source.name !== "string" ||
       typeof source.data !== "string" ||
       !source.data.length ||
-      !["step", "stl", "svg", "dxf"].includes(source.format)
+      !["step", "stl", "svg", "dxf", "turnmill"].includes(source.format)
     )
       throw new Error(
         "An imported source is missing its name, file data, or format.",
@@ -48,7 +64,7 @@ export function validateImportedFiles(
       source.unit !== "in"
     )
       throw new Error("The source units for " + source.name + " are invalid.");
-    if (source.format === "step" || source.format === "stl") {
+    if (source.format === "step" || source.format === "stl" || source.format === "turnmill") {
       if (
         !Array.isArray(source.bodies) ||
         !source.bodies.length ||

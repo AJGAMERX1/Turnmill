@@ -6,6 +6,7 @@ import { turningReferences } from "./turningReferences";
 import { defaultJoint, type Joint } from "./kinematics";
 import { partFeatures } from "./partTabs";
 import { uid } from "./projects";
+import { refillComponents } from "./refills";
 import type { Feature, Project, Sketch } from "./types";
 
 type End = "start" | "end";
@@ -40,19 +41,62 @@ export function barrelEnd(surfaces: FitSurface[], axis: "X" | "Z", end: End): Ba
   const outer = atEnd.filter(s => s.side === "shaft").sort((a, b) => diam(b) - diam(a))[0];
   const concentric = atEnd.filter(s => s.side === "bore" &&
     s.centerline.every((n, i) => Math.abs(n - outer.centerline[i]) < 1e-5));
-  return { axis, centerline: outer.centerline, station, outside: diam(outer), bore: Math.max(0, ...concentric.map(diam)) };
+  const rim = { axis, centerline: outer.centerline, station, outside: diam(outer), bore: Math.max(0, ...concentric.map(diam)) };
+  return usableRim(rim) ? rim : undefined;
 }
 
-export function suggestedPairSize(end: BarrelEnd) {
-  const target = 0.8 * end.outside;
-  const scores = threadPresets.filter(p => p.label.startsWith("M")).map(p => {
-    const dia = evaluate(p.diameter, {}), pitch = evaluate(p.pitch, {});
-    return { p, dia, pitch, score: Math.abs(dia - target) + Math.abs(pitch - 0.75) / 4 };
-  }).filter(({ dia, pitch }) => dia < end.outside && threadMinorDiameter(dia, pitch) >= end.bore - 1e-7);
-  return scores.sort((a, b) => a.score - b.score)[0]?.p.label;
+const tolerance = 1e-6;
+const presets = threadPresets.map(preset => ({
+  ...preset, major: evaluate(preset.diameter, {}), step: evaluate(preset.pitch, {}),
+}));
+
+function usableRim(rim: BarrelEnd | undefined) {
+  return !!rim && Number.isFinite(rim.outside) && Number.isFinite(rim.bore) && rim.bore >= 0 && rim.outside > rim.bore + tolerance;
+}
+
+function checkBarrel(project: Project, bodyId: string, ...rims: BarrelEnd[]) {
+  if (refillComponents(project).some(refill => refill.bodyId === bodyId))
+    throw Error("Select the pen barrel to add screw-on parts. The refill fits inside it.");
+  if (!rims.every(usableRim))
+    throw Error("The thread needs a flat, round end with material around its center. Select a barrel or change the pointed end to a flat shoulder.");
+}
+
+function sizeProblem(major: number, pitch: number, allowance: number, outside: number, bore: number,
+  kind: "cap" | "cone", collars: boolean): string | undefined {
+  if (!Number.isFinite(allowance) || allowance < 0 || allowance >= major - threadMinorDiameter(major, pitch))
+    return "Reduce the diametral allowance so the thread flanks still engage.";
+  if (kind === "cone") {
+    if (major >= outside) return "Choose a smaller thread to leave material around the barrel socket.";
+    if (threadMinorDiameter(major, pitch) < bore - tolerance)
+      return "The existing bore is larger than this thread’s pilot. Choose a larger thread or a finer pitch.";
+  } else {
+    const minor = threadMinorDiameter(major - allowance, pitch);
+    if (collars && minor <= outside + tolerance)
+      return "Use a larger cap thread so its root clears the barrel and leaves the original pen opening intact.";
+    if (!collars && major - allowance > outside - tolerance)
+      return "Choose a smaller thread to leave a shoulder for the cap against the barrel.";
+    if (minor <= bore + tolerance)
+      return "The thread root would cut into the barrel bore. Choose a larger thread, reduce the allowance, or use a finer pitch.";
+  }
+}
+
+/** List sizes that fit the measured rims, with the default at the front. Full axial stock and other parts are checked by the kernel. */
+export function compatiblePairSizes(project: Project, bodyId: string, stock: BarrelEnd, kind: "cap" | "cone",
+  rear?: BarrelEnd, allowance = 0.1): string[] {
+  if (!usableRim(stock) || (kind === "cap" && !usableRim(rear)) ||
+      refillComponents(project).some(refill => refill.bodyId === bodyId)) return [];
+  const collars = kind === "cap" && capNeedsCollars(project, bodyId);
+  const outside = kind === "cap" && rear ? (collars ? Math.max : Math.min)(stock.outside, rear.outside) : stock.outside;
+  const bore = kind === "cap" && rear ? Math.max(stock.bore, rear.bore) : stock.bore;
+  const score = (p: typeof presets[number]) => collars ? p.major + p.step * 0.01
+    : Math.abs(p.major - 0.8 * outside) + Math.abs(p.step - 0.75) / 4;
+  return presets.filter(p => !sizeProblem(p.major, p.step, allowance, outside, bore, kind, collars))
+    .sort((a,b) => Number(b.label.startsWith("M")) - Number(a.label.startsWith("M")) || score(a) - score(b))
+    .map(p => p.label);
 }
 
 export function createThreadedCone(project: Project, bodyId: string, stock: BarrelEnd, settings: PairSettings) {
+  checkBarrel(project, bodyId, stock);
   const target = partFeatures(project, bodyId).filter(f => !f.suppressed).at(-1);
   if (!target) throw Error("Restore the barrel before adding threads.");
   if (partFeatures(project, bodyId).some(f => !f.suppressed && f.finishes?.some(
@@ -64,11 +108,8 @@ export function createThreadedCone(project: Project, bodyId: string, stock: Barr
   const value = (s: string) => evaluate(s, values);
   const major = value(preset.diameter), pitch = value(preset.pitch);
   const clearance = value(settings.allowance), opening = value(settings.opening), tip = value(settings.tipDiameter);
-  if (major >= stock.outside) throw Error("Choose a smaller thread to leave material around the barrel socket.");
-  if (threadMinorDiameter(major, pitch) < stock.bore - 1e-6)
-    throw Error("The existing bore is larger than this thread’s pilot. Choose a larger thread or a finer pitch.");
-  if (clearance < 0 || clearance >= major - threadMinorDiameter(major, pitch))
-    throw Error("Reduce the diametral allowance so the thread flanks still engage.");
+  const problem = sizeProblem(major, pitch, clearance, stock.outside, stock.bore, "cone", false);
+  if (problem) throw Error(problem);
   if (!(value(settings.length) > 0 && value(settings.coneLength) > 0))
     throw Error("Give the cone and its threads a positive length.");
   if (opening < 0 || tip <= opening || tip >= stock.outside || opening >= threadMinorDiameter(major - clearance, pitch))
@@ -154,13 +195,6 @@ export function capNeedsCollars(project: Project, bodyId: string): boolean {
     t => t.kind === "thread" && !t.suppressed && t.side === "internal"));
 }
 
-export function suggestedCapCollarSize(outside: number, allowance = 0.1): string | undefined {
-  const choices = threadPresets.filter(p => p.label.startsWith("M")).map(p => ({
-    label: p.label, diameter: evaluate(p.diameter, {}), pitch: evaluate(p.pitch, {}),
-  })).filter(p => threadMinorDiameter(p.diameter - allowance, p.pitch) > outside + 0.1);
-  return choices.sort((a,b) => a.diameter - b.diameter || a.pitch - b.pitch)[0]?.label;
-}
-
 export type CapMount = { barrelId: string; front: End; active: End; ends: Record<End, Joint> };
 
 /** Keep a single cap body and a single active screw joint when posting the cap. */
@@ -182,6 +216,7 @@ export function setCapMount(project: Project, capId: string, end: End, pose: Rec
 }
 
 export function createThreadedCap(project: Project, bodyId: string, stock: BarrelEnd, settings: CapSettings, otherStock?: BarrelEnd) {
+  checkBarrel(project, bodyId, stock, ...(otherStock ? [otherStock] : []));
   const history = partFeatures(project, bodyId).filter(f => !f.suppressed);
   const target = history.at(-1);
   if (!target) throw Error("Restore the barrel before adding a cap.");
@@ -198,17 +233,11 @@ export function createThreadedCap(project: Project, bodyId: string, stock: Barre
   const values = resolveParameters(project.parameters);
   const value = (s: string) => evaluate(s, values);
   const major = value(preset.diameter), pitch = value(preset.pitch), allowance = value(settings.allowance);
-  if (allowance < 0 || allowance >= major - threadMinorDiameter(major, pitch))
-    throw Error("Reduce the diametral allowance so the barrel and cap threads engage.");
-  if (collars) {
-    if (threadMinorDiameter(major - allowance, pitch) <= Math.max(stock.outside, otherStock?.outside ?? stock.outside) + 1e-6)
-      throw Error("Use a larger cap thread so its root clears the barrel and leaves the original pen opening intact.");
-    if (otherStock && 2 * (value(settings.length) + pitch) >= Math.abs(stock.station - otherStock.station))
-      throw Error("The two cap collars would meet. Shorten the cap thread or lengthen the barrel.");
-  } else if (major - allowance > Math.min(stock.outside, otherStock?.outside ?? stock.outside) - 1e-6)
-    throw Error("Choose a smaller thread to leave a shoulder for the cap against the barrel.");
-  if (threadMinorDiameter(major - allowance, pitch) <= Math.max(stock.bore, otherStock?.bore ?? stock.bore) + 1e-6)
-    throw Error("The thread root would cut into the barrel bore. Choose a larger thread, reduce the allowance, or use a finer pitch.");
+  const outside = (collars ? Math.max : Math.min)(stock.outside, otherStock?.outside ?? stock.outside);
+  const problem = sizeProblem(major, pitch, allowance, outside, Math.max(stock.bore, otherStock?.bore ?? stock.bore), "cap", collars);
+  if (problem) throw Error(problem);
+  if (collars && otherStock && 2 * (value(settings.length) + pitch) >= Math.abs(stock.station - otherStock.station))
+    throw Error("The two cap collars would meet. Shorten the cap thread or lengthen the barrel.");
 
   const { name, prefix } = attachmentName(project, "cap");
   const ref = (field: string) => prefix + "_" + field;

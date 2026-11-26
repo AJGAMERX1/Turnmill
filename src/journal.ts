@@ -123,7 +123,7 @@ export function useJournal() {
   const commit = useCallback(
     (project: Project) => {
       const old = active.current;
-      if (project === old.project) return;
+      if (project === old.project) return project;
       ++navigation.current;
       const index = old.index + 1;
       for (const n of cache.current.keys())
@@ -133,6 +133,7 @@ export function useJournal() {
         keepAssemblyItems(old.project, project),
       );
       publish({ project: next, index, last: index }, next);
+      return next;
     },
     [publish],
   );

@@ -4,7 +4,7 @@ import { geometry, near, project, runtime } from "../tests/systems/runtime.mjs";
 
 const api = await runtime();
 try {
-  const { createThreadedCap, createThreadedCone, capNeedsCollars, setCapMount, suggestedCapCollarSize } = await api.load("threadedCone");
+  const { createThreadedCap, createThreadedCone, capNeedsCollars, setCapMount, barrelEnd, compatiblePairSizes } = await api.load("threadedCone");
   const { evaluateModel } = await api.load("buildModel");
   const { buildBodies, releaseBodies } = await api.load("geometry");
   const { threadMinorDiameter } = await api.load("finishingTypes");
@@ -17,6 +17,28 @@ try {
   const endStock = end => ({axis:"X",centerline:[0,0,0],station:end === "end" ? 50 : 0,outside:10,bore:7});
   const settings = {end:"end",size:"M8 × 0.75",length:"2.25 mm",allowance:"0.1 mm",mode:"cosmetic",
     capLength:"16 mm",capDiameter:"12 mm",crown:"flat",crownLength:"3 mm",wall:"1.5 mm"};
+  const { insertRefill } = await api.load("refills");
+  const withGel = insertRefill(barrel, "energel-lr7", {}, {bodyId:"gel"}).project;
+  const coneSettings = {...settings, coneLength:"12 mm", tipDiameter:"4 mm", opening:"2 mm"};
+  const gelFeature = withGel.features.find(f => f.id === "gel");
+  gelFeature.name = "Barrel"; // Library identity must survive a rename.
+  assert.deepEqual(compatiblePairSizes(withGel, "gel", endStock("end"), "cap", endStock("start")), []);
+  assert.throws(() => createThreadedCap(withGel, "gel", endStock("end"), settings, endStock("start")), /Select the pen barrel/);
+  assert.throws(() => createThreadedCone(withGel, "gel", endStock("end"), coneSettings), /Select the pen barrel/);
+
+  const taper = {axis:[1,0,0], centerline:[0,0,0], side:"shaft", start:0, end:5, diameter:4, endDiameter:0};
+  assert.equal(barrelEnd([taper], "X", "end"), undefined);
+  assert.equal(barrelEnd([taper], "X", "start").outside, 4);
+  const point = {...endStock("start"), outside:0, bore:0};
+  assert.throws(() => createThreadedCap(barrel, "barrel", endStock("end"), settings, point), /flat, round end/);
+  assert.deepEqual(compatiblePairSizes(barrel, "barrel", endStock("end"), "cap", point), []);
+  const slim = {...endStock("start"), outside:6.4, bore:5.2};
+  assert.deepEqual(compatiblePairSizes(barrel, "barrel", endStock("end"), "cap", slim), [],
+    "The common thread must clear the larger bore and fit the smaller outside diameter");
+  const slimOptions = compatiblePairSizes(barrel, "barrel", slim, "cap", {...slim, station:50});
+  assert.deepEqual(slimOptions, ["1/4–28 UNF"]);
+  assert.deepEqual(compatiblePairSizes(barrel, "barrel", slim, "cap", {...slim, station:50}, 0.2), []);
+  assert(compatiblePairSizes(withGel, "barrel", endStock("end"), "cap", endStock("start")).includes("M8 × 0.75"));
   for (const [end,crown] of [["start","domed"],["end","domed"],["start","tapered"],["end","flat"]]) {
     const {project: pen,capId} = createThreadedCap(barrel,"barrel",endStock(end),{...settings,end,crown});
     const model = await evaluateModel(JSON.parse(JSON.stringify(pen)));
@@ -44,7 +66,7 @@ try {
   const nose = createThreadedCone(barrel,"barrel",endStock("end"),{...settings,
     coneLength:"12 mm",tipDiameter:"4 mm",opening:"2 mm",mode:"modeled"}).project;
   assert(capNeedsCollars(nose,"barrel"));
-  assert.equal(suggestedCapCollarSize(10),"M12 × 1");
+  assert.equal(compatiblePairSizes(nose,"barrel",endStock("end"),"cap",endStock("start"))[0],"M12 × 1");
   const outer = makeCylinder(5,50,[13,-7,0],[0,0,1]), bore = makeCylinder(3.5,50,[13,-7,0],[0,0,1]);
   const ring = outer.cut(bore);
   const zBarrel = project([], [{id:"barrel",name:"Offset Z sleeve",kind:"import",sketchId:"",suppressed:false,
@@ -95,7 +117,6 @@ try {
   }
   // A snapped donor has a real collar bearing on the original mouth. New
   // posting threads must leave this contact and the ink passage intact.
-  const { insertRefill } = await api.load("refills");
   const { seatRefill } = await api.load("refillSeating");
   const { makeRefillSnapJoint } = await api.load("assemblyRefillSnap");
   const { verifyRefillSeat } = await api.load("refillSeatingGeometry");

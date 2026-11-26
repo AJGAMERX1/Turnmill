@@ -3,7 +3,7 @@ import { evaluate } from "./expressions";
 import type { Point, Sketch } from "./types";
 
 /** Use coordinate expressions so each face remains on its datum when dimensions change. */
-function stockProfile(sketch: Sketch, start: Point, length: string, outside: string,
+export function stockProfile(sketch: Sketch, start: Point, length: string, outside: string,
   bore: string, turned: boolean, parameters: Record<string, number>): Sketch {
   evaluate(start.x, parameters);
   const span = evaluate(length, parameters);

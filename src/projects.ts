@@ -77,6 +77,22 @@ export function blankProject(): Project {
     features: [],
   };
 }
+export async function readProjectFile(file: File): Promise<Project> {
+  let text: string;
+  try {
+    text = await file.text();
+  } catch {
+    throw Error("The project file could not be read. Choose it again.");
+  }
+  let document: unknown;
+  try {
+    document = JSON.parse(text.replace(/^\uFEFF/, ""));
+  } catch {
+    throw Error("This file does not contain a readable Turnmill project. Choose a copy saved with Save project.");
+  }
+  return validateProject(document);
+}
+
 export function validateProject(raw: unknown): Project {
   if (!raw || typeof raw !== "object")
     throw Error("Open a Turnmill project saved with Save project.");
