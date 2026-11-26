@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { DisplayAppearance } from "./metalAppearance";
 import type { RenderBody } from "./geometry";
 import { createStudio, type View } from "./studio";
 
@@ -8,7 +9,7 @@ export default function FinishPreview({
   turned,
 }: {
   mesh: RenderBody;
-  color: number;
+  color: DisplayAppearance | number;
   turned: boolean;
 }) {
   const element = useRef<HTMLDivElement>(null);
@@ -27,7 +28,7 @@ export default function FinishPreview({
   }, []);
   useEffect(() => {
     studio.current?.updateMeshes([mesh], [color]);
-  }, [mesh, color]);
+  }, [mesh, JSON.stringify(color)]);
   const views: [string, View][] = [
     ["Isometric", "iso"],
     ["Start face", turned ? "left" : "bottom"],

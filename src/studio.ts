@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { naturalAppearance, type DisplayAppearance } from "./metalAppearance";
+import { makeDisplayMaterial, metalGrainTile } from "./metalTexture";
 import type { MenuAnchor } from "./ContextMenu";
 import type { RenderBody } from "./geometry";
 
@@ -149,7 +151,7 @@ export function createStudio(
     new THREE.MeshStandardMaterial({ color: 0x252b2d, metalness: .02, roughness: .43 }),
     new THREE.MeshStandardMaterial({ color: 0xc6c9be, metalness: .02, roughness: .54 }),
   ];
-  const colors = new Map<number, THREE.MeshStandardMaterial>();
+  let grain: THREE.DataTexture | undefined;
   const meshes: THREE.Mesh[] = [];
   type Instance = { body: RenderBody; root: THREE.Group; mesh: THREE.Mesh };
   let instances: Instance[] = [];
@@ -233,6 +235,7 @@ export function createStudio(
   }
   function releaseInstance(instance: Instance) {
     instance.root.removeFromParent();
+    instance.mesh.userData.finish?.dispose();
     instance.root.traverse((object) =>
       (object as THREE.Mesh).geometry?.dispose(),
     );
@@ -281,29 +284,26 @@ export function createStudio(
     group.add(root);
     return { body, root, mesh };
   }
-  function applyColors(tones: number[]) {
+  function applyColors(tones: (DisplayAppearance | number)[]) {
     let changed = false;
     meshes.forEach((mesh, i) => {
-      const color = tones[i];
-      if (color === undefined) return;
-      let mat = colors.get(color);
-      if (!mat) {
-        mat = bodyMaterial.clone();
-        mat.color.setHex(color);
-        if (color === 0x50585a || color === 0x383b3a) {
-          mat.metalness = 0.05;
-          mat.roughness = 0.5;
-        }
-        colors.set(color, mat);
-      }
+      const tone = tones[i];
+      if (tone === undefined) return;
+      const appearance = typeof tone === "number" ? naturalAppearance(tone) : tone;
+      const { color, metalness, roughness, finish } = appearance;
+      const key = [color, metalness, roughness, finish].join("/");
+      if (key === mesh.userData.appearanceKey) return;
+      if (finish !== "polished" && !grain) grain = metalGrainTile(renderer.capabilities.getMaxAnisotropy());
+      const mat = makeDisplayMaterial(appearance, mesh.geometry, grain);
+      mesh.userData.finish?.dispose();
       mesh.userData.finish = mat;
-      if (Array.isArray(mesh.material) && mesh.material[0] === mat) return;
+      mesh.userData.appearanceKey = key;
       mesh.material = [mat, hoverMaterial, chosenMaterial];
       changed = true;
     });
     return changed;
   }
-  function updateMeshes(data: RenderBody[], tones?: number[]) {
+  function updateMeshes(data: RenderBody[], tones?: (DisplayAppearance | number)[]) {
     if (
       data.length === instances.length &&
       data.every((body, i) => instances[i].body === body)
@@ -512,7 +512,7 @@ export function createStudio(
       return new Promise((resolve, reject) => frame.toBlob((blob) => blob ? resolve(blob)
         : reject(Error("The browser could not save the render.")), "image/png"));
     },
-    setColors(tones: number[]) {
+    setColors(tones: (DisplayAppearance | number)[]) {
       if (applyColors(tones)) render();
     },
     pickBodyAt(event: PointerEvent) {
@@ -583,7 +583,7 @@ export function createStudio(
         guideMaterial,
       ])
         material.dispose();
-      colors.forEach((m) => m.dispose());
+      grain?.dispose();
       environment.dispose();
       renderer.dispose();
       renderer.forceContextLoss();

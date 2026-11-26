@@ -3,6 +3,8 @@ import wasmUrl from "replicad-opencascadejs/wasm?url";
 import { setOC } from "replicad";
 import type { EvaluatedFeature } from "./types";
 import { importSolidFile } from "./exchangeSolids";
+// Keep geometry in this worker module so it uses the same initialized Replicad instance.
+import { buildBodies, releaseBodies } from "./geometry";
 import type { FileUnit, StoredBody } from "./exchangeTypes";
 
 export type SolidImportRequest = {
@@ -17,7 +19,6 @@ worker.onmessage = async ({ data }: MessageEvent<SolidImportRequest>) => {
   try {
     await ready;
     if (data.format === "turnmill") {
-      const { buildBodies, releaseBodies } = await import("./geometry");
       const shapes = buildBodies(data.features);
       try {
         const bodies = shapes.map(body => ({ name: body.name, brep: body.shape.serialize() }));

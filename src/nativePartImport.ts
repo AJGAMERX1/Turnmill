@@ -3,6 +3,7 @@ import { evaluateModel } from "./buildModel";
 import { asBase64, type StoredBody } from "./exchangeTypes";
 import type { SolidImportReply } from "./exchangeWorker";
 import { defaultJoint, placementFromMatrix } from "./kinematics";
+import { readSurface, type BodySurface } from "./metalAppearance";
 import { uid } from "./projects";
 import { isRigidTransform } from "./rigidTransform";
 import type { EvaluatedFeature, Feature, Project } from "./types";
@@ -54,6 +55,7 @@ export async function insertNativeParts(current: Project, source: Project, file:
   const poses: Record<string, number[]> = {};
   const joints: Record<string, ReturnType<typeof defaultJoint>> = {};
   const densities: Record<string, string> = {};
+  const surfaces: Record<string, BodySurface> = {};
   roots.forEach(({ id }, i) => {
     const newId = added[i].id, ws = source.workspaces;
     const pose = ws?.allPartsPose?.[id];
@@ -62,6 +64,8 @@ export async function insertNativeParts(current: Project, source: Project, file:
       joints[newId] = { ...defaultJoint(), floating: true, placement: placementFromMatrix(new Matrix4().fromArray(pose)) };
     }
     workspaces.bodyMaterials[newId] = ws?.bodyMaterials?.[id] ?? ws?.material ?? "Brass";
+    const surface = readSurface(source, id);
+    if (surface.finish || surface.anodize) surfaces[newId] = surface;
     const density = ws?.bodyDensities?.[id];
     if (density !== undefined) densities[newId] = density;
   });
@@ -69,6 +73,7 @@ export async function insertNativeParts(current: Project, source: Project, file:
     workspaces.allPartsPose = { ...workspaces.allPartsPose, ...poses };
     workspaces.joints = { ...workspaces.joints, ...joints };
   }
+  if (Object.keys(surfaces).length) workspaces.bodySurfaces = { ...workspaces.bodySurfaces, ...surfaces };
   if (Object.keys(densities).length) workspaces.bodyDensities = { ...workspaces.bodyDensities, ...densities };
   return { ...current, workspaces, features: [...current.features, ...added],
     importedFiles: [...(current.importedFiles ?? []), { id: sourceId, name: file.name, format: "turnmill", data, bodies }] };

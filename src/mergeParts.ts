@@ -89,7 +89,7 @@ export function mergeParts(
   if (ws.joints) ws.joints = mergedJoints(project, keep, tool, new Matrix4().fromArray(assemblyTransform));
   // The combined stock uses the kept part's material, mass calculation, and part number.
   // A composite body no longer represents one purchased refill or catalog item.
-  for (const key of ["bodyMaterials", "bodyDensities", "jointPose", "allPartsPose", "refills", "refillDiameterChecks", "hardwareComponents"]) {
+  for (const key of ["bodyMaterials", "bodySurfaces", "bodyDensities", "jointPose", "allPartsPose", "refills", "refillDiameterChecks", "hardwareComponents"]) {
     if (!ws[key]) continue;
     const records = { ...ws[key] };
     delete records[toolId];

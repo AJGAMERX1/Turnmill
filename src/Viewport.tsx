@@ -1,3 +1,4 @@
+import type { DisplayAppearance } from "./metalAppearance";
 import type { MenuAnchor } from "./ContextMenu";
 import { observeGeometry } from "../tests/hook/observe";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +19,8 @@ type GripMeasurement = GripStock & {
 
 export type KernelStatus = {
   signature?: string;
+  /** Geometry that actually produced the published solids and thread frames. */
+  builtSignature?: string;
   gripStock?: GripMeasurement;
   threadFrames?: import("./threadMates").ThreadFrame[];
   fitSurfaces?: import("./fitSurfaces").FitSurface[][];
@@ -44,7 +47,7 @@ type Props = {
   view: View;
   fitToken: number;
   exportRequest: ExportRequest | null;
-  appearances?: number[];
+  appearances?: (DisplayAppearance | number)[];
   visibleBodyId?: string;
   photoMode?: boolean;
   donorFinishes?: Record<string, DonorFinish>;
@@ -281,6 +284,7 @@ export function Viewport({
           error: "",
           volume: data.volume,
           area: data.area,
+          builtSignature: status.current.signature,
           threadFrames: data.threadFrames,
           fitSurfaces: data.fitSurfaces,
           capSurfaces: data.capSurfaces,
@@ -300,6 +304,8 @@ export function Viewport({
           installed.current = { ids: [], meshes: [] };
           displayInstalled();
           publish({
+            builtSignature: undefined,
+            threadFrames: undefined,
             volume: 0,
             area: 0,
             center: undefined,
@@ -319,6 +325,8 @@ export function Viewport({
       publish({
         busy: false,
         gripStock: undefined,
+        builtSignature: undefined,
+        threadFrames: undefined,
         error:
           "The CAD engine stopped. Reload to reopen the autosaved project.",
         volume: 0,
@@ -358,7 +366,7 @@ export function Viewport({
   }, [gripBodyId, gripFeature, gripBeforeFinishId, gripPriorKey]);
   useEffect(() => {
     displayInstalled(false);
-  }, [visibleBodyId, appearances.join(",")]);
+  }, [visibleBodyId, JSON.stringify(appearances)]);
   useEffect(() => { presentBodies(false); }, [photoMode, JSON.stringify(placements), ghostIds.join(","), JSON.stringify(donorFinishes)]);
   useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {

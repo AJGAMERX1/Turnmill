@@ -158,7 +158,7 @@ export default function ExchangeDialog({ project, onSave, onOpenProject, onClose
     }
   }
   const details: Record<ImportFormat, string> = {
-    turnmill: "Insert the saved solids into your current design, or open the project to restore its editable feature history, parameters and assembly.",
+    turnmill: "Open project keeps the sketches, threads and refill setup editable. Insert parts adds solid copies to your current design.",
     step: "Import closed STEP solids as body features with their surfaces and edges.",
     stl: "Import watertight STL meshes as faceted solids. Each triangle becomes a face.",
     dxf: "Import supported closed 2D contours as editable sketches. Extrude or revolve a sketch to make a body.",

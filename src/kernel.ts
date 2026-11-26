@@ -13,6 +13,7 @@ import {
 import { exportShopArchive } from "./shopArchive";
 import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
+import { checkWritingGeometry } from "./writingFitWorker";
 import { collectFitSurfaces, collectTurnedCapSurfaces, type FitSurface } from "./fitSurfaces";
 import type { Shape3D } from "replicad";
 import type { EvaluatedFeature, Project } from "./types";
@@ -132,7 +133,6 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
     await ready;
     if (data.type === "writing-fit") {
       try {
-        const { checkWritingGeometry } = await import("./writingFitWorker");
         if (currentRevision < 0 || data.revision !== currentRevision || latestBuild?.revision !== currentRevision)
           throw Error("The pen changed. Wait for the rebuild and check the fit again.");
         data.port.postMessage({ result: checkWritingGeometry(data.job, model.bodies, latestBuild.features) });

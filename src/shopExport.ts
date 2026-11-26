@@ -1,7 +1,7 @@
 import type { EvaluatedFeature } from "./types";
 import type { ThreadFrame } from "./threadMates";
 
-export type ShopPart = { bodyId: string; item: number; name: string; material: string; purchased: boolean; drawing?: { number: string; revision: string; tolerance?: string; note?: string } };
+export type ShopPart = { bodyId: string; item: number; name: string; material: string; purchased: boolean; appearance?: string; drawing?: { number: string; revision: string; tolerance?: string; note?: string } };
 export type ShopPackage = { projectName: string; parts: ShopPart[] };
 
 const cleanLine = (value: string) => value.replace(/[\u0000-\u001f\u007f]/g, " ").trim();
@@ -38,6 +38,7 @@ export function shopManifest(projectName: string, parts: { part: ShopPart; featu
   for (const { part, features, frames } of parts) {
     lines.push(shopStepFilename(part), cleanLine(part.name) + " | Qty 1 | " + cleanLine(part.material) +
       (part.purchased ? " | Purchased reference" : " | Manufactured part"));
+    if (part.appearance) lines.push("  Surface appearance reference · " + cleanLine(part.appearance));
     if (part.drawing) {
       const { number, revision, tolerance, note } = part.drawing;
       lines.push("  Drawing " + cleanLine(number) + " · revision " + cleanLine(revision));

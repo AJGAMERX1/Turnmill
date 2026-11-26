@@ -20,7 +20,7 @@ import ThreadMateDialog from "./ThreadMateDialog";
 import { resolveThreadMates, type ThreadFrame } from "./threadMates";
 import type { FitSurface } from "./fitSurfaces";
 import type { ClearanceResult } from "./clearance";
-import { materials } from "./materials";
+import { appearanceForBody } from "./metalAppearance";
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, type RefObject } from "react";
 import {
   Play,
@@ -98,7 +98,7 @@ export type LiveAssembly = {
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { initialComponent?: string; onApplyPose: () => void; onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
+type PartNavigation = { rebuilding: boolean; initialComponent?: string; onApplyPose: () => void; onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -231,7 +231,7 @@ function JointStudio({
   onFrames,
   guideAssist,
   liveAssembly,
-  initialComponent,
+  initialComponent, rebuilding,
   onOpenPart,
   onMillGrip, onThreads, onMergeParts,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
@@ -318,14 +318,18 @@ function JointStudio({
     } | null>(null);
   const [meshVersion, setMeshVersion] = useState(0),
     [driveDrag, setDriveDrag] = useState(true);
+  const signature = useMemo(() => JSON.stringify(features), [features]);
+  const poseReady = !rebuilding && !!meshVersion && displayedGeometry.current === signature;
   let config = raw,
-    problem = "";
-  try {
-    config = resolveThreadMates(raw, threadFrames, values, ids);
-    if (freePreview?.project === project && isFloating(raw[freePreview.id]))
-      config = { ...config, [freePreview.id]: { ...defaultJoint(), floating: true, placement: freePreview.placement } };
-  } catch (e) {
-    problem = (e as Error).message;
+    problem = poseReady ? "" : "Building assembly…";
+  if (poseReady) {
+    try {
+      config = resolveThreadMates(raw, threadFrames, values, ids);
+      if (freePreview?.project === project && isFloating(raw[freePreview.id]))
+        config = { ...config, [freePreview.id]: { ...defaultJoint(), floating: true, placement: freePreview.placement } };
+    } catch (e) {
+      problem = (e as Error).message;
+    }
   }
   const joint = config[selected] || defaultJoint(),
     floating = isFloating(raw[selected]),
@@ -346,25 +350,27 @@ function JointStudio({
   let boltTrack: ReturnType<typeof resolveBoltTrack> | undefined;
   let tipExposure: number | undefined;
   let readings: ReturnType<typeof assemblyCamReadings> = [];
-  try {
-    [min, max] = limits(joint, d, values);
-    current = Math.max(min, Math.min(max, poses[selected]?.[d] ?? 0));
-    readings = assemblyCamReadings(ids, config, poses, values);
-    const following = readings.find((r) => r.followerId === selected);
-    if (following) current = following.position;
-    matrices = buildPoses(ids, config, poses, values);
-    if (boltId) {
-      boltTrack = resolveBoltTrack(config[boltId].bolt, values);
-      const pen = project.workspaces?.boltPen;
-      const tip = matrices[ids.indexOf(pen?.refillId)], nose = matrices[ids.indexOf(pen?.noseId)];
-      if (pen?.carrierId === boltId && tip && nose) {
-        const tipInNose = new Matrix4().fromArray(nose).invert().multiply(new Matrix4().fromArray(tip));
-        tipExposure = -new Vector3(refillTipX(project, pen.refillId, values), 0, 0).applyMatrix4(tipInNose).x;
+  if (poseReady) {
+    try {
+      [min, max] = limits(joint, d, values);
+      current = Math.max(min, Math.min(max, poses[selected]?.[d] ?? 0));
+      readings = assemblyCamReadings(ids, config, poses, values);
+      const following = readings.find((r) => r.followerId === selected);
+      if (following) current = following.position;
+      matrices = buildPoses(ids, config, poses, values);
+      if (boltId) {
+        boltTrack = resolveBoltTrack(config[boltId].bolt, values);
+        const pen = project.workspaces?.boltPen;
+        const tip = matrices[ids.indexOf(pen?.refillId)], nose = matrices[ids.indexOf(pen?.noseId)];
+        if (pen?.carrierId === boltId && tip && nose) {
+          const tipInNose = new Matrix4().fromArray(nose).invert().multiply(new Matrix4().fromArray(tip));
+          tipExposure = -new Vector3(refillTipX(project, pen.refillId, values), 0, 0).applyMatrix4(tipInNose).x;
+        }
       }
+      if (joint.kind === "screw") lead = screwLead(joint, values);
+    } catch (e) {
+      problem ||= (e as Error).message;
     }
-    if (joint.kind === "screw") lead = screwLead(joint, values);
-  } catch (e) {
-    problem = (e as Error).message;
   }
   useLayoutEffect(() => {
     liveAssembly.current = {
@@ -381,7 +387,6 @@ function JointStudio({
     }
   });
   const twistFrame = useRef<number | null>(null);
-  const signature = useMemo(() => JSON.stringify(features), [features]);
   const handledAssist = useRef<number | undefined>(undefined);
   function stopGuideTwist() {
     if (twistFrame.current !== null) cancelAnimationFrame(twistFrame.current);
@@ -561,17 +566,10 @@ function JointStudio({
     window.addEventListener("keydown", cancel);
     return () => window.removeEventListener("keydown", cancel);
   }, []);
-  const colors = bodies.map(
-    (b) =>
-      (
-        materials[project.workspaces?.bodyMaterials?.[b.id]] ||
-        materials[project.workspaces?.material] ||
-        materials.Brass
-      ).color,
-  );
+  const colors = bodies.map(body => appearanceForBody(project, body.id));
   useEffect(() => {
     studio.current?.setColors(colors);
-  }, [meshVersion, colors.join(",")]);
+  }, [meshVersion, JSON.stringify(colors)]);
   const poseKey = JSON.stringify(matrices);
   const mountingKey = JSON.stringify(
     ids.map((id) => [
@@ -630,6 +628,7 @@ function JointStudio({
     return () => cancelAnimationFrame(frame);
   }, [playing, selected, d, min, max, problem, manualDrive]);
   function saveJoint(id: string, next: Joint, resetDrive = false) {
+    if (!poseReady) return false;
     const nextConfig = { ...raw, [id]: next };
     const nextPoses = resetDrive ? { ...poses, [id]: [] } : poses;
     try {
@@ -1089,7 +1088,7 @@ function JointStudio({
           onSnap={next => { saveJoint(selected, next, true); }} onRelease={() => changeAttachment(selected, true)}/>}
         {capMount && <div className="cap-position"><label>Cap position<select aria-label="Cap position"
           value={onCapMount ? (capMount.active === capMount.front ? "front" : "back") : ""}
-          disabled={!checkerReady || (capCheck?.id === selected && capCheck.pending)}
+          disabled={!poseReady || !checkerReady || (capCheck?.id === selected && capCheck.pending)}
           onChange={e => void moveCap(e.target.value)}>
           {!onCapMount && <option value="">Choose mount</option>}
           <option value="front">Front · cover the tip</option>
@@ -1324,7 +1323,7 @@ function JointStudio({
           position={current}
           onChange={(spring) => patch({ spring })}
         />
-        {inputError || (meshVersion && problem) ? (
+        {inputError || (poseReady && problem) ? (
           <p role="alert" className="error-text">
             {inputError || problem}
           </p>

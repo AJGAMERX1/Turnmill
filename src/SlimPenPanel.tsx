@@ -41,7 +41,7 @@ export default function SlimPenPanel({ project, setup, ready, request, commit, k
       if (active.current.project === project && active.current.key === key) setMessage({ source: project, key, error: (cause as Error).message });
     } finally { setBusy(false); }
   }
-  return <section aria-label="Slim pen" className="writing-fit slim-pen"><h3>Slim pen</h3>
+  return <section id="studio-slim" tabIndex={-1} aria-label="Slim pen" className="writing-fit slim-pen"><h3>Slim pen</h3>
     <SlimSizeInputs settings={settings} disabled={busy} onChange={edit}/>
     <button className="bench-action" disabled={!ready || busy} onClick={() => void preview()}><Ruler size={15}/>{busy ? "Checking slimmer solids…" : "Preview slimming"}</button>
     {shown?.error && <p role="alert" className="fit-warning">{shown.error}</p>}

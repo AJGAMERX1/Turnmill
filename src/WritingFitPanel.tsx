@@ -12,11 +12,12 @@ import type { WritingRequest } from "./writingFitJob";
 
 type Props = {
   project: Project; refills: RefillComponent[]; ready: boolean;
+  onRefill: () => void; onThreads: (bodyId: string) => void;
   request: RefObject<WritingRequest | null>; commit: (p: Project, bodies?: FinishBodySnapshot[]) => Project;
 };
 
 
-export default function WritingFitPanel({ project, refills, ready, request, commit }: Props) {
+export default function WritingFitPanel({ project, refills, ready, request, commit, onRefill, onThreads }: Props) {
   const noses = writingNoses(project);
   const cartridges = refills.filter(r => !isSleeveDonor(r.kind));
   const [noseChoice, chooseNose] = useState(""), [refillChoice, chooseRefill] = useState("");
@@ -49,9 +50,20 @@ export default function WritingFitPanel({ project, refills, ready, request, comm
     finally { setBusy(false); }
   }
   const edit = (key: keyof typeof edits, value: string) => { setEdits({ ...edits, [key]: value }); clear(); };
-  if (!nose || !refill) return <section aria-label="Writing fit"><h3>Writing fit</h3><p>{!nose
-    ? "Use Threads → Screw-on cone on the barrel to set up a capped pen."
-    : "Insert a cartridge from the refill library. BIC front inserts use Snap to fit in Assembly."}</p></section>;
+  if (!nose || !refill) {
+    const imported = project.features.some(f => f.kind === "import" && !f.suppressed);
+    return <section id="studio-slim" tabIndex={-1} aria-label="Slim pen" className="writing-fit slim-pen">
+      <h3>Slim pen</h3>
+      <p>{!refill
+        ? refills.length ? "Slim supports Parker-style G2 and EnerGel cartridges. BIC front inserts use Snap to fit in Assembly."
+          : "Choose a Parker-style G2 or EnerGel cartridge to size the barrel around your refill."
+        : "Add a screw-on cone to the barrel to check the writing fit and preview a slimmer pen."}</p>
+      {imported && <p>For a saved Turnmill pen, choose Open project in the import dialog to keep its editable barrel, cone and refill.</p>}
+      {refill
+        ? <button className="bench-action" onClick={() => onThreads(refill.bodyId)}>Set up screw-on cone</button>
+        : <button className="bench-action" onClick={onRefill}>Choose cartridge</button>}
+    </section>;
+  }
   return <><section aria-label="Writing fit" className="writing-fit"><h3>Writing fit</h3>
     {noses.length > 1 && <label>Cone<select value={nose.coneId} disabled={busy} onChange={e => {chooseNose(e.target.value); setEdits({}); clear();}}>
       {noses.map(n => <option key={n.coneId} value={n.coneId}>{n.name}</option>)}</select></label>}

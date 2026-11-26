@@ -104,7 +104,7 @@ export function organizePartInsertion(before: Project, after: Project, part?: Pa
   }
   if (!before.emptyParts?.some((p) => p.id === part.id)) return after;
   const workspaces = { ...after.workspaces };
-  for (const key of ["bodyMaterials", "bodyDensities", "hardwareComponents", "allPartsPose", "joints"]) {
+  for (const key of ["bodyMaterials", "bodySurfaces", "bodyDensities", "hardwareComponents", "allPartsPose", "joints"]) {
     const records = workspaces[key];
     if (records && Object.hasOwn(records, root.id)) {
       const updated = { ...records, [part.id]: records[root.id] };

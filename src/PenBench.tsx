@@ -2,9 +2,10 @@ import { useState } from "react";
 import { ArrowUpRight, Component, PenTool, SlidersHorizontal, Eye } from "lucide-react";
 import { evaluate, resolveParameters } from "./expressions";
 import { validateProjectScrewCones } from "./screwConeProfile";
-import { materials, massProperties, positionedProperties, type BodyProps } from "./materials";
+import { massProperties, positionedProperties, type BodyProps } from "./materials";
 import type { EvaluatedFeature, Project } from "./types";
 import { refillCatalog, refillComponents, refillDimensions, reverseRefill } from "./refills";
+import PenAppearancePanel from "./PenAppearancePanel";
 import SlimBoltPanel from "./SlimBoltPanel";
 import WritingFitPanel from "./WritingFitPanel";
 import InputValue from "./InputValue";
@@ -17,12 +18,14 @@ type Props = {
   commit: (p: Project, bodies?: import("./geometry").FinishBodySnapshot[]) => Project;
   writingCheck: React.RefObject<import("./writingFitJob").WritingRequest | null>;
   solidFeatures: EvaluatedFeature[];
+  selectedBodyId?: string;
   properties?: BodyProps[];
   matrices?: number[][];
   surfaces?: FitSurface[][];
   values: Record<string, number>;
   densities: number[];
   onRefill: () => void;
+  onThreads: (bodyId: string) => void;
   onProject: () => void;
   onAssembly: () => void;
   onParameters: () => void;
@@ -31,8 +34,8 @@ type Props = {
 };
 const mm = (v: number) => Number(v.toFixed(2)) + " mm";
 
-export default function PenBench({ project, commit, writingCheck, solidFeatures, properties, matrices, surfaces, values, densities,
-  onRefill, onProject, onAssembly, onParameters, showInternals, setShowInternals }: Props) {
+export default function PenBench({ project, commit, writingCheck, solidFeatures, selectedBodyId, properties, matrices, surfaces, values, densities,
+  onRefill, onThreads, onProject, onAssembly, onParameters, showInternals, setShowInternals }: Props) {
   const [warning, setWarning] = useState("");
   const mounted = properties && matrices ? positionedProperties(properties, matrices) : [];
   const { mass, center } = massProperties(mounted, densities);
@@ -41,15 +44,6 @@ export default function PenBench({ project, commit, writingCheck, solidFeatures,
   const preset = bolt ? ["grip_diameter", "pocket_recess", "tip_projection", "guide_clearance"]
     : ["barrel_length", "outer_diameter", "bore_diameter"];
   const dimensions = preset.flatMap((key) => project.parameters.filter((p) => p.name === key));
-  const shellId = bolt?.barrelId ?? solidFeatures.find(f => /barrel/i.test(f.name))?.id;
-  const shellMaterial = shellId ? project.workspaces?.bodyMaterials?.[shellId] ?? project.workspaces?.material ?? "Brass" : "";
-  function setBarrelMaterial(name: string) {
-    if (!shellId) return;
-    const densities = { ...project.workspaces?.bodyDensities };
-    delete densities[shellId];
-    commit({ ...project, workspaces: { ...project.workspaces, bodyDensities: densities,
-      bodyMaterials: { ...project.workspaces?.bodyMaterials, [shellId]: name } } });
-  }
   const installed = refillComponents(project).filter((r) => solidFeatures.some((f) => f.id === r.bodyId));
   const unknownMass = installed.filter((r) => !densities[solidFeatures.findIndex((f) => f.id === r.bodyId)]);
   let gripStation: number | undefined, fit: number | undefined;
@@ -85,15 +79,13 @@ export default function PenBench({ project, commit, writingCheck, solidFeatures,
       {fit !== undefined && <p>{fit < 0 ? "The guide is smaller than the refill tip." : "Calculated from the tip guide and bore dimensions."}</p>}
     </section>
     {bolt && <SlimBoltPanel project={project} commit={commit}/>}
-    {installed.length > 0 && !bolt && <WritingFitPanel project={project} refills={installed} commit={commit} request={writingCheck} ready={!!surfaces && !!matrices}/>}
+    {!bolt && <WritingFitPanel project={project} onRefill={onRefill} onThreads={onThreads} refills={refillComponents(project).filter(r => project.features.some(f => f.id === r.bodyId && !f.suppressed))} commit={commit} request={writingCheck} ready={!!surfaces && !!matrices}/>}
     {installed.length > 0 && <RefillDiameterChecks project={project} commit={commit} installed={installed}
       bodies={solidFeatures} surfaces={surfaces} matrices={matrices} values={values}/>}
+    <PenAppearancePanel key={project.id} project={project} preferredId={selectedBodyId} commit={commit}
+      bodies={solidFeatures.filter(body => !installed.some(refill => refill.bodyId === body.id))}/>
     <section><h3>Body dimensions</h3>
-      {shellId && <fieldset className="barrel-finishes"><legend>Barrel material <strong>{shellMaterial}</strong></legend>
-        <div>{Object.entries(materials).filter(([key]) => key !== "Nitrile" || key === shellMaterial).map(([name, m]) =>
-          <button key={name} title={name} aria-label={name + " barrel"} aria-pressed={name === shellMaterial}
-            onClick={() => setBarrelMaterial(name)} style={{"--swatch": "#" + m.color.toString(16).padStart(6, "0")} as React.CSSProperties}/>)}</div>
-      </fieldset>}{dimensions.map((d) => <label key={d.name}>{d.label ?? d.name.replaceAll("_"," ")}
+      {dimensions.map((d) => <label key={d.name}>{d.label ?? d.name.replaceAll("_"," ")}
       <InputValue label={d.label ?? d.name} value={d.expression} onCommit={(value) => dimension(d.name, value)}/></label>)}
       <button className="bench-text" onClick={onParameters}><SlidersHorizontal size={14}/> All parameters</button>
     </section>

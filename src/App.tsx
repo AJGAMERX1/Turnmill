@@ -31,6 +31,7 @@ import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./Cont
 import { buildPoses, type JointConfig } from "./kinematics";
 import { resolveThreadMates } from "./threadMates";
 import PenBench from "./PenBench";
+import { appearanceForBody, bodyMaterialName } from "./metalAppearance";
 import RefillDialog from "./RefillDialog";
 import ShopExportDialog from "./ShopExportDialog";
 import { isSleeveDonor, refillComponents, refillMassGrams } from "./refills";
@@ -67,6 +68,7 @@ import {
   Ruler,
   SquarePen,
   Aperture,
+  Palette,
   Camera,
   Component,
   FileText,
@@ -412,32 +414,20 @@ export default function App() {
     () => JSON.stringify(model.features),
     [model.features],
   );
-  const error = model.error || kernel.error,
-    busy =
-      model.key !== geoSignature ||
-      model.pending ||
-      kernel.busy ||
-      kernel.signature !== modelSignature ||
-      !ready;
+  const modelCurrent = ready && model.key === geoSignature && !model.pending;
+  const kernelCurrent = modelCurrent && kernel.signature === modelSignature && !kernel.busy;
+  const error = (modelCurrent && model.error) || (kernelCurrent && kernel.error) || "";
+  const busy = !modelCurrent || (!model.error && !kernelCurrent);
   const valid = !error && !busy && kernel.volume > 0;
   const failedRevolve = error.includes(axisCrossingMessage)
     ? model.features.find((f) => f.kind === "revolve" && crossesRevolveAxis(f.points))
     : undefined;
   const failedFeature = failedRevolve && project.features.find((f) => f.id === failedRevolve.id);
   const failedSketch = failedFeature && project.sketches.find((s) => s.id === failedFeature.sketchId);
-  const defaultMaterial = Object.hasOwn(
-    materials,
-    project.workspaces?.material || "",
-  )
-    ? project.workspaces!.material
-    : "Brass";
   const solidFeatures = model.features.filter((f) => f.operation === "new");
   const owners = useMemo(() => bodyOwners(project.features), [project.features]);
   const bodyFor = (f?: Feature) => f ? owners.get(f.id) : undefined;
-  const materialOf = (id: string) =>
-    Object.hasOwn(materials, project.workspaces?.bodyMaterials?.[id] || "")
-      ? project.workspaces!.bodyMaterials[id]
-      : defaultMaterial;
+  const materialOf = (id: string) => bodyMaterialName(project, id);
   const selectedBodyId = activePart?.id ?? bodyFor(currentF) ?? "";
   const finishedDimensions = valid && !selectedS && !currentF?.suppressed &&
     (currentF?.kind === "import" || currentF?.kind === "merge")
@@ -466,17 +456,16 @@ export default function App() {
     try { return volume ? 1000 * (refillMassGrams(project, f.id) ?? 0) / volume : 0; }
     catch { return 0; }
   });
-  const appearances = solidFeatures.map(
-    (f) => materials[materialOf(f.id)].color,
-  );
+  const hasFinishablePart = solidFeatures.some(f => !cartridges.some(r => r.bodyId === f.id));
+  const appearances = solidFeatures.map(f => appearanceForBody(project, f.id));
   const studioPose = useMemo(() => {
-    if (!showcasing) return {};
+    if (!showcasing || !modelCurrent || model.error || kernel.builtSignature !== modelSignature) return {};
     try {
       const ids = model.features.filter((f) => f.operation === "new").map((f) => f.id);
       const joints = resolveThreadMates(project.workspaces?.joints ?? {}, kernel.threadFrames ?? [], model.values, ids);
       return { matrices: buildPoses(ids, joints, project.workspaces?.jointPose ?? {}, model.values) };
     } catch (e) { return { error: (e as Error).message }; }
-  }, [showcasing, model, kernel.threadFrames, project.workspaces?.joints, project.workspaces?.jointPose]);
+  }, [showcasing, modelCurrent, model, modelSignature, kernel.builtSignature, kernel.threadFrames, project.workspaces?.joints, project.workspaces?.jointPose]);
   const arranged = useMemo(() => allPartsMatrices(project, model.features.filter(f => f.operation === "new").map(f => f.id)),
     [model.features, project.workspaces?.allPartsPose]);
   const displayedPose = showcasing ? studioPose.matrices : mode === "Part" && !activePart ? arranged : undefined;
@@ -531,18 +520,17 @@ export default function App() {
     setPendingSketch(null);
     setEditingSketch(null);
   };
-  function openSlimPen() {
+  function showStudioPanel(sectionId: string, controlId: string) {
     switchMode("Pen Studio");
     requestAnimationFrame(() => {
-      const method = document.getElementById("slim-pen-method");
-      if (method) {
-        method.closest("section")?.scrollIntoView({ block: "start" });
-        method.focus({ preventScroll: true });
-      } else {
-        setNotice("To slim a capped pen, insert a cartridge and add a screw-on cone to the barrel. The built-in bolt-action pen also supports slimming.");
-      }
+      const section = document.getElementById(sectionId);
+      section?.scrollIntoView({ block: "start" });
+      const control = document.getElementById(controlId) ?? section?.querySelector<HTMLElement>("button:enabled") ?? section;
+      control?.focus({ preventScroll: true });
     });
   }
+  const openSlimPen = () => showStudioPanel("studio-slim", "slim-pen-method");
+  const openAppearance = () => showStudioPanel("studio-appearance", "appearance-part");
   function openPart(part?: PartTab) {
     switchMode("Part");
     setPartSelection(part ? { projectId: project.id, id: part.id } : undefined);
@@ -648,7 +636,7 @@ export default function App() {
   function withoutPartRecords(id: string) {
     const workspaces = { ...project.workspaces };
     if (workspaces.capMounts) workspaces.capMounts = remainingCapMounts(workspaces.capMounts, id);
-    for (const key of ["joints", "jointPose", "allPartsPose", "bodyMaterials", "bodyDensities", "hardwareComponents", "refills", "refillDiameterChecks"]) {
+    for (const key of ["joints", "jointPose", "allPartsPose", "bodyMaterials", "bodySurfaces", "bodyDensities", "hardwareComponents", "refills", "refillDiameterChecks"]) {
       if (workspaces[key] && Object.hasOwn(workspaces[key], id)) {
         workspaces[key] = { ...workspaces[key] };
         delete workspaces[key][id];
@@ -1193,6 +1181,12 @@ export default function App() {
       title: "Slim pen", group: "Pen Studio", shortcut: "Alt L",
       keywords: "thin minimum diameter refill radial wall clearance cap cone",
       run: openSlimPen,
+    },
+    {
+      title: "Part appearance", group: "Pen Studio",
+      keywords: "anodizing anodized color metal material texture aluminum titanium brass",
+      disabled: !hasFinishablePart,
+      run: openAppearance,
     },
     {
       title: "CNC shop package",
@@ -1760,7 +1754,11 @@ export default function App() {
           aria-hidden={mode !== "Part" && !showcasing}
         >
           {showcasing ? <div className="photo-tools"><span><Aperture size={16}/> Studio render</span>
-            <div className="photo-actions"><button onClick={openSlimPen}><Ruler size={15}/> Slim pen</button><button disabled={!valid || !!studioPose.error} onClick={downloadPhoto}><Camera size={15}/> Save PNG</button></div></div> : <div className="model-tools">
+            <div className="photo-actions">
+              <button onClick={openAppearance} disabled={!hasFinishablePart}><Palette size={15}/> Appearance</button>
+              <button className="slim-tool" onClick={openSlimPen} title="Slim pen (Alt+L)"><Ruler size={15}/> Slim pen</button>
+              <button disabled={!valid || !!studioPose.error} onClick={downloadPhoto}><Camera size={15}/> Save PNG</button>
+            </div></div> : <div className="model-tools">
             {!treeVisible &&
               iconButton("Show model browser", Menu, () => toggleTree(true))}
             <button onClick={newSketch}>
@@ -2200,6 +2198,7 @@ export default function App() {
           {mode === "Assembly" && (
             <Assembly
               {...props}
+              rebuilding={!modelCurrent}
               liveAssembly={liveAssembly}
               initialComponent={project.workspaces?.capMounts?.[selected] || cartridges.some(r => r.bodyId === selected) ? selected : undefined}
               onApplyPose={transferToAllParts}
@@ -2218,7 +2217,7 @@ export default function App() {
               rebuilding={model.key !== geoSignature || model.pending}
             />
           )}
-          {showcasing && <PenBench project={project} commit={commitChecked} writingCheck={writingCheck} solidFeatures={solidFeatures}
+          {showcasing && <PenBench project={project} onThreads={openThreads} selectedBodyId={activePart?.id} commit={commitChecked} writingCheck={writingCheck} solidFeatures={solidFeatures}
             properties={valid && !studioPose.error ? kernel.bodyProperties : undefined} matrices={studioPose.matrices}
             surfaces={valid && !studioPose.error ? kernel.fitSurfaces : undefined} values={model.values}
             densities={effectiveDensities} onRefill={() => setDialog("refill")}
@@ -2564,7 +2563,7 @@ export default function App() {
             finishing.mesh && (
               <FinishPreview
                 mesh={finishing.mesh}
-                color={materials[material].color}
+                color={appearanceForBody(project, selectedBodyId)}
                 turned={currentF.kind === "revolve"}
               />
             )

@@ -37,7 +37,7 @@ export default function SlimBoltPanel({ project, commit }: { project: Project; c
     } catch (e) { setBusy(false); setError((e as Error).message); }
   }
   const result = shown?.result;
-  return <section aria-label="Slim pen" className="writing-fit slim-pen"><h3>Slim pen</h3>
+  return <section id="studio-slim" tabIndex={-1} aria-label="Slim pen" className="writing-fit slim-pen"><h3>Slim pen</h3>
     <SlimSizeInputs settings={settings} disabled={busy} onChange={change => { setEdits({ ...edits, ...change }); setError(""); }} />
     <button className="bench-action" disabled={busy} onClick={preview}>{busy ? "Checking bolt travel…" : "Preview slimming"}</button>
     {error && <p role="alert" className="fit-warning">{error}</p>}
