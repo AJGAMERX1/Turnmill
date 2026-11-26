@@ -220,6 +220,7 @@ export default function Scale(
         <label className="tm-check tm-export-opt">
           <input
             type="checkbox"
+            data-command-key="include-blank-outline-in-export"
             checked={include}
             onChange={(e) => props.onExportOptions({ include: e.target.checked, centerlines })}
           />
