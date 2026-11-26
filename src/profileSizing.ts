@@ -18,12 +18,19 @@ function constant(expression: string) {
   try { return evaluate(expression, {}); } catch { return undefined; }
 }
 
+function axisSources(sketch: Sketch, axis: Axis) {
+  const sources = sketch.points.map((p) => p[axis]);
+  for (const rule of sketch.constraints) {
+    if (rule.type === axis && rule.value) sources[rule.indices[0]] = rule.value;
+  }
+  return sources;
+}
 function matchingRange(sketch: Sketch, axis: Axis) {
   const cached = sketch.sizing?.[axis];
   // A later point edit or a redraw invalidates the quick sizing formula.
   return cached && typeof cached.radial === "boolean" && typeof cached.lower === "string"
     && typeof cached.size === "string" && Array.isArray(cached.coordinates)
-    && cached.coordinates.length === sketch.points.length && sketch.points.every((p, i) => p[axis] === cached.coordinates[i])
+    && cached.coordinates.length === sketch.points.length && axisSources(sketch, axis).every((s, i) => s === cached.coordinates[i])
     ? cached : undefined;
 }
 function validateBounds(radial: boolean, low: number, size: number) {
@@ -42,13 +49,13 @@ export function profileRange(sketch: Sketch, axis: Axis, turned: boolean, values
   if (sketch.points.length < 3) return;
   // Positive scaling preserves horizontal and vertical lines. Other relations
   // can prescribe angles, distances, radii or symmetry about a different datum.
-  if (sketch.constraints.some((c) => c.type !== "horizontal" && c.type !== "vertical"
-      && c.type !== (axis === "x" ? "y" : "x"))) return;
-  const source = sketch.points.map((p) => p[axis]);
+  if (sketch.constraints.some((c) => !["horizontal", "vertical", "x", "y"].includes(c.type))) return;
+  const source = axisSources(sketch, axis);
   const radial = turned && axis === "y";
   const cached = matchingRange(sketch, axis);
   const saved = cached?.radial === radial ? cached : undefined;
-  if (!saved && source.some((s) => constant(s) === undefined)) return;
+  if (!saved && (source.some((s) => constant(s) === undefined)
+    || sketch.points.some((p) => constant(p[axis]) === undefined))) return;
   const coords = source.map((s) => evaluate(s, values));
   const n = coords.length;
   if (sketch.constraints.some((c) => c.type === (axis === "x" ? "vertical" : "horizontal")
@@ -86,9 +93,12 @@ export function changeProfileRange(sketch: Sketch, range: ProfileRange, field: "
     return isExpression(sketch.points[i][range.axis]) ? number + " mm" : number;
   });
   const saved: SavedRange = { radial: range.radial, lower, size, coordinates };
+  const fixed = new Set(sketch.constraints.filter((c) => c.type === range.axis).map((c) => c.indices[0]));
   return {
     ...sketch,
-    points: sketch.points.map((p, i) => ({ ...p, [range.axis]: coordinates[i] })),
+    points: sketch.points.map((p, i) => ({ ...p, [range.axis]: fixed.has(i)
+      ? String(evaluate(coordinates[i], values)) : coordinates[i] })),
+    constraints: sketch.constraints.map((c) => c.type === range.axis ? { ...c, value: coordinates[c.indices[0]] } : c),
     sizing: { ...sketch.sizing, [range.axis]: saved },
   };
 }

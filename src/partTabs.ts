@@ -9,15 +9,35 @@ export function projectPartTabs(project: Project): PartTab[] {
   ];
 }
 
-export function partFeatures(project: Project, partId: string): Feature[] {
-  let owner: string | undefined;
-  return project.features.filter((f) => {
+/** Older documents store a boolean operation's target implicitly as the last active body. */
+export function bodyOwners(features: Feature[]): Map<string, string | undefined> {
+  const owners = new Map<string, string | undefined>();
+  let active: string | undefined;
+  let preceding: string | undefined;
+  for (const f of features) {
     if (f.operation === "new") {
-      owner = f.id;
-      return f.id === partId;
+      preceding = f.id;
+      if (!f.suppressed) active = f.id;
+      owners.set(f.id, f.id);
+    } else {
+      owners.set(f.id, f.bodyId ?? (f.suppressed ? preceding : active) ?? preceding);
     }
-    return (f.bodyId ?? owner) === partId;
+  }
+  return owners;
+}
+
+/** Bind old positional targets before an edit can change the body preceding a cut. */
+export function bindHistoryTargets(features: Feature[]): Feature[] {
+  const owners = bodyOwners(features);
+  return features.map((f) => {
+    const target = owners.get(f.id);
+    return f.operation !== "new" && !f.bodyId && target ? { ...f, bodyId: target } : f;
   });
+}
+
+export function partFeatures(project: Project, partId: string): Feature[] {
+  const owners = bodyOwners(project.features);
+  return project.features.filter((f) => owners.get(f.id) === partId);
 }
 
 export function partSketches(project: Project, partId: string, features: Feature[]): Sketch[] {

@@ -1,5 +1,5 @@
 export const axisCrossingMessage =
-  "This profile crosses the dashed X axis (Y = 0). Sketch one half of the part, entirely above or below the line. An edge can lie on the line. Revolve creates the other half.";
+  "This profile crosses the dashed X axis (Y = 0). Keep the closed profile above or below the axis. An edge may lie on the axis.";
 
 export function crossesRevolveAxis(points: ReadonlyArray<readonly [number, number]>) {
   const tolerance = 1e-7;

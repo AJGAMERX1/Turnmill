@@ -1018,7 +1018,7 @@ function JointStudio({
             value={joint.parent}
             onChange={(e) => patch({ parent: e.target.value })}
           >
-            <option value="">Ground</option>
+            <option value="">{floating ? "World" : "Ground"}</option>
             {bodies
               .filter((b) => {
                 let at = b.id;

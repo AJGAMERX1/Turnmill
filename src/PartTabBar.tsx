@@ -30,7 +30,7 @@ export default function PartTabBar({ parts, active, assembly, onPart, onAssembly
   function navigate(e: KeyboardEvent<HTMLDivElement>) {
     const tabs = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
     const index = tabs.indexOf(e.target as HTMLButtonElement);
-    if (index < 0) return;
+    if (index < 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
     if (["F2", "Backspace", "Delete"].includes(e.key)) {
       e.preventDefault();
       const part = parts.find((p) => p.id === tabs[index].dataset.partId);

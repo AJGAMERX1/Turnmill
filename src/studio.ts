@@ -425,6 +425,7 @@ export function createStudio(
     },
     pickBodyAt(event: PointerEvent) {
       const face = hit(event);
+      if (face) canvas.focus({ preventScroll: true });
       pickFace(face);
       return face ? face.body - 1 : -1;
     },
@@ -448,9 +449,6 @@ export function createStudio(
         right: new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(stepX),
         down: new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(-stepY),
       };
-    },
-    setOrbitEnabled: (value: boolean) => {
-      controls.enabled = value;
     },
     setTransforms(matrices: number[][], reframe = false) {
       for (const object of group.children) {

@@ -73,6 +73,7 @@ Object.assign(env, {
 try {
   await run("baseline", ["npm", "test"]);
   await run("test-hook", ["node", "tests/qa/hook.mjs"]);
+  await run("inspector-dimensions", ["node", "tests/qa/inspector-dimensions.mjs"]);
   await run("projects", ["node", "tests/projects/run.mjs"], {}, 65 * 60000);
   const m10 = await mkdtemp(resolve(evidence, "projects-m10-"));
   if (await run("m10-acceptance", ["node", "tests/projects/m10-acceptance.mjs"], {

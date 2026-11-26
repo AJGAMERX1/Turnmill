@@ -24,7 +24,7 @@ import CommandPalette from "./CommandPalette";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { JointConfig } from "./kinematics";
 import PartTabBar from "./PartTabBar";
-import { organizePartInsertion, partFeatures, partSketches, projectPartTabs, savePartFeature } from "./partTabs";
+import { bindHistoryTargets, bodyOwners, organizePartInsertion, partFeatures, partSketches, projectPartTabs, savePartFeature } from "./partTabs";
 import type { LiveAssembly } from "./Mechanisms";
 import HardwareDialog from "./HardwareDialog";
 import { finishLabels, type FinishKind } from "./finishingTypes";
@@ -211,6 +211,7 @@ export default function App() {
     [project.features, activePart?.id]);
   const sketches = useMemo(() => activePart ? partSketches(project, activePart.id, history) : project.sketches,
     [project.sketches, history, activePart?.id]);
+  const partEditorProject = activePart ? { ...project, features: history, sketches } : project;
   const [context, setContext] = useState<{
     anchor: MenuAnchor; title: string; items: MenuItem[]; project: Project;
   } | null>(null);
@@ -380,15 +381,8 @@ export default function App() {
     ? project.workspaces!.material
     : "Brass";
   const solidFeatures = model.features.filter((f) => f.operation === "new");
-  const bodyFor = (f?: Feature) => {
-    if (!f) return;
-    if (f.operation === "new") return f.id;
-    if (f.bodyId) return f.bodyId;
-    return project.features
-      .slice(0, project.features.indexOf(f))
-      .reverse()
-      .find((q) => q.operation === "new" && !q.suppressed)?.id;
-  };
+  const owners = useMemo(() => bodyOwners(project.features), [project.features]);
+  const bodyFor = (f?: Feature) => f ? owners.get(f.id) : undefined;
   const materialOf = (id: string) =>
     Object.hasOwn(materials, project.workspaces?.bodyMaterials?.[id] || "")
       ? project.workspaces!.bodyMaterials[id]
@@ -540,9 +534,19 @@ export default function App() {
     Object.values((project.workspaces?.joints ?? {}) as JointConfig).some(({ threadMate }) =>
       threadMate && [threadMate.moving, threadMate.mating].some(
         (ref) => ref.featureId === featureId && (finishId === undefined || ref.finishId === finishId)));
+  function withoutPartRecords(id: string) {
+    const workspaces = { ...project.workspaces };
+    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents"]) {
+      if (workspaces[key] && Object.hasOwn(workspaces[key], id)) {
+        workspaces[key] = { ...workspaces[key] };
+        delete workspaces[key][id];
+      }
+    }
+    return workspaces;
+  }
   const removeFeature = (feature: Feature) => {
     const next = project.features[project.features.indexOf(feature) + 1];
-    if (project.features.some((f) => f.bodyId === feature.id) ||
+    if (project.features.some((f) => f.operation !== "new" && bodyFor(f) === feature.id) ||
       (feature.operation === "new" && next && next.operation !== "new" && !next.bodyId)) {
       setNotice("Remove the operations that use this body first.");
       return false;
@@ -553,26 +557,19 @@ export default function App() {
       setNotice("Detach the joints that use this part in Assembly before deleting it.");
       return false;
     }
-    const workspaces = { ...project.workspaces };
-    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities"]) {
-      if (workspaces[key] && Object.hasOwn(workspaces[key], feature.id)) {
-        workspaces[key] = { ...workspaces[key] };
-        delete workspaces[key][feature.id];
-      }
-    }
-    commit({ ...project, workspaces, features: project.features.filter((f) => f.id !== feature.id),
+    commit({ ...project, workspaces: withoutPartRecords(feature.id), features: project.features.filter((f) => f.id !== feature.id),
       sketches: project.sketches.map((s) => s.partId === feature.id ? { ...s, partId: undefined } : s),
     });
     return true;
   };
-  const updateF = (f: Feature) =>
-    commit({
-      ...project,
-      features: project.features.map((i) => (i.id === f.id ? f : i)),
-    });
+  const updateF = (f: Feature) => {
+    const toggledBody = f.operation === "new" && project.features.find((q) => q.id === f.id)?.suppressed !== f.suppressed;
+    const features = toggledBody ? bindHistoryTargets(project.features) : project.features;
+    commit({ ...project, features: features.map((item) => item.id === f.id ? f : item) });
+  };
   const reorder = (f: Feature, by: number) => {
-    const a = project.features.slice(),
-      i = a.findIndex((q) => q.id === f.id);
+    const a = bindHistoryTargets(project.features);
+    const i = a.findIndex((q) => q.id === f.id);
     if (i + by < 0 || i + by >= a.length) return;
     [a[i], a[i + by]] = [a[i + by], a[i]];
     let body = "";
@@ -1019,7 +1016,7 @@ export default function App() {
       let reason = c.reason;
       if (c.disabled && !reason) {
         if (c.group === "Export")
-          reason =
+          reason = (mode === "Scales" && !rulerBodyId ? "Create engraved stock or apply the graduations to a part in Scales." : "") ||
             error ||
             (busy
               ? "Wait for the solid to finish rebuilding."
@@ -1980,7 +1977,8 @@ export default function App() {
           onDelete={(part) => {
             const root = project.features.find((f) => f.id === part.id);
             if (root) { removeFeature(root); return; }
-            commit({ ...project, emptyParts: project.emptyParts?.filter((p) => p.id !== part.id),
+            commit({ ...project, workspaces: withoutPartRecords(part.id),
+              emptyParts: project.emptyParts?.filter((p) => p.id !== part.id),
               sketches: project.sketches.map((s) => s.partId === part.id ? { ...s, partId: undefined } : s) });
           }}/>
       )}
@@ -2168,7 +2166,7 @@ export default function App() {
           entryId={entryId}
           initialKind={presetAdvanced}
           feature={currentF}
-          project={project}
+          project={partEditorProject}
           onClose={close}
           onSave={(feature) => {
             updateF(feature);
@@ -2200,7 +2198,7 @@ export default function App() {
       )}
       {dialog === "feature" && (
         <FeatureDialog
-          project={activePart ? { ...project, features: history, sketches } : project}
+          project={partEditorProject}
           scopedPart={!!activePart}
           {...featureDraft}
           editingProfile={!!activeSketch}
