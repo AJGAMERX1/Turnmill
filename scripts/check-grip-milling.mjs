@@ -8,6 +8,8 @@ try {
   const { evaluateFinish } = await api.load("finishingTypes");
   const { applyGripMilling } = await api.load("gripMilling");
   const { measureGripStock } = await api.load("gripBands");
+  const { collectFitSurfaces, collectTurnedCapSurfaces } = await api.load("fitSurfaces");
+  const { barrelEnd, shoulderOutside } = await api.load("threadedCone");
   const { importSolidFile } = await api.load("exchangeSolids");
   const tube = {
     id: "tube", name: "Tube", kind: "revolve", operation: "new", amount: 360,
@@ -67,7 +69,22 @@ try {
       const data = geometry(solid);
       assert(data.valid && data.solids === 1, style + " makes one valid solid");
       removed[style] = stockVolume - data.volume;
-      if (style === "flutes") checkIndexedFloors(solid);
+      if (style === "flutes") {
+        checkIndexedFloors(solid);
+        const smoothFits = collectFitSurfaces(solid, "tube", true);
+        assert(!smoothFits.some(s => s.side === "shaft" && Math.abs(s.diameter - 12) < 1e-6),
+          "flutes interrupt the original OD face for smooth fit references");
+        const seats = collectTurnedCapSurfaces(solid, "tube", smoothFits);
+        const front = barrelEnd(seats, "X", "start"), back = barrelEnd(seats, "X", "end");
+        near(front.station, 0, 1e-5, "thread datum at the original front face");
+        near(back.station, 30, 1e-5, "thread datum at the original rear face");
+        near(shoulderOutside(front, 3), 12, 1e-5, "intact round shoulder before flutes");
+        near(shoulderOutside(back, 3), 12, 1e-5, "intact round shoulder behind flutes");
+        assert(Number.isNaN(shoulderOutside(front, 4.5)), "the fluted seating station is interrupted");
+        const interruptedToEnd = seats.filter(s => s.side !== "shaft" || s.start > 1e-5);
+        assert.equal(barrelEnd(interruptedToEnd, "X", "start"), undefined,
+          "interior land cannot supply a missing end datum");
+      }
       assert(removed[style] > 0.1, style + " removes measurable stock");
       near(measureBand(solid, 0, 4), stockArea * 4, 1e-4, style + " leaves the front outside the band intact");
       near(measureBand(solid, 16, 30), stockArea * 14, 1e-4, style + " leaves the back outside the band intact");

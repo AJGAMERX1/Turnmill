@@ -1,4 +1,5 @@
 import { measureShapeSurfaceProperties, type Face, type Shape3D } from "replicad";
+import { measureGripStock } from "./gripBands";
 
 type XYZ = [number, number, number];
 export type FitSurface = {
@@ -8,6 +9,8 @@ export type FitSurface = {
   diameter: number;
   /** At the end station of a measured outer taper, otherwise constant. */
   endDiameter?: number;
+  /** Actual axial bounds of turned stock, including a cut or taper at an end. */
+  turnedBounds?: [number, number];
   axis: XYZ;
   centerline: XYZ;
   start: number;
@@ -172,4 +175,19 @@ export function collectFitSurfaces(
   return [...candidates, ...tapers].sort(
     (a, b) => a.start - b.start || a.diameter - b.diameter,
   );
+}
+
+/** A pocket can trim one cylinder face across a long barrel. Recover the complete
+ * rings on either side of that pocket from its exact edges for the Threads tool. */
+export function collectTurnedCapSurfaces(shape: Shape3D, bodyId: string, fits: FitSurface[]): FitSurface[] {
+  const stock = measureGripStock(shape);
+  const turnedBounds: [number, number] = [stock.minX, stock.maxX];
+  const other = fits.filter(s => s.side !== "shaft" || Math.abs(s.axis[0]) < 1 - 1e-6 ||
+    Math.hypot(s.centerline[1], s.centerline[2]) > 1e-6);
+  const lands: FitSurface[] = stock.bands.map(b => ({
+    key: JSON.stringify([bodyId, "cap-seat", b.start, b.end, b.startRadius, b.endRadius]),
+    bodyId, side: "shaft", axis: [1, 0, 0], centerline: [0, 0, 0],
+    start: b.start, end: b.end, diameter: b.startRadius * 2, endDiameter: b.endRadius * 2, turnedBounds,
+  }));
+  return [...other.map(s => ({ ...s, turnedBounds })), ...lands];
 }

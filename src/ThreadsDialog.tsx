@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Vector3 } from "three";
 import { Modal } from "./Dialogs";
@@ -12,7 +12,11 @@ import { jointMount, type JointConfig } from "./kinematics";
 import { refillComponents } from "./refills";
 import { partFeatures } from "./partTabs";
 import { resolveThreadMates } from "./threadMates";
-import { barrelAxis, barrelEnd, capAttachmentIssue, hasCapAttachments, legacyCapBarrelStock, legacyCapForBarrel, repairCapDiameter, shoulderOutside, compatiblePairSizes, createThreadedCap, createThreadedCone, type BarrelEnd, type CapSettings, type PairSettings } from "./threadedCone";
+import {
+  applyCapConeFit, barrelAxis, barrelEnd, capAttachmentIssue, compatiblePairSizes, createThreadedCap,
+  createThreadedCone, hasCapAttachments, legacyCapBarrelStock, legacyCapForBarrel, repairCapDiameter,
+  shoulderOutside, suggestCapFit, type BarrelEnd, type CapConeFit, type CapSettings, type PairSettings,
+} from "./threadedCone";
 import type { Project } from "./types";
 import type { KernelReply } from "./Viewport";
 import "./threadsDialog.css";
@@ -110,10 +114,13 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   }
   const [part, setPart] = useState<Attachment>(initialPart);
   const [end, setEnd] = useState<PairSettings["end"]>(() => (initialPart === "cap" && capFront()) || "end");
-  const stock = surfaces && barrelEnd(surfaces, axis, end);
+  const stock = useMemo(() => surfaces && barrelEnd(surfaces, axis, end), [surfaces, axis, end]);
   const cap = part === "cap";
   const hasAttachments = cap && hasCapAttachments(project, bodyId);
-  const rear = cap && surfaces ? barrelEnd(surfaces, axis, end === "end" ? "start" : "end") : undefined;
+  const rear = useMemo(() => cap && surfaces ? barrelEnd(surfaces, axis, end === "end" ? "start" : "end") : undefined,
+    [cap, surfaces, axis, end]);
+  const [coneFit, setConeFit] = useState<CapConeFit>();
+  const draft = useMemo(() => cap && coneFit ? applyCapConeFit(project, coneFit) : project, [cap, coneFit, project]);
   const [requestedSize, setSize] = useState("");
   const [allowance, setAllowance] = useState("0.10 mm");
   const [length, setLength] = useState("4.5 mm"), [coneLength, setConeLength] = useState("15 mm");
@@ -124,7 +131,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const [crown, setCrown] = useState<CapSettings["crown"]>("domed");
   const [crownInput, setCrownLength] = useState<string>(), [wall, setWall] = useState("1.5 mm");
   function read(expression: string) {
-    try { return evaluate(expression, resolveParameters(project.parameters)); }
+    try { return evaluate(expression, resolveParameters(draft.parameters)); }
     catch { return undefined; }
   }
   const allowanceMm = read(allowance), threadLengthMm = read(length);
@@ -133,12 +140,17 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const capDiameter = outside ?? (shoulder ? mmField(shoulder) : "");
   const capOD = read(capDiameter);
   const candidates = stock && allowanceMm !== undefined && allowanceMm >= 0 && threadLengthMm !== undefined
-    ? compatiblePairSizes(project, bodyId, stock, part, rear, allowanceMm, threadLengthMm) : [];
+    ? compatiblePairSizes(draft, bodyId, stock, part, rear, allowanceMm, threadLengthMm) : [];
   const compatibleSizes = cap ? candidates.filter(label => {
     const preset = threadPresets.find(p => p.label === label);
     return preset && capOD !== undefined && capOD > evaluate(preset.diameter, {}) + 1e-5;
   }) : candidates;
   const size = compatibleSizes.includes(requestedSize) ? requestedSize : compatibleSizes[0] ?? "";
+  const suggestion = useMemo(() => {
+    if (!cap || !stock || !rear || size || measurementError || allowanceMm === undefined || threadLengthMm === undefined ||
+        (outside !== undefined && capOD === undefined)) return;
+    return suggestCapFit(draft, bodyId, stock, rear, threadLengthMm, allowanceMm, outside === undefined ? undefined : capOD);
+  }, [cap, stock, rear, size, measurementError, allowanceMm, threadLengthMm, outside, capOD, draft, bodyId]);
   const preset = threadPresets.find(p => p.label === size);
   const capLength = capLengthInput ?? (hasAttachments ? "28 mm" : "18 mm");
   const major = preset && evaluate(preset.diameter, {});
@@ -162,14 +174,14 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
     } else if (cap && candidates.length && !size) {
       stockIssue = "Increase the cap outside diameter to leave a wall around its threaded opening.";
     } else if (!size) {
-      stockIssue = (cap && capAttachmentIssue(project, bodyId)) ||
+      stockIssue = (cap && capAttachmentIssue(draft, bodyId)) ||
         "No standard thread fits between the bore and the barrel surface. Try a shorter thread or a thicker barrel wall.";
     }
   }
   const capSettings = { end, size, length, mode, allowance, capLength, capDiameter, crown, crownLength, wall, matchBarrel: outside === undefined };
   let previewFit: ReturnType<typeof fitCapEnvelope> | undefined;
   if (cap && major) {
-    try { previewFit = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major); }
+    try { previewFit = fitCapEnvelope(capSettings, resolveParameters(draft.parameters), major); }
     catch { /* Incomplete inputs stay editable. */ }
   }
   const [busy, setBusy] = useState<"create" | "restore" | null>(null), [error, setError] = useState("");
@@ -191,7 +203,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       const host = restore ? repairHost : bodyId;
       const checkingCap = restore || cap;
       let revision = 0;
-      async function build(next: Project, options: { measureRefillFit?: boolean; capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number } } = {}) {
+      async function build(next: Project, options: { measureCapSeats?: boolean; capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number } } = {}) {
         const model = await evaluateModel(next);
         if (token.current !== request) throw Error("Thread operation closed.");
         const rev = ++revision;
@@ -209,16 +221,16 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       let fitting: ReturnType<typeof fitCapEnvelope> | undefined;
       if (restore && repairId) {
         const original = legacyCapBarrelStock(project, repairId);
-        const { reply } = await build(original, { measureRefillFit: true });
+        const { reply } = await build(original, { measureCapSeats: true });
         if (reply.type === "error") throw Error(reply.message);
-        const measured = reply.fitSurfaces?.[0];
+        const measured = reply.capSurfaces?.[0];
         if (!measured?.length) throw Error("Could not measure the original barrel at its cap seats.");
         const restored = repairCapDiameter(project, repairId, measured, undefined, true);
         next = restored.project; partId = repairId;
         changes = ["Changed " + restored.oldSize + " to " + restored.size + ". Cap and front shoulder now meet at Ø" + mmField(restored.outside) + "."];
       } else if (cap) {
-        fitting = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!);
-        const created = createThreadedCap(project, bodyId, stock!, fitting.settings, rear!);
+        fitting = fitCapEnvelope(capSettings, resolveParameters(draft.parameters), major!);
+        const created = createThreadedCap(draft, bodyId, stock!, fitting.settings, rear!);
         next = created.project; partId = created.capId; changes = fitting.changes;
       } else {
         const created = createThreadedCone(project, bodyId, stock!, { end, size, length, coneLength, tipDiameter,
@@ -236,7 +248,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       let verified = await check(fitting?.cavityDepth);
       if (token.current !== request) return;
       if (fitting && verified.type === "error" && verified.capFit) {
-        const corrected = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!, verified.capFit);
+        const corrected = fitCapEnvelope(capSettings, resolveParameters(draft.parameters), major!, verified.capFit);
         const profile = next.sketches.find(s => s.partId === partId)?.capProfile;
         if (!profile || corrected.cavityDepth <= fitting.cavityDepth) throw Error(verified.message);
         const lengthName = profile.prefix + "_length";
@@ -247,6 +259,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
       }
       if (token.current !== request) return;
       if (verified.type === "error") throw Error(verified.message);
+      if (!restore && cap && coneFit) changes.push(coneFit.name + " base changed to Ø" + mmField(coneFit.to) + ".");
       onSave(next, partId, !restore && (stock!.axis !== "X" || stock!.centerline.some(n => Math.abs(n) > 1e-6)), changes,
         restore ? host : undefined);
     } catch (cause) {
@@ -265,7 +278,7 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
     const front = kind === "cap" && capFront();
     if (front) setEnd(front);
     onPartChange?.(kind);
-    setPart(kind); setSize(""); setError("");
+    setPart(kind); setSize(""); setConeFit(undefined); setError("");
   }
   if (restoreView) return <Modal title="Threads" onClose={onClose} className="thread-pair-dialog">
     <div className="thread-pair-scroll">
@@ -297,7 +310,9 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         {existing.length > 0 && <details><summary>Edit existing threads ({existing.length})</summary>
           {existing.map(({ feature, finish }) => <button key={finish.id} disabled={!!busy} type="button"
             onClick={() => onEdit(feature.id, finish.id)}>{finish.name} · {feature.name}</button>)}</details>}
-        {size && (cap ? <CapSection project={project} stock={stock} rear={rear} settings={previewFit?.settings ?? capSettings}/>
+        {cap && coneFit && <p className="helper" role="status">{coneFit.name} base will change from Ø{mmField(coneFit.from)} to Ø{mmField(coneFit.to)}.
+          {" "}<button type="button" className="thread-shared" disabled={!!busy} onClick={() => setConeFit(undefined)}>Keep original cone</button></p>}
+        {size && (cap ? <CapSection project={draft} stock={stock} rear={rear} settings={previewFit?.settings ?? capSettings}/>
           : <JointSection start={end === "start"} closed={closeBack}/>)}
         {previewFit && previewFit.changes.length > 0 && <p className="helper" role="status">Automatic fit · {previewFit.changes.join(" ")}</p>}
         <fieldset disabled={!!busy}>
@@ -344,7 +359,16 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         </fieldset>
       </div>
       <div className="thread-pair-footer">
-        {(error || measurementError || stockIssue) && <p role="alert" className="error-text">{error || measurementError || stockIssue}</p>}
+        {(error || measurementError || (!suggestion && stockIssue)) && <p role="alert" className="error-text">{error || measurementError || stockIssue}</p>}
+        {suggestion && <div className="thread-fit-suggestion">
+          <p>{suggestion.size} can seat {mmField(suggestion.length)} in from both ends.
+            {suggestion.cone && <> Narrow the {suggestion.cone.name} base from Ø{mmField(suggestion.cone.from)} to Ø{mmField(suggestion.cone.to)} so the cap can pass over it.</>}</p>
+          <button type="button" className="outline-btn" disabled={!!busy} onClick={() => {
+            if (suggestion.cone) setConeFit(suggestion.cone);
+            if (Math.abs(suggestion.length - threadLengthMm!) > 1e-6) setLength(mmField(suggestion.length));
+            setSize(suggestion.size); setError("");
+          }}>Use suggested fit</button>
+        </div>}
         {!surfaces && !error && !measurementError && <p className="helper">Measuring the barrel ends…</p>}
         <div className="dialog-actions"><button type="button" onClick={onClose}>Cancel</button>
           <button className="primary" type="submit" disabled={!!busy || !stock || (cap && !rear) || !size || !!measurementError}>

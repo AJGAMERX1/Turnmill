@@ -12,7 +12,7 @@ import {
 } from "./geometry";
 import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
-import { collectFitSurfaces, type FitSurface } from "./fitSurfaces";
+import { collectFitSurfaces, collectTurnedCapSurfaces, type FitSurface } from "./fitSurfaces";
 import type { Shape3D } from "replicad";
 import type { EvaluatedFeature, Project } from "./types";
 import { verifyCapPosting } from "./capClearanceGeometry";
@@ -24,6 +24,7 @@ const worker = self as unknown as DedicatedWorkerGlobalScope;
 const ready = initOC({ locateFile: () => wasmUrl }).then(setOC);
 const model = new ModelBodies();
 const fitCache = new WeakMap<Shape3D, FitSurface[]>();
+const capSurfaceCache = new WeakMap<Shape3D, FitSurface[]>();
 const MIN_PREVIEW_SNAPSHOT_MS = 1000;
 let currentRevision = -1;
 
@@ -84,6 +85,7 @@ type Request =
       features: EvaluatedFeature[];
       retainedMeshes?: number[];
       measureRefillFit?: boolean;
+      measureCapSeats?: boolean;
       capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number };
       previewBodyIndex?: number;
       finishBody?: FinishBodySnapshot;
@@ -187,7 +189,8 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         }
       }
       let fitSurfaces: FitSurface[][] | undefined;
-      if (data.measureRefillFit) {
+      let capSurfaces: FitSurface[][] | undefined;
+      if (data.measureRefillFit || data.measureCapSeats) {
         const roots = data.features.filter(f => f.operation === "new");
         fitSurfaces = solids.map(({ shape }, i) => {
           const cached = fitCache.get(shape);
@@ -196,9 +199,20 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
           fitCache.set(shape, lands);
           return lands;
         });
+        if (data.measureCapSeats) {
+          const fits = fitSurfaces;
+          capSurfaces = solids.map(({ shape }, i) => {
+            if (roots[i].kind !== "revolve") return fits[i];
+            const cached = capSurfaceCache.get(shape);
+            if (cached) return cached;
+            const seats = collectTurnedCapSurfaces(shape, roots[i].id, fits[i]);
+            capSurfaceCache.set(shape, seats);
+            return seats;
+          });
+        }
       }
       worker.postMessage(
-        { ...output, revision: data.revision, previewBody, ...properties, fitSurfaces, threadFrames: solids.flatMap((b) => b.threadFrames ?? []) },
+        { ...output, revision: data.revision, previewBody, ...properties, fitSurfaces, capSurfaces, threadFrames: solids.flatMap((b) => b.threadFrames ?? []) },
         meshes.flatMap(buffers),
       );
       currentRevision = data.revision;

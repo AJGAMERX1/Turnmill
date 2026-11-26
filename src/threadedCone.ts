@@ -36,10 +36,13 @@ export function barrelEnd(surfaces: FitSurface[], axis: "X" | "Z", end: End): Ba
   });
   const outside = aligned.filter(s => s.side === "shaft");
   if (!outside.length) return;
-  const station = end === "start" ? Math.min(...outside.map(s => s.start)) : Math.max(...outside.map(s => s.end));
+  const bounds = axis === "X" ? aligned.find(s => s.turnedBounds)?.turnedBounds : undefined;
+  const station = bounds ? bounds[end === "start" ? 0 : 1]
+    : end === "start" ? Math.min(...outside.map(s => s.start)) : Math.max(...outside.map(s => s.end));
   const atEnd = aligned.filter(s => Math.abs(s[end] - station) < 1e-5);
   const diam = (s: FitSurface) => end === "end" ? s.endDiameter ?? s.diameter : s.diameter;
   const outer = atEnd.filter(s => s.side === "shaft").sort((a, b) => diam(b) - diam(a))[0];
+  if (!outer) return;
   const concentric = atEnd.filter(s => s.side === "bore" &&
     s.centerline.every((n, i) => Math.abs(n - outer.centerline[i]) < 1e-5));
   const bandSurfaces = aligned.filter(s => s.centerline.every((n, i) => Math.abs(n - outer.centerline[i]) < 1e-5));
@@ -63,7 +66,8 @@ function checkBarrel(project: Project, bodyId: string, ...rims: BarrelEnd[]) {
     throw Error("The thread needs a flat, round end with material around its center. Select a barrel or change the pointed end to a flat shoulder.");
 }
 
-type Clearance = { name: string; diameter: number };
+export type CapConeFit = { parameter: string; from: number; to: number; name: string };
+type Clearance = { name: string; diameter: number; cone?: { parameter: string; minimum: number } };
 
 function attachedClearance(project: Project, host: string, values: Record<string, number>): Clearance | undefined {
   const joints = (project.workspaces?.joints ?? {}) as Record<string, Joint>;
@@ -74,6 +78,7 @@ function attachedClearance(project: Project, host: string, values: Record<string
     const f = project.features.find(f => f.id === id && !f.suppressed);
     if (!f) continue;
     let diameter = 0;
+    let cone: Clearance["cone"];
     if (joint.refillSnap) {
       const refill = refills.find(r => r.bodyId === id && isSleeveDonor(r.kind));
       if (refill) diameter = values[refill.prefix + "_collar_diameter"];
@@ -84,10 +89,25 @@ function attachedClearance(project: Project, host: string, values: Record<string
       const male = f.finishes?.find(t => t.id === joint.threadMate!.moving.finishId && !t.suppressed);
       if (male?.kind === "thread" && male.preparation === "tenon" && f.finishes?.length === 1 &&
           partFeatures(project, id).filter(f => !f.suppressed).length === 1 &&
-          sketch?.points.length === 4 && sketch.constraints.length === 0 && /^cone\d*_base \/ 2$/.test(sketch.points[1].y))
+          sketch?.points.length === 4 && sketch.constraints.length === 0 && /^cone\d*_base \/ 2$/.test(sketch.points[1].y)) {
         diameter = 2 * evaluate(sketch.points[1].y, values);
+        const parameter = sketch.points[1].y.split(" ")[0], prefix = parameter.slice(0, -5);
+        const [a, b, c, d] = sketch.points;
+        const mate = joint.threadMate.mating;
+        const socket = partFeatures(project, host).find(step => !step.suppressed && step.id === mate.featureId)?.finishes
+          ?.find(t => !t.suppressed && t.id === mate.finishId);
+        if (socket?.kind === "thread" && socket.preparation === "socket" && socket.side === "internal" &&
+            joint.threadMate.moving.featureId === id && male.side === "external" && f.operation === "new" &&
+            sketch.partId === id && !sketch.capProfile && !sketch.coneEdge && evaluate(f.amount, values, "angle") === 360 &&
+            a.y === prefix + "_opening / 2" && d.y === a.y && c.y === prefix + "_tip / 2" &&
+            a.x === b.x && c.x === d.x && c.x === a.x + (socket.end === "end" ? " + " : " - ") + prefix + "_length") {
+          const minimum = Math.max(evaluate(male.diameter, values), evaluate(socket.diameter, values),
+            values[prefix + "_tip"]) + 0.3;
+          cone = { parameter, minimum };
+        }
+      }
     }
-    if (diameter > (largest?.diameter ?? 0)) largest = { diameter, name: f.name };
+    if (diameter > (largest?.diameter ?? 0)) largest = { diameter, name: f.name, cone };
   }
   return largest;
 }
@@ -183,6 +203,163 @@ export function compatiblePairSizes(project: Project, bodyId: string, stock: Bar
     (kind === "cone" || shoulders.every(od => p.major - allowance < od - tolerance)))
     .sort((a,b) => Number(b.label.startsWith("M")) - Number(a.label.startsWith("M")) || score(a) - score(b))
     .map(p => p.label);
+}
+
+type AxialRange = [number, number];
+
+// Express each measured face in millimetres inward from the mouth of this end.
+function facesByDepth(rim: BarrelEnd) {
+  const start = rim.end === "start";
+  return (rim.bandSurfaces ?? []).map(s => ({
+    side: s.side,
+    lo: start ? s.start - rim.station : rim.station - s.end,
+    hi: start ? s.end - rim.station : rim.station - s.start,
+    first: start ? s.diameter : s.endDiameter ?? s.diameter,
+    last: start ? s.endDiameter ?? s.diameter : s.diameter,
+  })).filter(s => s.hi > 0 && s.hi > s.lo).sort((a, b) => a.lo - b.lo);
+}
+
+/** Depth ranges where a thread fits the measured band and its shoulder has a
+ * complete turned surface beyond the stop. Clip tapered faces at the actual
+ * diameter crossing so narrow usable lands survive independently of grid size. */
+function seatRanges(faces: ReturnType<typeof facesByDepth>, male: number, pitch: number, limit: number, matchCap?: number, originalOD?: number) {
+  const root = threadMinorDiameter(male, pitch);
+  const stopWidth = Math.min(pitch / 20, 0.05);
+  const stopDiameter = Math.max(male + Math.min(root / 10, 0.02) + tolerance, matchCap ?? 0);
+  const intervals: AxialRange[] = [];
+  for (const face of faces) {
+    if (face.lo > limit) break;
+    const { lo, hi, first, last } = face;
+    const crossing = (d: number) => lo + (hi - lo) * (d - first) / (last - first);
+    const shaft = face.side === "shaft";
+    const threshold = shaft ? male + tolerance : root - 0.02 - tolerance;
+    const firstMargin = shaft ? first - threshold : threshold - first;
+    const lastMargin = shaft ? last - threshold : threshold - last;
+    // Once the thread would cut through a bore or run out of stock, a land
+    // farther in cannot restore that material along the preceding engagement.
+    if (firstMargin <= 0) limit = Math.min(limit, Math.max(0, lo));
+    else if (lastMargin <= 0) limit = Math.min(limit, crossing(threshold) - tolerance);
+    if (!shaft || Math.max(first, last) <= stopDiameter) continue;
+    if (originalOD !== undefined && (Math.abs(first - originalOD) > tolerance || Math.abs(last - originalOD) > tolerance)) continue;
+    const from = Math.max(0, first <= stopDiameter ? crossing(stopDiameter) + tolerance : lo);
+    const to = last <= stopDiameter ? crossing(stopDiameter) - tolerance : hi;
+    if (to > from) intervals.push([from, to]);
+  }
+  const lands: AxialRange[] = [];
+  for (const [lo, hi] of intervals.sort((a, b) => a[0] - b[0])) {
+    const prev = lands.at(-1);
+    if (prev && lo <= prev[1] + tolerance) prev[1] = Math.max(prev[1], hi);
+    else lands.push([lo, hi]);
+  }
+  return lands.map(([lo, hi]): AxialRange => [Math.max(pitch, lo), Math.min(limit, hi - stopWidth)])
+    .filter(([lo, hi]) => hi >= lo);
+}
+
+/** Recommend the closest common seating depth on measured stock. A custom cap
+ * diameter is honored; otherwise the cap mouth follows the front shoulder.
+ * Exact cuts and front/back assembly clearance still run before committing. */
+export function recommendCapSeat(project: Project, bodyId: string, front: BarrelEnd, rear: BarrelEnd,
+  requestedLength: number, allowance = 0.1, capOutside?: number, preferOriginal = false): { length: number; size: string } | undefined {
+  if (!(Number.isFinite(requestedLength) && requestedLength > 0 && Number.isFinite(allowance) && allowance >= 0) ||
+      (capOutside !== undefined && !(Number.isFinite(capOutside) && capOutside > 0)) ||
+      !usableRim(front) || !usableRim(rear) || front.axis !== rear.axis || !front.end || !rear.end || front.end === rear.end ||
+      refillComponents(project).some(r => r.bodyId === bodyId)) return;
+  const span = Math.abs(front.station - rear.station);
+  const limit = (span - 2 * tolerance) / 2;
+  const frontFaces = facesByDepth(front), rearFaces = facesByDepth(rear);
+  const { outside, bore, attachment } = capLimits(project, bodyId, front, rear, 0);
+  function choose(originalOD?: number) {
+    let best: number | undefined;
+    const sizes = new Set<string>();
+    // Each standard thread costs one scan of the faces at each end, regardless
+    // of how long the barrel is or how narrow a gap needs to be crossed.
+    for (const p of presets) {
+      if (p.step > limit || (capOutside !== undefined && capOutside <= p.major + 1e-5) ||
+          sizeProblem(p.major, p.step, allowance, outside, bore, "cap", attachment)) continue;
+      const male = p.major - allowance;
+      const a = seatRanges(frontFaces, male, p.step, limit, capOutside === undefined ? p.major + 1e-5 : undefined, originalOD);
+      const b = seatRanges(rearFaces, male, p.step, limit, undefined, originalOD);
+      for (let i = 0, j = 0; i < a.length && j < b.length;) {
+        const lo = Math.max(a[i][0], b[j][0]), hi = Math.min(a[i][1], b[j][1]);
+        if (lo <= hi) {
+          let length = requestedLength;
+          if (length < lo || length > hi) {
+            // Prefer a simple shop dimension, using tenths for narrower lands.
+            const grid = Math.ceil(lo * 4) <= Math.floor(hi * 4) ? 4 : 10;
+            const from = Math.ceil(lo * grid) / grid, to = Math.floor(hi * grid) / grid;
+            length = from <= to ? Math.max(from, Math.min(to, length)) : Number(((lo + hi) / 2).toFixed(6));
+          }
+          if (length >= lo && length <= hi) {
+            const distance = Math.abs(length - requestedLength);
+            if (best === undefined || distance < Math.abs(best - requestedLength) - tolerance ||
+                (Math.abs(distance - Math.abs(best - requestedLength)) <= tolerance && length < best)) {
+              best = length;
+              sizes.clear();
+            }
+            if (length === best) sizes.add(p.label);
+          }
+        }
+        if (a[i][1] < b[j][1]) i++;
+        else j++;
+      }
+    }
+    if (best === undefined) return;
+    const size = compatiblePairSizes(project, bodyId, front, "cap", rear, allowance, best).find(label => sizes.has(label));
+    if (size) return { length: best, size };
+  }
+  const nearest = choose();
+  if (!nearest || (nearest.length === requestedLength && !preferOriginal) || capOutside !== undefined ||
+      Math.abs(front.outside - rear.outside) > tolerance) return nearest;
+  return choose(front.outside) ?? nearest;
+}
+
+function adjustedDriver(expression: string, before: number, after: number, nominal: string, values: Record<string, number>) {
+  // A user can link either dimension to another named parameter. Preserve that link when refitting.
+  const dependsOnParameter = expression.match(/[a-zA-Z_]\w*/g)?.some(name => Object.hasOwn(values, name));
+  if (!dependsOnParameter) return nominal;
+  const sign = after < before ? " - " : " + ";
+  return "(" + expression + ")" + sign + Number(Math.abs(after - before).toFixed(12)) + " mm";
+}
+
+/** Only change the generated cone's private base driver. Preserve its original
+ * parameter dependency when the proposal is accepted in the draft. */
+export function applyCapConeFit(project: Project, fit: CapConeFit): Project {
+  const values = resolveParameters(project.parameters);
+  if (!Number.isFinite(fit.to) || fit.to <= 0 || !(fit.to < fit.from) ||
+      !Number.isFinite(values[fit.parameter]) || Math.abs(values[fit.parameter] - fit.from) > tolerance)
+    throw Error("The cone diameter changed. Reopen Threads to measure a new fit.");
+  return { ...project, parameters: project.parameters.map(p => p.name === fit.parameter
+    ? { ...p, expression: adjustedDriver(p.expression, fit.from, fit.to, fit.to + " mm", values) } : p) };
+}
+
+export function suggestCapFit(project: Project, bodyId: string, front: BarrelEnd, rear: BarrelEnd,
+  length: number, allowance = 0.1, capOutside?: number): { length: number; size: string; cone?: CapConeFit } | undefined {
+  const direct = recommendCapSeat(project, bodyId, front, rear, length, allowance, capOutside);
+  if (direct) return direct;
+  const obstacle = attachedClearance(project, bodyId, resolveParameters(project.parameters));
+  if (!obstacle?.cone) return;
+  const { minimum, parameter } = obstacle.cone;
+  const from = obstacle.diameter, name = obstacle.name;
+  // A user may have reused the cone base in another part or assembly driver.
+  // Limit this automatic offer to the generator's own lone profile reference.
+  const token = new RegExp("\\b" + parameter + "\\b");
+  const otherProfiles = project.sketches.filter(s => s.points[1]?.y !== parameter + " / 2");
+  const ownProfileCount = project.sketches.length - otherProfiles.length;
+  if (ownProfileCount !== 1 || project.parameters.some(p => token.test(p.expression)) ||
+      token.test(JSON.stringify(otherProfiles)) || token.test(JSON.stringify(project.features)) ||
+      token.test(JSON.stringify(project.workspaces ?? {}))) return;
+  // Reserve 0.2 mm diametral clearance at the cap's narrowest threaded opening.
+  // The trial checks all remaining attachments and both ends of the same barrel.
+  const clearance = 0.2;
+  if (!(minimum + clearance < from)) return;
+  const trial = applyCapConeFit(project, { parameter, from, to: minimum + clearance, name });
+  const proposed = recommendCapSeat(trial, bodyId, front, rear, length, allowance, capOutside, true);
+  const preset = presets.find(p => p.label === proposed?.size);
+  if (!proposed || !preset) return;
+  const upper = threadMinorDiameter(preset.major, preset.step) - clearance;
+  const to = Math.max(Number(minimum.toFixed(6)), Math.floor(upper * 10) / 10);
+  if (!(to < from && to <= upper)) return;
+  return { ...proposed, cone: { parameter, from, to, name } };
 }
 
 export function capAttachmentIssue(project: Project, bodyId: string): string | undefined {
@@ -484,18 +661,11 @@ export function repairCapDiameter(project: Project, capId: string, surfaces: Fit
     throw Error("Shorten the cap thread so the front and back retain separate seating shoulders.");
   // The major and pitch select the thread standard. Leave equivalent expressions (especially a driven pitch)
   // intact. Other dimensions and the front/back joint definitions continue to reference the same parameters.
-  function adjustedDriver(expression: string, before: number, after: number, nominal: string) {
-    // A user can link either dimension to another named parameter. Preserve that link when refitting.
-    const dependsOnParameter = expression.match(/[a-zA-Z_]\w*/g)?.some(name => Object.hasOwn(values, name));
-    if (!dependsOnParameter) return nominal;
-    const sign = after < before ? " - " : " + ";
-    return "(" + expression + ")" + sign + Number(Math.abs(after - before).toFixed(12)) + " mm";
-  }
   const parameters = project.parameters.map(p => {
     if (p.name === key("major") && Math.abs(oldMajor - chosen.major) > tolerance)
-      return { ...p, expression: adjustedDriver(p.expression, oldMajor, chosen.major, chosen.diameter) };
+      return { ...p, expression: adjustedDriver(p.expression, oldMajor, chosen.major, chosen.diameter, values) };
     if (p.name === key("pitch") && Math.abs(oldPitch - chosen.step) > tolerance)
-      return { ...p, expression: adjustedDriver(p.expression, oldPitch, chosen.step, chosen.pitch) };
+      return { ...p, expression: adjustedDriver(p.expression, oldPitch, chosen.step, chosen.pitch, values) };
     if (matchOutside && p.name === key("diameter")) return { ...p, expression: shoulderDriver(project, barrelId, front, mount.front, length, values) };
     return p;
   });

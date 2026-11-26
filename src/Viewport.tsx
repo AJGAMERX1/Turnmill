@@ -21,6 +21,7 @@ export type KernelStatus = {
   gripStock?: GripMeasurement;
   threadFrames?: import("./threadMates").ThreadFrame[];
   fitSurfaces?: import("./fitSurfaces").FitSurface[][];
+  capSurfaces?: import("./fitSurfaces").FitSurface[][];
   busy: boolean;
   error: string;
   volume: number;
@@ -46,6 +47,7 @@ type Props = {
   photoMode?: boolean;
   donorFinishes?: Record<string, DonorFinish>;
   measureRefillFit?: boolean;
+  measureCapSeats?: boolean;
   gripBodyId?: string;
   gripFeatureId?: string;
   gripBeforeFinishId?: string;
@@ -66,6 +68,7 @@ export type KernelReply = { revision: number } & (
       volume: number;
       threadFrames?: import("./threadMates").ThreadFrame[];
       fitSurfaces?: import("./fitSurfaces").FitSurface[][];
+      capSurfaces?: import("./fitSurfaces").FitSurface[][];
       area: number;
       bodyProperties: import("./materials").BodyProps[];
       center?: [number, number, number];
@@ -100,7 +103,7 @@ export function Viewport({
   onStatus,
   takeFinishBody,
   appearances = [], donorFinishes,
-  visibleBodyId, photoMode = false, placements, ghostIds = [], savePhoto, measureRefillFit = false,
+  visibleBodyId, photoMode = false, placements, ghostIds = [], savePhoto, measureRefillFit = false, measureCapSeats = false,
   gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
   onBodyPick,
@@ -173,6 +176,7 @@ export function Viewport({
     features: EvaluatedFeature[];
     finishBody?: FinishBodySnapshot;
     measureRefillFit: boolean;
+    measureCapSeats: boolean;
   } | null>(null);
   function dispatchBuild() {
     if (activeBuild.current || !pendingBuild.current || !engine.current) return;
@@ -259,6 +263,7 @@ export function Viewport({
           area: data.area,
           threadFrames: data.threadFrames,
           fitSurfaces: data.fitSurfaces,
+          capSurfaces: data.capSurfaces,
           bodyProperties: data.bodyProperties,
           center: data.center,
         });
@@ -320,10 +325,10 @@ export function Viewport({
       revision: current,
       features,
       finishBody: takeFinishBody?.(),
-      measureRefillFit,
+      measureRefillFit, measureCapSeats,
     };
     dispatchBuild();
-  }, [signature, measureRefillFit]);
+  }, [signature, measureRefillFit, measureCapSeats]);
   useEffect(() => {
     if (status.current.gripStock) publish({ gripStock: undefined });
     requestGrip();

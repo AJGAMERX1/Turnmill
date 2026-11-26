@@ -1741,6 +1741,7 @@ export default function App() {
               visibleBodyId={activePart?.id}
               features={model.features}
               view={view}
+              measureCapSeats={dialog === "threads"}
               measureRefillFit={cartridges.length > 0 || dialog === "threads" || dialog === "finish"}
               gripBodyId={gripBodyId} gripFeatureId={gripTarget?.featureId}
               gripBeforeFinishId={gripTarget?.beforeFinishId} gripPriorFinishes={gripTarget?.priorFinishes}
@@ -2421,7 +2422,7 @@ export default function App() {
         }}/>}
       {dialog === "threads" && threadSession?.project === project && (
         <BarrelThreads key={threadSession.bodyId} project={threadSession.posedProject} sourceId={threadSession.bodyId}
-          solids={solidFeatures} surfaces={valid ? kernel.fitSurfaces : undefined} measurementError={error || undefined}
+          solids={solidFeatures} surfaces={valid ? kernel.capSurfaces : undefined} measurementError={error || undefined}
           onCreateBarrel={(next, id) => {
             const saved = commit(next);
             switchMode("Part");

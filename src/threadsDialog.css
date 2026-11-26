@@ -22,3 +22,6 @@
 .thread-pair-dialog summary {cursor:pointer;color:var(--muted);margin:8px 0}
 .thread-pair-dialog details button {display:block;text-align:left}
 @media(max-width:360px){.thread-pair-grid{grid-template-columns:1fr}}
+
+.thread-fit-suggestion {margin-bottom:10px}
+.thread-fit-suggestion p {margin-bottom:7px}

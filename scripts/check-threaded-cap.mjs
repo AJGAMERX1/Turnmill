@@ -4,7 +4,7 @@ import { geometry, near, project, runtime } from "../tests/systems/runtime.mjs";
 
 const api = await runtime();
 try {
-  const { createThreadedCap, createThreadedCone, setCapMount, barrelEnd, compatiblePairSizes } = await api.load("threadedCone");
+  const { createThreadedCap, createThreadedCone, setCapMount, barrelEnd, compatiblePairSizes, recommendCapSeat, suggestCapFit, applyCapConeFit } = await api.load("threadedCone");
   const { evaluateModel } = await api.load("buildModel");
   const { buildBodies, releaseBodies } = await api.load("geometry");
   const { threadMinorDiameter } = await api.load("finishingTypes");
@@ -31,6 +31,24 @@ try {
     const larger = linked.parameters.map(p => p.name === "barrel_od" ? { ...p, expression:"11 mm" } : p);
     near(resolveParameters(larger).cap_diameter, 11, 1e-7, "a flush cap follows the original driven barrel diameter");
   } finally { releaseBodies(measuredBlank); }
+  // An interrupted grip exposes only these complete turns of the outside
+  // surface. A cap needs its stop on measured stock at both ends simultaneously.
+  const land = (start, end, diameter = 10) => ({ side:"shaft", axis:[1,0,0], centerline:[0,0,0], start, end, diameter });
+  const fitFaces = [land(0,2.6), land(3.5,4.4), land(6.1,13), land(37,44), land(45.7,46.4), land(47.7,50),
+    { ...land(0,50,7), side:"bore" }];
+  const recommend = (faces, length, od) => recommendCapSeat(barrel, "barrel", barrelEnd(faces, "X", "end"),
+    barrelEnd(faces, "X", "start"), length, 0.1, od);
+  const shared = recommend(fitFaces, 4.5);
+  assert.equal(shared.length, 4.25, "both cap seats move onto measured lands");
+  assert(compatiblePairSizes(barrel, "barrel", barrelEnd(fitFaces,"X","end"), "cap", barrelEnd(fitFaces,"X","start"), 0.1, shared.length).includes(shared.size));
+  assert.equal(recommend(fitFaces, 4.123).length, 4.123, "keep an entered working length, including sub-grid precision");
+  assert.equal(recommend(fitFaces, 4.5, 6), undefined, "a custom cap cannot be widened to force a thread");
+  assert.equal(recommend([land(0,0.15), land(49.85,50)], 4.5), undefined, "no measured shoulder beyond one turn");
+  assert.equal(recommend([land(0,0.45)], 4.5), undefined, "front and back need separate engagement and stop");
+  const interrupted = [land(0,1),land(6,9),land(42,44.5),land(49.7,50),{...land(0,50,7),side:"bore"}];
+  assert.equal(recommend(interrupted,4.5).length,6, "when no shorter engagement fits, use the next shared land");
+  assert.equal(recommend([...interrupted, {...land(48,48.2,9.96), side:"bore"}],4.5), undefined,
+    "a shoulder beyond a wide bore cannot repair thread stock missing along the engagement");
   const fitValues = resolveParameters([{ name: "desired", expression: "2 mm" }]);
   const fitInput = { ...settings, crown: "domed", crownLength: "8 mm", capLength: "desired",
     wall: "1.5 mm", length: "4 mm", capDiameter: "desired + 2 mm" };
@@ -96,6 +114,26 @@ try {
     "a flush cap cannot pass over a full-width nose");
   nose.parameters = nose.parameters.map(p => p.name === "cone_base" ? {...p, expression:"9 mm"} : p);
   assert(compatiblePairSizes(nose, "barrel", wideStock("end"), "cap", wideStock("start")).includes("M12 × 1"));
+  const wideSleeve = structuredClone(wide);
+  wideSleeve.parameters = [{ name:"barrel_od", expression:"15 mm" }];
+  for (const point of wideSleeve.sketches[0].points) if (point.y === "7.5") point.y = "barrel_od / 2";
+  const fullNose = createThreadedCone(wideSleeve,"barrel",wideStock("end"),{...coneSettings,size:"M12 × 1"}).project;
+  // Original-diameter land at 1.75 mm on both ends; the nearby 5 mm seat
+  // lies in the grip groove on the front, and the requested 4.5 mm is fluted.
+  const mixed = [land(0,3,15),land(3,45.4,14.64),land(46,48,14.64),land(48,50,15), {...land(0,50,7),side:"bore"}];
+  const front = barrelEnd(mixed,"X","end"), back = barrelEnd(mixed,"X","start");
+  const proposal = suggestCapFit(fullNose,"barrel",front,back,4.5);
+  assert.equal(proposal.size,"M14 × 1");
+  near(proposal.length,1.75,1e-9,"choose both original-diameter shoulders when reducing a wide cone");
+  near(proposal.cone.to,12.7,1e-9,"diametral clearance and the M12 cone seating shoulder");
+  const changed = applyCapConeFit(fullNose,proposal.cone);
+  assert.equal(resolveParameters(fullNose.parameters).cone_base,15,"proposal leaves the original cone in place");
+  near(resolveParameters(changed.parameters).cone_base,12.7,1e-9,"accepted isolated cone base draft");
+  near(resolveParameters(changed.parameters.map(p=>p.name==="barrel_od"?{...p,expression:"16 mm"}:p)).cone_base,13.7,1e-9,"preserve original cone diameter driver");
+  assert(compatiblePairSizes(changed,"barrel",front,"cap",back,0.1,proposal.length).includes(proposal.size));
+  assert.equal(suggestCapFit({...fullNose, parameters:[...fullNose.parameters,{name:"other",expression:"cone_base + 1 mm"}]},
+    "barrel",front,back,4.5),undefined,"a shared cone driver cannot be automatically narrowed");
+  assert.equal(suggestCapFit(fullNose,"barrel",front,back,4.5,0.1,10),undefined,"respect intentionally smaller cap dimensions");
   const outer = makeCylinder(5,50,[13,-7,0],[0,0,1]), bore = makeCylinder(3.5,50,[13,-7,0],[0,0,1]);
   const ring = outer.cut(bore);
   const zBarrel = project([], [{id:"barrel",name:"Offset Z sleeve",kind:"import",sketchId:"",suppressed:false,
