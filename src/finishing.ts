@@ -11,7 +11,9 @@ import {
 import { cutHole } from "./holeMachining";
 import { applyGripMilling } from "./gripMilling";
 import { applyKnurl, applyMark } from "./surfaceFinishes";
-import type { EvaluatedFinish } from "./finishingTypes";
+import { threadMinorDiameter, type EvaluatedFinish } from "./finishingTypes";
+import { prepareThreadStock } from "./threadPreparation";
+import { solidBounds } from "./secondaryProjection";
 import type { ThreadFrame } from "./threadMates";
 type Vec = [number, number, number];
 type Axis = "revolve" | "extrude";
@@ -26,21 +28,22 @@ function bounds(shape: Shape3D | Edge) {
   }
 }
 
-function axialFrame(shape: Shape3D, kind: Axis, end: "start" | "end") {
-  const [lo, hi] = bounds(shape),
+function axialFrame(shape: Shape3D, kind: Axis, end: "start" | "end", exact = false, centerline?: Vec) {
+  const [lo, hi] = exact ? solidBounds(shape) : bounds(shape),
     turning = kind === "revolve",
     axis = turning ? 0 : 2;
   const endCoord = end === "start" ? lo[axis] : hi[axis];
   const center: Vec = turning
     ? [0, 0, 0]
     : [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, 0];
-  const radialBound = turning
-    ? Math.max(
-        Math.abs(lo[1]),
-        Math.abs(lo[2]),
-        Math.abs(hi[1]),
-        Math.abs(hi[2]),
-      )
+  if (centerline) {
+    for (const i of [0, 1, 2]) if (i !== axis) center[i] = centerline[i];
+  }
+  const u = turning ? 1 : 0, v = turning ? 2 : 1;
+  const radialBound = centerline ? Math.hypot(
+    Math.max(Math.abs(lo[u] - center[u]), Math.abs(hi[u] - center[u])),
+    Math.max(Math.abs(lo[v] - center[v]), Math.abs(hi[v] - center[v])),
+  ) : turning ? Math.max(Math.abs(lo[1]), Math.abs(lo[2]), Math.abs(hi[1]), Math.abs(hi[2]))
     : Math.hypot(hi[0] - lo[0], hi[1] - lo[1]);
   return { axis, center, endCoord, span: hi[axis] - lo[axis], radialBound };
 }
@@ -126,8 +129,7 @@ function applyThread(
   const r = f.diameter / 2,
     p = f.pitch,
     h = f.length,
-    depth = (5 * Math.sqrt(3) * p) / 16,
-    minor = r - depth;
+    minor = threadMinorDiameter(f.diameter, p) / 2;
   const internal = f.side === "internal";
   const clearance = 0.02 * p;
   // Verify a ring of material over the usable length, allowing an entry chamfer at either end.
@@ -135,34 +137,36 @@ function applyThread(
     witnessRadius = internal ? minor + 0.06 * p : r - 0.06 * p;
   if (witnessRadius <= 0.02 * p)
     throw Error("Increase the thread diameter or reduce the pitch.");
-  const witnessOuter = cylinder(
-    witnessRadius,
-    h - 2 * inset,
-    z + inset,
-    center,
-    axis,
-  );
-  const witnessInner = cylinder(
-    witnessRadius - 0.02 * p,
-    h - 2 * inset,
-    z + inset,
-    center,
-    axis,
-  );
-  const witness = witnessOuter.cut(witnessInner);
-  witnessOuter.delete();
-  witnessInner.delete();
-  const material = shape.intersect(witness);
-  const available = measureVolume(material),
-    expected = measureVolume(witness);
-  material.delete();
-  witness.delete();
-  if (available < expected * 0.999)
-    throw Error(
-      internal
-        ? "The bore is too large or the wall is too thin for this thread. Use a larger thread or reduce the bore."
-        : "There is insufficient stock around the axis. Reduce the major diameter or shorten the threaded band.",
+  if (!f.preparation) {
+    const witnessOuter = cylinder(
+      witnessRadius,
+      h - 2 * inset,
+      z + inset,
+      center,
+      axis,
     );
+    const witnessInner = cylinder(
+      witnessRadius - 0.02 * p,
+      h - 2 * inset,
+      z + inset,
+      center,
+      axis,
+    );
+    const witness = witnessOuter.cut(witnessInner);
+    witnessOuter.delete();
+    witnessInner.delete();
+    const material = shape.intersect(witness);
+    const available = measureVolume(material),
+      expected = measureVolume(witness);
+    material.delete();
+    witness.delete();
+    if (available < expected * 0.999)
+      throw Error(
+        internal
+          ? "The bore is too large or the wall is too thin for this thread. Use a larger thread or reduce the bore."
+          : "There is insufficient stock around the axis. Reduce the major diameter or shorten the threaded band.",
+      );
+  }
   if (f.mode === "cosmetic") {
     const count = Math.max(40, Math.ceil((h / p) * 48)),
       coords = new Float32Array(count * 6);
@@ -236,7 +240,9 @@ function applyThread(
   let cutter: Shape3D | undefined, prepared: Shape3D | undefined;
   try {
     cutter = grooveTool(0);
-    if (internal) {
+    if (f.preparation) {
+      prepared = shape.clone();
+    } else if (internal) {
       const pilot = cylinder(minor, h, z, center, axis);
       try {
         prepared = shape.cut(pilot);
@@ -342,25 +348,35 @@ export function applyFinish(
   if (finish.kind === "fillet" || finish.kind === "chamfer")
     return { shape: finishEdges(shape, kind, finish) };
   if (finish.kind === "thread") {
-    const frame = axialFrame(shape, kind, finish.end);
-    const entrance: Vec = [...frame.center];
-    entrance[frame.axis] = frame.endCoord;
-    return {
-      ...applyThread(shape, finish, frame),
-      thread: {
-        finishId: finish.id,
-        name: finish.name,
-        axis: frame.axis === 0 ? "X" : "Z",
-        entrance,
-        end: finish.end,
-        side: finish.side,
-        hand: finish.hand,
-        mode: finish.mode,
-        pitch: finish.pitch,
-        diameter: finish.diameter,
-        length: finish.length,
-      },
-    };
+    const axis = finish.preparation && finish.preparationAxis
+      ? finish.preparationAxis === "X" ? "revolve" : "extrude" : kind;
+    const frame = axialFrame(shape, axis, finish.end, !!finish.preparation,
+      finish.preparation ? finish.preparationCenter : undefined);
+    const prepared = finish.preparation ? prepareThreadStock(shape, finish, frame) : undefined;
+    try {
+      if (finish.preparation === "tenon") {
+        frame.endCoord += (finish.end === "start" ? -1 : 1) * finish.length;
+        frame.span += finish.length;
+      }
+      const entrance: Vec = [...frame.center];
+      entrance[frame.axis] = frame.endCoord;
+      return {
+        ...applyThread(prepared ?? shape, finish, frame),
+        thread: {
+          finishId: finish.id,
+          name: finish.name,
+          axis: frame.axis === 0 ? "X" : "Z",
+          entrance,
+          end: finish.end,
+          side: finish.side,
+          hand: finish.hand,
+          mode: finish.mode,
+          pitch: finish.pitch,
+          diameter: finish.diameter,
+          length: finish.length,
+        },
+      };
+    } finally { prepared?.delete(); }
   }
   if (finish.kind !== "hole")
     throw Error("Choose a supported finishing operation.");

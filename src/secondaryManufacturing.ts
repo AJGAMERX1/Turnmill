@@ -1,3 +1,5 @@
+import { evaluate } from "./expressions";
+import { threadMinorDiameter, threadPresets } from "./finishingTypes";
 import type { EvaluatedFeature } from "./types";
 import type { ProjectedBody, ProjectedView } from "./secondaryProjection";
 import {
@@ -205,16 +207,13 @@ function finishNotes(features: EvaluatedFeature[]) {
       const atStart = reversed && f.kind === "revolve" ? op.end === "end" : op.end === "start";
       const end = atStart ? "start end" : "far end";
       if (op.kind === "thread") {
-        const call =
-          op.preset &&
-          op.preset !== "custom" &&
-          !op.preset.toLowerCase().includes("custom")
-            ? op.preset
-            : "Ø " +
-              formatDrawingLength(op.diameter) +
-              " × " +
-              formatDrawingLength(op.pitch) +
-              " pitch";
+        const nominal = threadPresets.find(p => p.label === op.preset);
+        // A saved preset is only a valid standard designation while the driven
+        // dimensions still agree. Pair allowances change the actual major.
+        const matches = nominal && Math.abs(evaluate(nominal.diameter, {}) - op.diameter) < 1e-7 &&
+          Math.abs(evaluate(nominal.pitch, {}) - op.pitch) < 1e-7;
+        const call = matches ? nominal.label :
+          "Ø " + formatDrawingLength(op.diameter) + " × " + formatDrawingLength(op.pitch) + " pitch";
         notes.push(
           call +
             " · " +
@@ -228,6 +227,13 @@ function finishNotes(features: EvaluatedFeature[]) {
             " · " +
             op.mode,
         );
+        if (op.preparation === "tenon")
+          notes.push(`Tenon extends ${formatDrawingLength(op.length)} mm from the original shoulder`);
+        if (op.preparation === "socket") {
+          notes.push(`Socket pilot Ø${formatDrawingLength(threadMinorDiameter(op.diameter, op.pitch))} mm × ${formatDrawingLength(op.length)} mm deep`);
+          if (op.backWall !== undefined)
+            notes.push(`Solid back wall · ${formatDrawingLength(op.backWall)} mm minimum at opposite end`);
+        }
       } else if (op.kind === "grip") {
         const count = op.count;
         const pattern = op.style === "rings" ? count + " rings" : op.style === "flutes" ? count + " axial flutes"

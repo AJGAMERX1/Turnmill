@@ -109,3 +109,27 @@
 .grip-placement p,.grip-stock-note {margin: 6px 0 2px; font-size: 12px; color: var(--muted); line-height: 1.4}
 .grip-placement p.grip-placement-warning {color: #ffb886}
 .grip-placement label {margin-top: 8px}
+.thread-placement-note {
+  display: grid;
+  grid-template-columns: minmax(90px, 35%) 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  margin: 4px 0 12px;
+  border: 1px solid var(--line);
+  background: #191f21;
+  border-radius: 6px;
+}
+.thread-placement-note svg { width: 100%; }
+.thread-placement-note p, .thread-settings small, .thread-pilot {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.thread-settings select { min-width: 0; max-width: 100%; }
+.thread-pilot { margin-top: 7px; }
+.thread-pilot strong { color: var(--gold); }
+.thread-back-wall { margin: 8px 0 12px; }
+.thread-settings .thread-back-toggle { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.thread-settings input[type="checkbox"] { width: 16px; height: 16px; margin: 0; }

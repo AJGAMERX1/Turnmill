@@ -39,6 +39,13 @@ export type GripSettings<T> = {
   count: T;
 };
 
+export type ThreadPreparation = "tenon" | "socket";
+
+/** Basic minor diameter of the 60-degree single-start profile used by this kernel. */
+export function threadMinorDiameter(majorDiameter: number, pitch: number) {
+  return majorDiameter - 5 * Math.sqrt(3) * pitch / 8;
+}
+
 type Common = {
   id: string;
   name: string;
@@ -78,6 +85,10 @@ export type Finish = Common &
     | HoleSettings<string>
     | {
         kind: "thread";
+        preparation?: ThreadPreparation;
+        preparationAxis?: "X" | "Z";
+        preparationCenter?: [number, number, number];
+        backWall?: string;
         diameter: string;
         length: string;
         pitch: string;
@@ -120,6 +131,10 @@ export type EvaluatedFinish = Common &
     | HoleSettings<number>
     | {
         kind: "thread";
+        preparation?: ThreadPreparation;
+        preparationAxis?: "X" | "Z";
+        preparationCenter?: [number, number, number];
+        backWall?: number;
         diameter: number;
         length: number;
         pitch: number;
@@ -138,6 +153,11 @@ export const finishLabels: Record<FinishKind, string> = {
   grip: "Grip milling",
   mark: "Surface mark",
 };
+const metricPreset = ([diameter, pitch]: number[]) => ({
+  label: "M" + diameter + " × " + pitch,
+  diameter: diameter + " mm",
+  pitch: pitch + " mm",
+});
 export const threadPresets = [
   ...[
     [2, 0.4],
@@ -154,11 +174,7 @@ export const threadPresets = [
     [10, 1],
     [10, 0.75],
     [12, 1],
-  ].map(([d, p]) => ({
-    label: "M" + d + " × " + p,
-    diameter: d + " mm",
-    pitch: p + " mm",
-  })),
+  ].map(metricPreset),
   ...(
     [
       ["#4", 0.112, 40, 48],
@@ -176,6 +192,7 @@ export const threadPresets = [
       pitch: "1/" + tpi + " in",
     })),
   ),
+  ...[[8, 0.75], [7, 0.75], [7, 0.5]].map(metricPreset),
 ];
 export function evaluateFinish(
   finish: Finish,
@@ -310,5 +327,22 @@ export function evaluateFinish(
       "Increase the major diameter or reduce the pitch so the thread leaves a core.",
     );
   if (reach < pitch) throw Error("Use a length of at least one thread pitch.");
-  return { ...finish, diameter, pitch, length: reach };
+  if (finish.preparation !== undefined) {
+    if ((finish.preparation !== "tenon" && finish.preparation !== "socket") ||
+        (finish.preparation === "tenon") !== (finish.side === "external"))
+      throw Error("Choose an external thread for a tenon or an internal thread for a socket.");
+    if (finish.preparationAxis !== undefined && finish.preparationAxis !== "X" && finish.preparationAxis !== "Z")
+      throw Error("Choose a valid part axis for the prepared thread.");
+    if (finish.preparationCenter !== undefined &&
+        (!Array.isArray(finish.preparationCenter) || finish.preparationCenter.length !== 3 ||
+         !finish.preparationCenter.every(Number.isFinite)))
+      throw Error("The thread centerline is invalid. Select the barrel end again.");
+    if (finish.end !== "start" && finish.end !== "end")
+      throw Error("Choose the end where the thread starts.");
+  }
+  const { backWall, ...thread } = finish;
+  if (backWall !== undefined && finish.preparation !== "socket")
+    throw Error("A solid back wall belongs on a threaded socket.");
+  return { ...thread, diameter, pitch, length: reach,
+    ...(backWall === undefined ? {} : { backWall: length("back wall thickness", backWall) }) };
 }

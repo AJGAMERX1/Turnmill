@@ -11,7 +11,7 @@ function finishExpressions(f: Finish): (string | undefined)[] {
   switch (f.kind) {
     case "fillet":
     case "chamfer": return [f.size];
-    case "thread": return [f.diameter, f.pitch, f.length];
+    case "thread": return [f.diameter, f.pitch, f.length, f.backWall];
     case "mark": return [f.height, f.depth, f.offset, f.rotation];
     case "grip": return [f.length, f.width, f.depth, f.offset, f.count];
     case "knurl": return [f.diameter, f.length, f.depth, f.offset, f.count, f.style === "diamond" ? f.angle : undefined];

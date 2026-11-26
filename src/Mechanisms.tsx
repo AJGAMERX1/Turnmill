@@ -1,6 +1,6 @@
 import { observeJoints } from "../tests/hook/observe";
 import { Matrix4, Vector3 } from "three";
-import { Grip, Combine } from "lucide-react";
+import { Grip, Combine, Nut } from "lucide-react";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
@@ -94,7 +94,7 @@ export type LiveAssembly = {
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
+type PartNavigation = { onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -226,7 +226,7 @@ function JointStudio({
   guideAssist,
   liveAssembly,
   onOpenPart,
-  onMillGrip, onMergeParts,
+  onMillGrip, onThreads, onMergeParts,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
@@ -764,6 +764,7 @@ function JointStudio({
     const free = isFloating(raw[targetId]);
     if (onMergeParts && bodies.length > 1)
       menuItems.push({ label: "Merge parts…", icon: Combine, shortcut: "U", run: () => onMergeParts(targetId) });
+    if (onThreads) menuItems.push({ label: "Threads", icon: Nut, shortcut: "T", run: () => onThreads(targetId) });
     if (onMillGrip)
       menuItems.push({ label: "Mill grip…", icon: Grip, shortcut: "M", run: () => onMillGrip(targetId) });
     if (onOpenPart)

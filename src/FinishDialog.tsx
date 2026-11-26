@@ -16,12 +16,14 @@ import { resolveParameters } from "./expressions";
 import {
   evaluateFinish,
   finishLabels,
-  threadPresets,
   type Finish,
   type FinishKind,
   type EvaluatedFinish,
 } from "./finishingTypes";
-import type { Project, Feature } from "./types";
+import type { Project, Feature, EvaluatedFeature } from "./types";
+import { newAssistedThread, threadContext, threadPosition, ThreadSettings } from "./ThreadSettings";
+import type { FitSurface } from "./fitSurfaces";
+import type { ThreadFrame } from "./threadMates";
 import { GripSettings, initialGripBand } from "./GripSettings";
 
 import type { GripStock } from "./gripBands";
@@ -33,6 +35,10 @@ export type GripRequest = {
 };
 type Props = {
   initialKind?: FinishKind;
+  initialThreadSide?: "internal" | "external";
+  evaluatedFeatures?: EvaluatedFeature[];
+  threadFrames?: ThreadFrame[];
+  threadSurfaces?: FitSurface[];
   gripStock?: GripStock & { beforeFinishId?: string; priorKey?: string; error?: string };
   onGripRequest: (request?: GripRequest) => void;
   values: Record<string, number>;
@@ -52,6 +58,9 @@ export default function FinishDialog({
   onSave,
   onClose,
   initialKind,
+  initialThreadSide,
+  evaluatedFeatures,
+  threadFrames, threadSurfaces,
   initialFinishId,
   gripStock, onGripRequest, values, measurementError,
   onPreview,
@@ -59,8 +68,15 @@ export default function FinishDialog({
   previewPanel,
 }: Props) {
   const turning = feature.kind === "revolve";
-  function fresh(kind: FinishKind): Finish {
+  const threadCtx = useMemo(() => threadContext(project, feature, evaluatedFeatures ?? [], threadSurfaces),
+    [project, feature, evaluatedFeatures, threadSurfaces]);
+  // Only new placements await measurements. Existing thread frames retain
+  // their saved axis and center while a user edits the thread dimensions.
+  const pendingThreadRims = useRef(new Map<string, "defaults" | "position">());
+  function fresh(kind: FinishKind, guided = false): Finish {
     const base = { id: uid(), name: finishLabels[kind], end: "end" as const };
+    if (guided && kind === "thread" && threadSurfaces === undefined)
+      pendingThreadRims.current.set(base.id, "defaults");
     if (kind === "fillet" || kind === "chamfer")
       return { ...base, kind, size: "0.2 mm", rims: "outer" };
     if (kind === "hole")
@@ -115,11 +131,12 @@ export default function FinishDialog({
       length: "4.5 mm",
       diameter:
         feature.id === "barrel-revolve" ? "outer_diameter - 2.3 mm" : "8 mm",
+      ...(guided && kind === "thread" ? newAssistedThread(threadCtx, initialThreadSide) : {}),
     };
   }
   const [rows, writeRows] = useState<Finish[]>(() =>
     initialKind
-      ? [...(feature.finishes || []), fresh(initialKind)]
+      ? [...(feature.finishes || []), fresh(initialKind, initialKind === "thread")]
       : feature.finishes?.length
         ? structuredClone(feature.finishes)
         : [fresh("chamfer")],
@@ -189,7 +206,7 @@ export default function FinishDialog({
       close();
   }, [project, feature.id, onClose]);
   async function checkDraft(apply: boolean) {
-    if (preview === "pending" || readingGraphic || (waitingForStock && !active.suppressed)) return;
+    if (preview === "pending" || readingGraphic || waitingForThread || (waitingForStock && !active.suppressed)) return;
     if (apply && verified.current === rows) {
       onSave(rows);
       return;
@@ -197,6 +214,8 @@ export default function FinishDialog({
     const token = ++previewToken.current;
     setError("");
     try {
+      if (pendingImportedThread && measurementError)
+        throw Error("Restore the imported part to measure its thread centerline. " + measurementError);
       const values = resolveParameters(project.parameters);
       for (const row of rows) {
         if (!row.name.trim())
@@ -240,6 +259,20 @@ export default function FinishDialog({
     }
   }
   const active = rows[index];
+  useLayoutEffect(() => {
+    if (!threadSurfaces || !pendingThreadRims.current.size) return;
+    const pending = new Map(pendingThreadRims.current);
+    pendingThreadRims.current.clear();
+    if (!rows.some(row => row.kind === "thread" && row.preparation && pending.has(row.id))) return;
+    setRows(all => all.map(row => {
+      if (row.kind !== "thread" || !row.preparation || !pending.has(row.id)) return row;
+      return { ...row, ...(pending.get(row.id) === "defaults"
+        ? newAssistedThread(threadCtx, row.side) : threadPosition(threadCtx, row.end)) };
+    }));
+  }, [threadCtx, threadSurfaces, rows]);
+  const pendingImportedThread = !threadSurfaces && threadCtx.root.kind === "import" &&
+    rows.some(row => !row.suppressed && row.kind === "thread" && row.preparation && pendingThreadRims.current.has(row.id));
+  const waitingForThread = pendingImportedThread && !measurementError;
   const editingGrip = active?.kind === "grip";
   const autoPlace = useRef(new Set(initialKind === "grip" && rows.length ? [rows[rows.length - 1].id] : []));
   const beforeFinishId = feature.finishes?.find(f => f.id === active?.id)?.id;
@@ -274,7 +307,21 @@ export default function FinishDialog({
   const gripShortcut = (initialKind === "grip" ||
     feature.finishes?.some(f => f.id === initialFinishId && f.kind === "grip")) && editingGrip;
 
+  const threadShortcut = active?.kind === "thread" && (initialKind === "thread" ||
+    feature.finishes?.some(f => f.id === initialFinishId && f.kind === "thread"));
+  const focused = threadShortcut || gripShortcut;
+
   const update = (patch: Record<string, unknown>) => {
+    if (active?.kind === "thread") {
+      if ("preparation" in patch && !patch.preparation) pendingThreadRims.current.delete(active.id);
+      else if (!threadSurfaces) {
+        const moves = ("preparation" in patch && patch.preparation !== active.preparation) ||
+          ("end" in patch && patch.end !== active.end && active.preparation);
+        const editedDefault = pendingThreadRims.current.has(active.id) &&
+          ["side", "diameter", "pitch", "length", "preset", "name"].some(key => key in patch);
+        if (moves || editedDefault) pendingThreadRims.current.set(active.id, "position");
+      }
+    }
     if (active?.kind === "grip" && ["offset","length","width","depth","end"].some(key => key in patch))
       autoPlace.current.delete(active.id);
     setRows((old) =>
@@ -373,7 +420,7 @@ export default function FinishDialog({
       </label>
   </>;
   return (
-    <Modal title={editingGrip ? "Grip milling · " + feature.name : "Finish " + feature.name} onClose={close}>
+    <Modal title={threadShortcut ? "Thread end · " + threadCtx.root.name : editingGrip ? "Grip milling · " + feature.name : "Finish " + feature.name} onClose={close}>
       <div className="finish-layout" data-has-panel={showPanel}>
         {previewPanel && (
           <section
@@ -393,7 +440,7 @@ export default function FinishDialog({
             void checkDraft(true);
           }}
         >
-          {!gripShortcut && <div
+          {!focused && <div
             style={{
               display: "flex",
               gap: 5,
@@ -428,7 +475,7 @@ export default function FinishDialog({
           </div>}
           {active && (
             <>
-              {!gripShortcut && <div className="two-cols">
+              {!focused && <div className="two-cols">
                 <label>
                   Operation
                   <select
@@ -452,7 +499,7 @@ export default function FinishDialog({
                     ))}
                   </select>
                 </label>
-                {!editingGrip && <label>
+                {!editingGrip && active.kind !== "thread" && <label>
                   End
                   <select
                     aria-label="End"
@@ -711,86 +758,12 @@ export default function FinishDialog({
                   </p>
                 </>
               )}
-              {active.kind === "thread" && (
-                <>
-                  <label>
-                    Thread size
-                    <select
-                      aria-label="Thread size"
-                      value={active.preset}
-                      onChange={(e) => {
-                        const p = threadPresets.find(
-                          (p) => p.label === e.target.value,
-                        );
-                        update(
-                          p
-                            ? {
-                                preset: p.label,
-                                diameter: p.diameter,
-                                pitch: p.pitch,
-                              }
-                            : { preset: "Custom" },
-                        );
-                      }}
-                    >
-                      <option>Custom</option>
-                      {threadPresets.map((p) => (
-                        <option key={p.label}>{p.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="two-cols">
-                    {field("Major diameter", "diameter", active.diameter)}
-                    {field("Pitch", "pitch", active.pitch)}
-                  </div>
-                  <div className="two-cols">
-                    {field("Threaded length", "length", active.length)}
-                    <label>
-                      Surface
-                      <select
-                        aria-label="Surface"
-                        value={active.side}
-                        onChange={(e) => update({ side: e.target.value })}
-                      >
-                        <option value="external">External shaft</option>
-                        <option value="internal">Internal bore</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div className="two-cols">
-                    <label>
-                      Geometry
-                      <select
-                        aria-label="Geometry"
-                        value={active.mode}
-                        onChange={(e) => update({ mode: e.target.value })}
-                      >
-                        <option value="modeled">Modeled helix</option>
-                        <option value="cosmetic">Cosmetic guide</option>
-                      </select>
-                    </label>
-                    <label>
-                      Hand
-                      <select
-                        aria-label="Hand"
-                        value={active.hand}
-                        onChange={(e) => update({ hand: e.target.value })}
-                      >
-                        <option value="right">Right-hand</option>
-                        <option value="left">Left-hand</option>
-                      </select>
-                    </label>
-                  </div>
-                  <p className="helper">
-                    {active.mode === "cosmetic"
-                      ? "The guide appears in the viewport and saves with the project. STEP and STL retain the smooth solid."
-                      : "A single-start 60° groove is cut into the solid. The tool prepares the shaft diameter or pilot bore over the chosen length. Dimensions are nominal and have no fit allowance."}
-                  </p>
-                </>
-              )}
+              {waitingForThread && <p className="helper" role="status">Measuring the thread centerline…</p>}
+              {active.kind === "thread" && <ThreadSettings thread={active} feature={feature} ctx={threadCtx}
+                project={project} frames={threadFrames} values={values} focused={!!threadShortcut} field={field} update={update}/>}
             </>
           )}
-          {gripShortcut ? <details className="grip-history">
+          {focused ? <details className="grip-history">
             <summary>History settings</summary>{historyFields}
           </details> : historyFields}
           <div className="finish-footer">
@@ -814,7 +787,7 @@ export default function FinishDialog({
                 <button
                   type="button"
                   className="finish-preview-button"
-                  disabled={preview === "pending" || readingGraphic || (waitingForStock && !active?.suppressed)}
+                  disabled={preview === "pending" || readingGraphic || waitingForThread || (waitingForStock && !active?.suppressed)}
                   onClick={() => void checkDraft(false)}
                 >
                   <Eye size={15} />
@@ -826,9 +799,9 @@ export default function FinishDialog({
               </button>
               <button
                 className="primary"
-                disabled={preview === "pending" || readingGraphic || (waitingForStock && !active?.suppressed)}
+                disabled={preview === "pending" || readingGraphic || waitingForThread || (waitingForStock && !active?.suppressed)}
               >
-                {editingGrip ? "Apply grip" : "Apply finishes"}
+                {threadShortcut ? "Apply thread" : editingGrip ? "Apply grip" : "Apply finishes"}
               </button>
             </div>
           </div>

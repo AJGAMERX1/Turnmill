@@ -1,5 +1,6 @@
 import InputValue from "./InputValue";
 import SelectionDimensions from "./SelectionDimensions";
+import ThreadsDialog from "./ThreadsDialog";
 import { observeModel } from "../tests/hook/observe";
 import PenGuidePanel, { GuideProfile } from "./PenGuidePanel";
 import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
@@ -41,6 +42,7 @@ import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
 import {
   Layers3,
   Grip,
+  Nut,
   Combine,
   Box,
   Boxes,
@@ -122,6 +124,7 @@ type DialogName =
   | "commands"
   | "help"
   | "finish"
+  | "threads"
   | "rename"
   | "import"
   | "advanced"
@@ -223,6 +226,7 @@ export default function App() {
       setDialog(null);
     }
   }, [dialog, mergeSession, project]);
+  const [threadSession, setThreadSession] = useState<{ project: Project; bodyId: string }>();
   const [gripRequest, setGripRequest] = useState<GripRequest>();
   const [presetFinish, setPresetFinish] = useState<FinishKind>(),
     [presetAdvanced, setPresetAdvanced] = useState<Advanced["kind"]>();
@@ -489,6 +493,7 @@ export default function App() {
   const close = () => {
     setDialog(null);
     setMergeSession(undefined);
+    setThreadSession(undefined);
     finishing.clear();
     setPresetFinish(undefined);
     setPresetAdvanced(undefined);
@@ -711,6 +716,22 @@ export default function App() {
   function mergeItem(bodyId: string): MenuItem {
     return { label: "Merge parts…", icon: Combine, shortcut: "U", disabled: !canMerge, run: () => openMerge(bodyId) };
   }
+  function openThreads(bodyId: string) {
+    const target = partFeatures(project, bodyId).filter(f => !f.suppressed).at(-1);
+    if (!target || isScaleFeature(project, target.id)) return;
+    if (activePart && activePart.id !== bodyId) setPartSelection({ projectId: project.id, id: bodyId });
+    setMenu(null);
+    setSelected(target.id);
+    setEntryId(undefined);
+    setThreadSession({ project, bodyId });
+    setDialog("threads");
+  }
+  const threadsBody = (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
+  const threadsEnabled = !!threadsBody && mode !== "Drawing" && solidFeatures.some(f => f.id === threadsBody) &&
+    !isScaleFeature(project, threadsBody);
+  function threadMenuItem(bodyId: string): MenuItem {
+    return { label: "Threads", icon: Nut, shortcut: "T", run: () => openThreads(bodyId) };
+  }
   function millGrip(bodyId: string) {
     const feature = partFeatures(project, bodyId).filter((f) => !f.suppressed).at(-1);
     if (!feature || isScaleFeature(project, feature.id)) {
@@ -738,7 +759,7 @@ export default function App() {
         ...makeSolidActions(sketch),
       ] : []),
       ...(!scale ? [
-        ...(!f.suppressed && gripBody ? [gripMenuItem(gripBody), ...(solidFeatures.length > 1 ? [mergeItem(gripBody)] : [])] : []),
+        ...(!f.suppressed && gripBody ? [threadMenuItem(gripBody), gripMenuItem(gripBody), ...(solidFeatures.length > 1 ? [mergeItem(gripBody)] : [])] : []),
         { label: "Finish…", icon: Wrench, shortcut: "G", run: () => {
           setEntryId(undefined); setPresetFinish(undefined); setDialog("finish");
         } },
@@ -782,7 +803,7 @@ export default function App() {
     if (showcasing) {
       const part = parts.find((p) => p.id === bodyId);
       openContext(anchor, part?.name || "Pen Studio", [
-        ...(part ? [gripMenuItem(part.id), ...(solidFeatures.length > 1 ? [mergeItem(part.id)] : []), { label: "Open part tab", icon: FolderOpen, run: () => openPart(part) }] : []),
+        ...(part ? [threadMenuItem(part.id), gripMenuItem(part.id), ...(solidFeatures.length > 1 ? [mergeItem(part.id)] : []), { label: "Open part tab", icon: FolderOpen, run: () => openPart(part) }] : []),
         { label: "Fit model to view", icon: Scan, run: () => setFit((v) => v + 1) },
       ]);
       return;
@@ -1046,7 +1067,10 @@ export default function App() {
       run: () => currentF && reorder(currentF, 1),
       disabled: !currentF || history.at(-1) === currentF,
     },
-    ...Object.entries(finishLabels).map(([k, label]) => ({
+    { key: "add-thread", title: "Threads", group: "Finishing", shortcut: "T",
+      keywords: "add thread screw-on cone cap threaded socket tenon external internal tap tapping die helical pitch closed back barrel",
+      disabled: !threadsEnabled, run: () => openThreads(threadsBody) },
+    ...Object.entries(finishLabels).filter(([k]) => k !== "thread").map(([k, label]) => ({
       key: "add-" + k,
       title: k === "grip" ? "Mill grip" : "Add " + label,
       ...(k === "grip" ? { shortcut: "M", keywords: "mill barrel grip rings flutes grooves crosscut texture pattern" } : {}),
@@ -1658,6 +1682,9 @@ export default function App() {
               <Wrench size={15} />
               Finish
             </button>
+            <button aria-label="Threads" title="Threads (T)" disabled={!threadsEnabled} onClick={() => openThreads(threadsBody)}>
+              <Nut size={16}/> Threads
+            </button>
             <button
               className="advanced-trigger"
               title="Advanced tools"
@@ -1679,7 +1706,7 @@ export default function App() {
               visibleBodyId={activePart?.id}
               features={model.features}
               view={view}
-              measureRefillFit={cartridges.length > 0}
+              measureRefillFit={cartridges.length > 0 || dialog === "threads" || dialog === "finish"}
               gripBodyId={gripBodyId} gripFeatureId={gripTarget?.featureId}
               gripBeforeFinishId={gripTarget?.beforeFinishId} gripPriorFinishes={gripTarget?.priorFinishes}
               photoMode={showcasing} photoMatrices={studioPose.matrices} ghostIds={ghostIds} savePhoto={savePhoto}
@@ -2063,7 +2090,7 @@ export default function App() {
             <Assembly
               {...props}
               liveAssembly={liveAssembly}
-              onMillGrip={millGrip} onMergeParts={openMerge}
+              onMillGrip={millGrip} onThreads={openThreads} onMergeParts={openMerge}
               onOpenPart={(id) => {
                 const part = parts.find((p) => p.id === id);
                 if (part) openPart(part);
@@ -2088,6 +2115,7 @@ export default function App() {
       </main>
       {ready && (mode === "Part" || mode === "Assembly") && (
         <PartTabBar parts={parts} active={activePart?.id} assembly={mode === "Assembly"}
+          threadableIds={solidFeatures.filter(f => !isScaleFeature(project, f.id)).map(f => f.id)} onThreads={openThreads}
           mergeableIds={canMerge ? solidFeatures.map(f => f.id) : []} onMerge={part => openMerge(part.id)}
           onNew={() => namePart()} onPart={openPart} onRename={namePart}
           onAssembly={() => switchMode("Assembly")}
@@ -2351,8 +2379,21 @@ export default function App() {
           close();
           setNotice("Parts merged into " + (next.features.find(f => f.id === keepId)?.name ?? "one solid") + ".");
         }}/>}
+      {dialog === "threads" && threadSession?.project === project && (
+        <ThreadsDialog project={project} bodyId={threadSession.bodyId}
+          surfaces={valid ? kernel.fitSurfaces?.[solidFeatures.findIndex(f => f.id === threadSession.bodyId)] : undefined}
+          measurementError={error || undefined}
+          onClose={close} onParameters={() => setDialog("parameters")} onSingle={() => { setEntryId(undefined); setPresetFinish("thread"); setDialog("finish"); }}
+          onEdit={(featureId, finishId) => { setSelected(featureId); setEntryId(finishId); setPresetFinish(undefined); setDialog("finish"); }}
+          onSave={(next, id, showAssembly) => {
+            commit(next); switchMode(showAssembly ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
+            close(); setNotice("Cone and barrel threaded. Turn the cone in Assembly to unscrew it.");
+          }} />
+      )}
       {dialog === "finish" && currentF && (
         <FinishDialog
+          evaluatedFeatures={model.features} threadFrames={valid ? kernel.threadFrames : undefined}
+          threadSurfaces={valid ? kernel.fitSurfaces?.[solidFeatures.findIndex(f => f.id === bodyFor(currentF))] : undefined}
           initialKind={presetFinish}
           initialFinishId={entryId}
           feature={currentF}

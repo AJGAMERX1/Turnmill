@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Box, Boxes, Combine, Layers3, Pencil, Plus, Trash2 } from "lucide-react";
+import { Box, Boxes, Combine, Layers3, Nut, Pencil, Plus, Trash2 } from "lucide-react";
 import { ContextMenu, menuTrigger, type MenuAnchor } from "./ContextMenu";
 import type { PartTab } from "./types";
 import "./partTabs.css";
@@ -12,12 +12,14 @@ type Props = {
   onAssembly: () => void;
   onNew: () => void;
   onRename: (part: PartTab) => void;
+  threadableIds: string[];
+  onThreads: (id: string) => void;
   mergeableIds: string[];
   onMerge: (part: PartTab) => void;
   onDelete: (part: PartTab) => void;
 };
 
-export default function PartTabBar({ parts, active, assembly, onPart, onAssembly, onNew, onRename, onDelete, onMerge, mergeableIds }: Props) {
+export default function PartTabBar({ parts, active, assembly, onPart, onAssembly, onNew, onRename, onDelete, onMerge, mergeableIds, onThreads, threadableIds }: Props) {
   const strip = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ anchor: MenuAnchor; part: PartTab } | null>(null);
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function PartTabBar({ parts, active, assembly, onPart, onAssembly
     </div>
     {menu && <ContextMenu anchor={menu.anchor} title={menu.part.name} onClose={() => setMenu(null)} items={[
       {label:"Open part", icon:Box, run:() => onPart(menu.part)},
+      ...(threadableIds.includes(menu.part.id) ? [{label:"Threads", icon:Nut, shortcut:"T", run:() => onThreads(menu.part.id)}] : []),
       ...(mergeableIds.includes(menu.part.id) ? [{label:"Merge parts…", icon:Combine, shortcut:"U", run:() => onMerge(menu.part)}] : []),
       {label:"Rename part", icon:Pencil, shortcut:"F2", run:() => onRename(menu.part)},
       {label:"Open assembly", icon:Boxes, run:onAssembly},
