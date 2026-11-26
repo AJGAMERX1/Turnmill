@@ -5,7 +5,7 @@ import type { EvaluatedFeature, Project } from "./types";
 import { evaluate, resolveParameters } from "./expressions";
 import { evaluateFinish } from "./finishingTypes";
 import { solveSketch } from "./solveSketch";
-import { prepareRefillSketch } from "./refills";
+import { prepareRefillSketch, refillTipX } from "./refills";
 export async function evaluateModel(
   p: Project,
 ): Promise<{ features: EvaluatedFeature[]; values: Record<string, number> }> {
@@ -81,6 +81,15 @@ export async function evaluateModel(
       points: solved.points.map((q) => [q.x, q.y]),
       edges: solved.edges,
     });
+  }
+  // Keep all sketch constraints, cuts and finishes in their design coordinates.
+  // A terminal marker also distinguishes a completed flipped body from a reusable unflipped prefix.
+  let last = features.length - 1;
+  for (let i = last; i >= 0; i--) {
+    if (features[i].operation !== "new") continue;
+    const tip = refillTipX(p, features[i].id, values);
+    if (tip > 0) features[last].reverseRefillLength = tip;
+    last = i - 1;
   }
   return { values, features };
 }

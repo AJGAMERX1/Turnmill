@@ -34,7 +34,7 @@ try {
       ),
     }),
   );
-  const { insertRefill, refillComponents, refillDimensions, refillMassGrams } =
+  const { insertRefill, refillComponents, refillDimensions, refillMassGrams, reverseRefill } =
     await server.ssrLoadModule("/src/refills.ts");
   const { blankProject, validateProject } =
     await server.ssrLoadModule("/src/projects.ts");
@@ -108,6 +108,63 @@ try {
     refillComponents(added.project)[1].prefix,
   );
   assert.equal(added.project.features[0], energel.project.features[0]);
+  // Each catalog envelope has a plane at the flat tail and a single vertex at the writing end.
+  function checkEnds(shape, length, tailX, tailDiameter) {
+    const box = shape.boundingBox;
+    try {
+      const [lo, hi] = box.bounds;
+      near(lo[0], 0);
+      near(hi[0], length);
+    } finally { box.delete(); }
+    const faces = shape.faces;
+    const ends = [];
+    try {
+      for (const face of faces) {
+        const bounds = face.boundingBox;
+        try {
+          const [lo, hi] = bounds.bounds;
+          const x = (hi[0] + lo[0]) / 2;
+          if (hi[0] - lo[0] < 1e-5 && (Math.abs(x) < 1e-5 || Math.abs(x - length) < 1e-5))
+            ends.push({ x, diameter: hi[1] - lo[1] });
+        } finally { bounds.delete(); }
+      }
+    } finally { faces.forEach(face => face.delete()); }
+    assert.equal(ends.length, 1, "exactly one axial endpoint has a flat tail");
+    near(ends[0].x, tailX);
+    near(ends[0].diameter, tailDiameter);
+  }
+  const flipped = reverseRefill(added.project, energel.bodyId);
+  assert.deepEqual(flipped.parameters, added.project.parameters);
+  assert.deepEqual(flipped.workspaces.joints, added.project.workspaces.joints);
+  assert.deepEqual(flipped.workspaces.jointPose, added.project.workspaces.jointPose);
+  const restored = reverseRefill(flipped, energel.bodyId);
+  const { importSolidFile } = await server.ssrLoadModule("/src/exchangeSolids.ts");
+  const changedLength = { ...flipped, parameters: flipped.parameters.map(param =>
+    param.name === "refill_length" ? { ...param, expression: "120 mm" } : param) };
+  const replaced = insertRefill(flipped, "parker-g2", {}, {replaceBodyId: energel.bodyId}).project;
+  for (const [part, length, tailX, diameter] of [
+    [added.project, 111, 111, 6.35],
+    [validateProject(JSON.parse(JSON.stringify(flipped))), 111, 0, 6.35],
+    [restored, 111, 111, 6.35],
+    [changedLength, 120, 0, 6.35],
+    [replaced, 98.1, 0, 6],
+  ]) {
+    const bodies = buildBodies((await evaluateModel(part)).features);
+    try {
+      checkEnds(bodies[0].shape, length, tailX, diameter);
+      checkEnds(bodies[1].shape, 111, 111, 6.35);
+      if (part === replaced) {
+        const file = exportBodies([bodies[0]], "step");
+        const imported = await importSolidFile("step", file, "Reversed G2");
+        try { checkEnds(imported[0].shape, length, tailX, diameter); }
+        finally { releaseBodies(imported); }
+      }
+    } finally { releaseBodies(bodies); }
+  }
+  const initiallyReversed = insertRefill(start, "bic-cristal", donor, { reversed: true });
+  const insertedSolids = buildBodies((await evaluateModel(initiallyReversed.project)).features);
+  try { checkEnds(insertedSolids[0].shape, 127, 0, 3.25); }
+  finally { releaseBodies(insertedSolids); }
   const cases = [
     [parker, 98.1, 6, 2.54],
     [energel, 111, 6.35, 2.27],
@@ -201,7 +258,7 @@ try {
     releaseBodies(rebuilt);
   }
   console.log(
-    "Passed three native refill profiles, source dimensions, donor validation, parametric swaps, posed joints, STEP and STL.",
+    "Passed three native refill profiles, source dimensions, donor validation, per-instance end-for-end reversal, parametric swaps, posed joints, STEP and STL.",
   );
 } finally {
   await server.close();

@@ -10,11 +10,14 @@ import {
 } from "./geometry";
 import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
+import { collectFitSurfaces, type FitSurface } from "./fitSurfaces";
+import type { Shape3D } from "replicad";
 import type { EvaluatedFeature } from "./types";
 
 const worker = self as unknown as DedicatedWorkerGlobalScope;
 const ready = initOC({ locateFile: () => wasmUrl }).then(setOC);
 const model = new ModelBodies();
+const fitCache = new WeakMap<Shape3D, FitSurface[]>();
 const MIN_PREVIEW_SNAPSHOT_MS = 1000;
 let currentRevision = -1;
 
@@ -25,6 +28,7 @@ type Request =
       revision: number;
       features: EvaluatedFeature[];
       retainedMeshes?: number[];
+      measureRefillFit?: boolean;
       previewBodyIndex?: number;
       finishBody?: FinishBodySnapshot;
     }
@@ -95,8 +99,20 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
           }
         }
       }
+      const solids = model.bodies;
+      let fitSurfaces: FitSurface[][] | undefined;
+      if (data.measureRefillFit) {
+        const roots = data.features.filter(f => f.operation === "new");
+        fitSurfaces = solids.map(({ shape }, i) => {
+          const cached = fitCache.get(shape);
+          if (cached) return cached;
+          const lands = collectFitSurfaces(shape, roots[i].id, true);
+          fitCache.set(shape, lands);
+          return lands;
+        });
+      }
       worker.postMessage(
-        { ...output, revision: data.revision, previewBody, ...properties, threadFrames: model.bodies.flatMap((b) => b.threadFrames ?? []) },
+        { ...output, revision: data.revision, previewBody, ...properties, fitSurfaces, threadFrames: solids.flatMap((b) => b.threadFrames ?? []) },
         meshes.flatMap(buffers),
       );
       currentRevision = data.revision;

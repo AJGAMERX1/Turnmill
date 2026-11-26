@@ -184,6 +184,7 @@ export function sheetFrame(
   return m;
 }
 function finishNotes(features: EvaluatedFeature[]) {
+  const reversed = features.at(-1)?.reverseRefillLength !== undefined;
   const notes: string[] = [];
   let holeCount = 0;
   for (const f of features) {
@@ -201,7 +202,8 @@ function finishNotes(features: EvaluatedFeature[]) {
     }
     for (const op of f.finishes || []) {
       if (op.suppressed) continue;
-      const end = op.end === "start" ? "start end" : "far end";
+      const atStart = reversed && f.kind === "revolve" ? op.end === "end" : op.end === "start";
+      const end = atStart ? "start end" : "far end";
       if (op.kind === "thread") {
         const call =
           op.preset &&
@@ -251,7 +253,7 @@ function finishNotes(features: EvaluatedFeature[]) {
         const hole = `Hole ${++holeCount}`;
         const turning = f.kind === "revolve";
         const axis = turning ? "X" : "Z";
-        const side = op.end === "start" ? "min" : "max";
+        const side = atStart ? "min" : "max";
         // A legacy depth cut could extend past the stock and had no explicit termination.
         let depth = `· drill travel ${formatDrawingLength(op.length)}`;
         if (op.termination === "blind")
@@ -276,8 +278,8 @@ function finishNotes(features: EvaluatedFeature[]) {
           notes.push(
             `${hole} · Countersink Ø ${formatDrawingLength(op.seatDiameter)} × ${n(op.seatAngle, 6)}° included`,
           );
-        const u = formatDrawingLength(op.offsetU ?? 0),
-          v = formatDrawingLength(op.offsetV ?? 0);
+        const u = formatDrawingLength((reversed ? -1 : 1) * (op.offsetU ?? 0)),
+          v = formatDrawingLength((reversed && !turning ? -1 : 1) * (op.offsetV ?? 0));
         notes.push(
           turning
             ? `${hole} center · Y ${u}, Z ${v} from the turning axis`

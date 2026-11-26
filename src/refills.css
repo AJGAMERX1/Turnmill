@@ -71,3 +71,10 @@
   font-size: 12px;
   color: #efbf79;
 }
+
+.reverse-refill {display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #52635f;border-radius:4px;padding:5px 8px;font:inherit;font-size:12px;white-space:nowrap;color:#d4e1dc}
+.reverse-refill[aria-pressed=true] {border-color:#ac8f58;color:#f0c384;background:#39352a}
+.refill-profile figcaption {align-items:center;flex-wrap:wrap}
+.installed-refill > svg,.installed-refill .reverse-refill {flex:none}
+.installed-refill > span {flex:1;overflow-wrap:anywhere;min-width:0}
+@media(max-width:590px){.reverse-refill {min-height:40px}}

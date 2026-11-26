@@ -115,8 +115,14 @@ export function dimensionSnaps(
         (y ? "Upper " : "Lower ") + (x ? "right" : "left") + " corner",
       );
     }
-  const projectPoint = (x: number, y: number, z: number): XY =>
-    view === "front" ? [x, z] : view === "top" ? [x, y] : [y, z];
+  const reversedLength = features.at(-1)?.reverseRefillLength;
+  const projectPoint = (x: number, y: number, z: number): XY => {
+    if (reversedLength !== undefined) {
+      x = reversedLength - x;
+      y = -y;
+    }
+    return view === "front" ? [x, z] : view === "top" ? [x, y] : [y, z];
+  };
   for (const feature of features) {
     const raw = project.features.find((f) => f.id === feature.id);
     const sketch = project.sketches.find((s) => s.id === raw?.sketchId);
@@ -181,8 +187,9 @@ export function dimensionSnaps(
       for (const op of feature.finishes || []) {
         if (op.suppressed) continue;
         if (op.kind !== "hole") break;
+        const u = midX + (op.offsetU ?? 0), v = midY + (op.offsetV ?? 0);
         identify(
-          [midX + (op.offsetU ?? 0), midY + (op.offsetV ?? 0)],
+          feature.kind === "revolve" ? projectPoint(0, u, v) : projectPoint(u, v, 0),
           "center",
           JSON.stringify([feature.id, op.id, "hole-center"]),
           op.name + " center",

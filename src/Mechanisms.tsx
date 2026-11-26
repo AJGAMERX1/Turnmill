@@ -1,8 +1,9 @@
 import { observeJoints } from "../tests/hook/observe";
-import { Matrix4, type Vector3 } from "three";
+import { Matrix4, Vector3 } from "three";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
+import { refillTipX } from "./refills";
 import BoltActionPanel from "./BoltActionPanel";
 import { defaultBoltTrack, resolveBoltTrack } from "./boltTrack";
 import CamStudy from "./CamStudy";
@@ -332,8 +333,8 @@ function JointStudio({
       const pen = project.workspaces?.boltPen;
       const tip = matrices[ids.indexOf(pen?.refillId)], nose = matrices[ids.indexOf(pen?.noseId)];
       if (pen?.carrierId === boltId && tip && nose) {
-        // Both local origins are defined at their respective tip datums.
-        tipExposure = -new Matrix4().fromArray(nose).invert().multiply(new Matrix4().fromArray(tip)).elements[12];
+        const tipInNose = new Matrix4().fromArray(nose).invert().multiply(new Matrix4().fromArray(tip));
+        tipExposure = -new Vector3(refillTipX(project, pen.refillId, values), 0, 0).applyMatrix4(tipInNose).x;
       }
     }
     if (joint.kind === "screw") lead = screwLead(joint, values);

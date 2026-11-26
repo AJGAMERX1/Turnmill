@@ -117,6 +117,7 @@ export type RefillComponent = {
   kind: RefillKind;
   prefix: string;
   mass?: string;
+  reversed?: boolean;
 };
 function validRefill(value: unknown): value is RefillComponent {
   if (!value || typeof value !== "object") return false;
@@ -135,6 +136,32 @@ export function refillComponents(project: Project): RefillComponent[] {
     .filter(validRefill)
     .filter((item) => features.has(item.bodyId));
 }
+/** Turn the complete cartridge about its local midpoint while leaving its assembly mount in place. */
+export function reverseRefill(project: Project, bodyId: string): Project {
+  const refill = refillComponents(project).find((part) => part.bodyId === bodyId);
+  if (!refill) throw Error("Select an installed refill to reverse.");
+  const { reversed, ...forward } = refill;
+  return {
+    ...project,
+    workspaces: {
+      ...project.workspaces,
+      refills: {
+        ...project.workspaces?.refills,
+        [bodyId]: reversed ? forward : { ...forward, reversed: true },
+      },
+    },
+  };
+}
+
+/** X datum of the writing point after installation, measured in the part's own coordinates. */
+export function refillTipX(project: Project, bodyId: string, values: Record<string, number>): number {
+  const refill = project.workspaces?.refills?.[bodyId];
+  if (!validRefill(refill) || refill.reversed !== true) return 0;
+  const length = values[refill.prefix + "_length"];
+  if (!Number.isFinite(length) || length <= 0) throw Error("Give the reversed refill a positive tip-to-tail length.");
+  return length;
+}
+
 export function refillDefaults(kind: RefillKind): RefillInputs {
   return Object.fromEntries(
     Object.entries(refillCatalog[kind].fields).map(([key, [n]]) => [
@@ -240,6 +267,7 @@ type RefillOptions = {
   bodyId?: string;
   prefix?: string;
   replaceBodyId?: string;
+  reversed?: boolean;
   mass?: string;
 };
 export function insertRefill(
@@ -325,7 +353,8 @@ export function insertRefill(
     name: partName,
     sketchId: sketch.id,
   };
-  const meta: RefillComponent = { bodyId, kind, prefix, mass };
+  const reversed = options.reversed ?? existing?.reversed;
+  const meta: RefillComponent = { bodyId, kind, prefix, mass, ...(reversed ? { reversed: true } : {}) };
   const hardware = {
     source: `${source.name} · reference envelope`,
     dimensions: Object.keys(source.fields).map((key) => ({

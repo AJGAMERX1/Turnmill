@@ -9,6 +9,7 @@ import type { EvaluatedFeature } from "./types";
 export type KernelStatus = {
   signature?: string;
   threadFrames?: import("./threadMates").ThreadFrame[];
+  fitSurfaces?: import("./fitSurfaces").FitSurface[][];
   busy: boolean;
   error: string;
   volume: number;
@@ -32,6 +33,7 @@ type Props = {
   appearances?: number[];
   visibleBodyId?: string;
   photoMode?: boolean;
+  measureRefillFit?: boolean;
   photoMatrices?: number[][];
   ghostIds?: string[];
   savePhoto?: RefObject<(() => Promise<Blob>) | null>;
@@ -47,6 +49,7 @@ export type KernelReply = { revision: number } & (
     ) & {
       volume: number;
       threadFrames?: import("./threadMates").ThreadFrame[];
+      fitSurfaces?: import("./fitSurfaces").FitSurface[][];
       area: number;
       bodyProperties: import("./materials").BodyProps[];
       center?: [number, number, number];
@@ -81,7 +84,7 @@ export function Viewport({
   onStatus,
   takeFinishBody,
   appearances = [],
-  visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto,
+  visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto, measureRefillFit = false,
   onBodyContextMenu,
   onBodyPick,
 }: Props) {
@@ -136,6 +139,7 @@ export function Viewport({
     revision: number;
     features: EvaluatedFeature[];
     finishBody?: FinishBodySnapshot;
+    measureRefillFit: boolean;
   } | null>(null);
   function dispatchBuild() {
     if (activeBuild.current || !pendingBuild.current || !engine.current) return;
@@ -210,6 +214,7 @@ export function Viewport({
           volume: data.volume,
           area: data.area,
           threadFrames: data.threadFrames,
+          fitSurfaces: data.fitSurfaces,
           bodyProperties: data.bodyProperties,
           center: data.center,
         });
@@ -270,9 +275,10 @@ export function Viewport({
       revision: current,
       features,
       finishBody: takeFinishBody?.(),
+      measureRefillFit,
     };
     dispatchBuild();
-  }, [signature]);
+  }, [signature, measureRefillFit]);
   useEffect(() => {
     displayInstalled(false);
   }, [visibleBodyId, appearances.join(",")]);

@@ -4,8 +4,11 @@ import { Matrix4, Vector3 } from "three";
 import { evaluate, resolveParameters } from "./expressions";
 import { materials, massProperties, type BodyProps } from "./materials";
 import type { EvaluatedFeature, Project } from "./types";
-import { refillCatalog, refillComponents, refillDimensions } from "./refills";
+import { refillCatalog, refillComponents, refillDimensions, reverseRefill } from "./refills";
 import InputValue from "./InputValue";
+import RefillDiameterChecks from "./RefillDiameterChecks";
+import ReverseRefillButton from "./ReverseRefillButton";
+import type { FitSurface } from "./fitSurfaces";
 
 type Props = {
   project: Project;
@@ -13,6 +16,8 @@ type Props = {
   solidFeatures: EvaluatedFeature[];
   properties?: BodyProps[];
   matrices?: number[][];
+  surfaces?: FitSurface[][];
+  values: Record<string, number>;
   densities: number[];
   onRefill: () => void;
   onProject: () => void;
@@ -23,7 +28,7 @@ type Props = {
 };
 const mm = (v: number) => Number(v.toFixed(2)) + " mm";
 
-export default function PenBench({ project, commit, solidFeatures, properties, matrices, densities,
+export default function PenBench({ project, commit, solidFeatures, properties, matrices, surfaces, values, densities,
   onRefill, onProject, onAssembly, onParameters, showInternals, setShowInternals }: Props) {
   const [warning, setWarning] = useState("");
   const mounted = properties && matrices && properties.length === matrices.length
@@ -51,7 +56,7 @@ export default function PenBench({ project, commit, solidFeatures, properties, m
     const values = resolveParameters(project.parameters);
     gripStation = evaluate(grip, values);
     const donor = bolt && refillDimensions(project, bolt.refillId);
-    if (donor && Number.isFinite(values.tip_bore)) fit = values.tip_bore - donor.guide_diameter;
+    if (donor && !project.workspaces?.refills?.[bolt.refillId]?.reversed && Number.isFinite(values.tip_bore)) fit = values.tip_bore - donor.guide_diameter;
   } catch { /* Show editable inputs while a parameter or a joint is being repaired. */ }
   const offset = center && gripStation !== undefined ? center[0] - gripStation : undefined;
   function dimension(key: string, expression: string) {
@@ -64,12 +69,21 @@ export default function PenBench({ project, commit, solidFeatures, properties, m
   return <aside className="pen-bench tm-workspace" aria-label="Pen design bench">
     <div className="bench-heading"><h2>Design bench</h2><button onClick={onProject}>New pen <ArrowUpRight size={14}/></button></div>
     <section><h3>Refill</h3>
-      {installed.length ? <ul>{installed.map((r) => <li key={r.bodyId}><PenTool size={15}/>{refillCatalog[r.kind].name}</li>)}</ul>
+      {installed.length ? <ul>{installed.map((r) => {
+        const name = solidFeatures.find((f) => f.id === r.bodyId)?.name || refillCatalog[r.kind].name;
+        const duplicate = solidFeatures.filter((f) => f.name === name).length > 1;
+        const label = duplicate ? name + " · " + r.prefix : name;
+        return <li className="installed-refill" key={r.bodyId}><PenTool size={15}/><span>{label}</span>
+          <ReverseRefillButton name={label} reversed={!!r.reversed} onReverse={() => commit(reverseRefill(project, r.bodyId))}/>
+        </li>;
+      })}</ul>
         : <p>Choose the cartridge your pen will write with.</p>}
       <button className="bench-action" onClick={onRefill}><PenTool size={16}/> Refill library</button>
-      {fit !== undefined && <dl><div><dt>Tip guide clearance</dt><dd>{mm(fit)}</dd></div></dl>}
-      {fit !== undefined && <p>{fit < 0 ? "The guide is smaller than the refill tip." : "Diametral gap at the guide. Measure your refill before cutting the nose."}</p>}
+      {fit !== undefined && <dl><div><dt>Design tip clearance</dt><dd>{mm(fit)}</dd></div></dl>}
+      {fit !== undefined && <p>{fit < 0 ? "The guide is smaller than the refill tip." : "Calculated from the tip guide and bore dimensions."}</p>}
     </section>
+    {installed.length > 0 && <RefillDiameterChecks project={project} commit={commit} installed={installed}
+      bodies={solidFeatures} surfaces={surfaces} matrices={matrices} values={values}/>}
     <section><h3>Body dimensions</h3>
       {shellId && <fieldset className="barrel-finishes"><legend>Barrel material <strong>{shellMaterial}</strong></legend>
         <div>{Object.entries(materials).filter(([key]) => key !== "Nitrile" || key === shellMaterial).map(([name, m]) =>

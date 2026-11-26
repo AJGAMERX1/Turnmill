@@ -43,6 +43,8 @@ export type Feature = {
   suppressed: boolean;
 };
 export type EvaluatedFeature = {
+  /** Applied after the last operation in an installed cartridge’s body history. */
+  reverseRefillLength?: number;
   id: string;
   name: string;
   kind: "revolve" | "extrude" | "import";

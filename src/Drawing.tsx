@@ -451,7 +451,8 @@ export default function Drawing(
     !!chosen?.advanced ||
     !!chosen?.operations?.length ||
     !!chosen?.finishes?.some((f) => !f.suppressed) ||
-    !!chosen?.ruler;
+    !!chosen?.ruler ||
+    chosen?.reverseRefillLength !== undefined;
   return (
     <div className="tm-workspace">
       <main className="tm-work-main">

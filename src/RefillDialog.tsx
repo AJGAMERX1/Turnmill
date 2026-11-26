@@ -14,6 +14,7 @@ import {
 } from "./refills";
 import type { Project } from "./types";
 import "./refills.css";
+import ReverseRefillButton from "./ReverseRefillButton";
 
 function storedInputs(project: Project, item: RefillComponent): RefillInputs {
   const params = new Map(project.parameters.map((p) => [p.name, p.expression]));
@@ -31,10 +32,14 @@ function ProfilePreview({
   kind,
   inputs,
   project,
+  reversed,
+  onReverse,
 }: {
   kind: RefillKind;
   inputs: RefillInputs;
   project: Project;
+  reversed: boolean;
+  onReverse: () => void;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const d = useMemo(() => {
@@ -79,7 +84,7 @@ function ProfilePreview({
         guide_diameter: 2,
         shoulder_distance: 8,
       };
-      const x = (mm: number) => left + ((right - left) * mm) / v.length;
+      const x = (mm: number) => left + (right - left) * (reversed ? 1 - mm / v.length : mm / v.length);
       const y = (diameter: number) =>
         (Math.min((right - left) / v.length, 5) * diameter) / 2;
       const shoulder = v.shoulder_distance,
@@ -135,28 +140,30 @@ function ProfilePreview({
       ctx.stroke();
       ctx.strokeStyle = "#d9a860";
       ctx.beginPath();
-      ctx.moveTo(left, mid + 3);
-      ctx.lineTo(left, height - 13);
+      ctx.moveTo(x(0), mid + 3);
+      ctx.lineTo(x(0), height - 13);
       ctx.stroke();
       ctx.fillStyle = "#ebc086";
       ctx.font = "10px monospace";
-      ctx.fillText("X 0", left + 4, height - 12);
+      ctx.textAlign = reversed ? "right" : "left";
+      ctx.fillText("TIP", x(0) + (reversed ? -4 : 4), height - 12);
     }
     draw();
     const observer = new ResizeObserver(draw);
     observer.observe(canvas);
     return () => observer.disconnect();
-  }, [kind, d]);
+  }, [kind, d, reversed]);
   return (
     <figure className="refill-profile">
       <canvas
         ref={ref}
         role="img"
-        aria-label={`${refillCatalog[kind].name} axial profile. Writing point at X zero, tube extends toward positive X.`}
+        aria-label={`${refillCatalog[kind].name} axial profile. Writing tip faces ${reversed ? "positive" : "negative"} X.`}
       />
       <figcaption>
         {d ? `${Number(d.length.toFixed(3))} mm overall` : "Profile schematic"}{" "}
-        <span>Writing point at X = 0</span>
+        <span>Tip toward {reversed ? "+X" : "−X"}</span>
+        <ReverseRefillButton name="refill" reversed={reversed} onReverse={onReverse}/>
       </figcaption>
     </figure>
   );
@@ -177,6 +184,7 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
   const [inputs, setInputs] = useState<RefillInputs>(() =>
     starting ? storedInputs(project, starting) : refillDefaults(kind),
   );
+  const [reversed, setReversed] = useState(!!starting?.reversed);
   const [mass, setMass] = useState(starting?.mass ?? "");
   const [error, setError] = useState("");
   const [details, setDetails] = useState(false);
@@ -225,6 +233,7 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
             const result = insertRefill(project, kind, inputs, {
               replaceBodyId: target || undefined,
               mass,
+              reversed,
             });
             onSave(result.project, result.bodyId);
           } catch (err) {
@@ -242,6 +251,7 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
                 const id = e.target.value;
                 setTarget(id);
                 const item = installed.find((r) => r.bodyId === id);
+                setReversed(!!item?.reversed);
                 chooseKind(item?.kind ?? kind, id);
               }}
             >
@@ -271,7 +281,7 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
           </select>
         </label>
         <p className="refill-variant">{entry.description}</p>
-        <ProfilePreview kind={kind} inputs={inputs} project={project} />
+        <ProfilePreview kind={kind} inputs={inputs} project={project} reversed={reversed} onReverse={() => setReversed((v) => !v)} />
         <div className="refill-field-grid">
           {keys.slice(0, kind === "bic-cristal" ? 4 : 3).map(field)}
         </div>

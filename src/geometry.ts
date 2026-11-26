@@ -22,6 +22,7 @@ import {
 import { binarySTL, printableMesh } from "./printMesh";
 import { export3MF } from "./exchangeSolids";
 import { applyFinish } from "./finishing";
+import { positioned } from "./motionGeometry";
 import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
 import type { EvaluatedFeature } from "./types";
 
@@ -221,6 +222,27 @@ export function restoreFinishBody(
   }
 }
 
+function turnRefill(body: Body, length: number) {
+  // A proper half-turn about Z at the axial midpoint preserves thread handedness.
+  const pose = [-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, length, 0, 0, 1];
+  const turned = positioned(body.shape, pose);
+  body.shape.delete();
+  body.shape = turned;
+  body.guides = body.guides?.map((guide) => {
+    const points = guide.slice();
+    for (let i = 0; i < points.length; i += 3) {
+      points[i] = length - points[i];
+      points[i + 1] = -points[i + 1];
+    }
+    return points;
+  });
+  body.threadFrames = body.threadFrames?.map((frame) => {
+    const [x, y, z] = frame.entrance;
+    return { ...frame, entrance: [length - x, -y, z],
+      end: frame.axis === "X" ? (frame.end === "start" ? "end" : "start") : frame.end };
+  });
+}
+
 /** New starts a body. An Add or Cut acts on the most recently started body. */
 export function buildBodies(
   features: EvaluatedFeature[],
@@ -330,6 +352,7 @@ export function buildBodies(
           // A transform or replacement can remove or duplicate the original thread axis.
           if (operation.kind !== "shell") body.threadFrames = [];
         }
+        if (feature.reverseRefillLength !== undefined) turnRefill(body, feature.reverseRefillLength);
       } catch (error) {
         const detail =
           error instanceof Error &&

@@ -289,6 +289,7 @@ export default function App() {
         project.parameters,
         modeledScale,
         project.importedFiles,
+        project.workspaces?.refills,
       ]),
     [
       project.sketches,
@@ -296,6 +297,7 @@ export default function App() {
       project.parameters,
       modeledScale,
       project.importedFiles,
+      project.workspaces?.refills,
     ],
   );
   useEffect(() => {
@@ -554,7 +556,7 @@ export default function App() {
         (ref) => ref.featureId === featureId && (finishId === undefined || ref.finishId === finishId)));
   function withoutPartRecords(id: string) {
     const workspaces = { ...project.workspaces };
-    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents", "refills"]) {
+    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents", "refills", "refillDiameterChecks"]) {
       if (workspaces[key] && Object.hasOwn(workspaces[key], id)) {
         workspaces[key] = { ...workspaces[key] };
         delete workspaces[key][id];
@@ -1556,6 +1558,7 @@ export default function App() {
               visibleBodyId={activePart?.id}
               features={model.features}
               view={view}
+              measureRefillFit={cartridges.length > 0}
               photoMode={showcasing} photoMatrices={studioPose.matrices} ghostIds={ghostIds} savePhoto={savePhoto}
               fitToken={fit}
               exportRequest={exportRequest}
@@ -1965,6 +1968,7 @@ export default function App() {
           )}
           {showcasing && <PenBench project={project} commit={commit} solidFeatures={solidFeatures}
             properties={valid && !studioPose.error ? kernel.bodyProperties : undefined} matrices={studioPose.matrices}
+            surfaces={valid && !studioPose.error ? kernel.fitSurfaces : undefined} values={model.values}
             densities={effectiveDensities} onRefill={() => setDialog("refill")}
             onProject={() => setDialog("new")} onAssembly={() => switchMode("Assembly")}
             onParameters={() => setDialog("parameters")} showInternals={showInternals} setShowInternals={setShowInternals} />}
