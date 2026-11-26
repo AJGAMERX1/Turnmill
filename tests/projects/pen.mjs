@@ -7,6 +7,7 @@ import {
   input,
   newProject,
   sample,
+  snap,
   native,
   ready,
   download,
@@ -50,7 +51,7 @@ export async function guide(s) {
     await button(panel, "Twist cap").click();
     await p.waitForFunction((angle) => Number(document.querySelector('[aria-label="Drive value"]')?.value) === angle, rotation);
     await coupling.getByText(refillX.toFixed(3) + " mm", { exact: true }).waitFor();
-    const pose = await p.evaluate(() => window.__cadTest.snapshot());
+    const pose = await snap(p);
     const index = pose.joints.ids.indexOf("pen-refill");
     assert(index >= 0);
     const tip = pose.bodies[index].bbox[0][0] + pose.joints.matrices[index][12];
