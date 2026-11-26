@@ -4,12 +4,14 @@ import { evaluateScaleStock } from "./secondaryEngraving";
 import type { EvaluatedFeature, Feature, Project } from "./types";
 import { evaluate, resolveParameters } from "./expressions";
 import { evaluateFinish } from "./finishingTypes";
+import { validateProjectScrewCones } from "./screwConeProfile";
 import { solveSketch } from "./solveSketch";
 import { prepareRefillSketch, refillTipX, type RefillComponent } from "./refills";
 export async function evaluateModel(
   p: Project,
 ): Promise<{ features: EvaluatedFeature[]; values: Record<string, number> }> {
   const values = resolveParameters(p.parameters);
+  validateProjectScrewCones(p, values);
   const cache = new Map<string, Awaited<ReturnType<typeof solveSketch>>>();
   const features = await evaluateHistory(p, p.features, values, cache);
   return { values, features };

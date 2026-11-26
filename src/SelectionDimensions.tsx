@@ -4,6 +4,7 @@ import { evaluate, resolveParameters } from "./expressions";
 import { changeProfileRange, profileRange, type ProfileRange } from "./profileSizing";
 import { isExpression, solveSketch, type XY } from "./solveSketch";
 import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
+import { screwConeProfile, validateProjectScrewCones } from "./screwConeProfile";
 import { selectionParameters } from "./selectionParameters";
 import { coneSegments, setConeDiameter, type ConeSegment } from "./coneDimensions";
 import { bodyOwners, featureUsesSketch } from "./partTabs";
@@ -78,9 +79,9 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
   const [solved, setSolved] = useState<{ sketch: Sketch; values: Record<string, number>; vertices: XY[] }>();
   const [coneEdge, setConeEdge] = useState<number>();
   const pending = useRef<AbortController | null>(null);
-  const latest = useRef<Project | null>(project);
+  const latest = useRef(project);
   latest.current = project;
-  useEffect(() => () => { latest.current = null; pending.current?.abort(); }, []);
+  useEffect(() => () => { pending.current?.abort(); }, []);
   const values = useMemo(() => {
     try { return resolveParameters(project.parameters); } catch { return undefined; }
   }, [project.parameters]);
@@ -88,10 +89,11 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
     sketchSelected && sketch ? { sketch } : feature ? { feature } : sketch ? { sketch } : undefined),
   [project, sketchSelected, sketch, feature]);
   const turned = !!turnedProfile || feature?.kind === "revolve" || (!feature && sketch?.sizing?.y?.radial === true);
+  const screwCone = useMemo(() => screwConeProfile(project, sketch, sketchSelected ? undefined : feature), [project, sketch, sketchSelected, feature]);
   const cones = useMemo(() => {
-    if (!turned || !sketch || !values || isCatalogProfile(project, sketch.id)) return [];
+    if (screwCone || !turned || !sketch || !values || isCatalogProfile(project, sketch.id)) return [];
     try { return coneSegments(sketch, values); } catch { return []; }
-  }, [turned, sketch, values, project.features, project.workspaces]);
+  }, [screwCone, turned, sketch, values, project.features, project.workspaces]);
   const preferredEdge = coneEdge ?? sketch?.coneEdge?.edge;
   const cone = cones.find(c => c.edge === preferredEdge) ??
     cones.reduce<ConeSegment | undefined>((longest, c) =>
@@ -99,12 +101,13 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
   const tipFirst = cone?.tipEnd === "start";
   const vertices = solved && solved.sketch === sketch && solved.values === values ? solved.vertices : undefined;
   const ranges = useMemo(() => {
-    if (!sketch || !values) return [];
+    if (!sketch || !values || screwCone?.length) return [];
     try {
-      return (["x", "y"] as const).map((axis) => profileRange(sketch, axis, turned, values, vertices))
+      const axes = screwCone ? ["x"] as const : ["x", "y"] as const;
+      return axes.map((axis) => profileRange(sketch, axis, turned, values, vertices))
         .filter((r): r is ProfileRange => !!r);
     } catch { return []; }
-  }, [sketch, values, turned, vertices]);
+  }, [screwCone, sketch, values, turned, vertices]);
   const drivers = sketch?.constraints.filter((c) => driverLabel(c)) || [];
   const hasNamedDrivers = !!sketch && project.parameters.some((param) =>
     sketch.points.some((p) => [p.x, p.y].some((s) => s.match(/[A-Za-z_]\w*/g)?.includes(param.name))));
@@ -119,30 +122,35 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
     }, () => {});
     return () => { active = false; };
   }, [needVertices, sketch, values]);
-  async function saveSketch(next: Sketch, checkSolid = false) {
-    if (!values || !sketch) return;
+  async function commitDimensions(candidate: Project, checkSolid = false, nextSketch?: Sketch) {
     setError("");
     setSaving(true);
     pending.current?.abort();
     const request = new AbortController();
     pending.current = request;
     try {
-      const result = await solveSketch(next, values);
-      if (turned && crossesRevolveAxis(result.points.map((p) => [p.x, p.y]))) throw Error(axisCrossingMessage);
-      const candidate = { ...project, sketches: project.sketches.map((s) => s.id === sketch.id ? next : s) };
-      if (checkSolid && latest.current === project) await checkConeBuild(candidate, sketch.id, request.signal);
+      if (nextSketch && values) {
+        if (screwCone) validateProjectScrewCones(candidate, values, project);
+        const result = await solveSketch(nextSketch, values);
+        if (turned && crossesRevolveAxis(result.points.map((p) => [p.x, p.y]))) throw Error(axisCrossingMessage);
+      }
+      if (checkSolid && sketch && latest.current === project) await checkConeBuild(candidate, sketch.id, request.signal);
       if (!request.signal.aborted && latest.current === project) {
-        if (checkSolid) setConeEdge(next.coneEdge?.edge);
+        if (checkSolid && nextSketch) setConeEdge(nextSketch.coneEdge?.edge);
         onChange(candidate);
       }
     } catch (e) {
-      if (latest.current === project) setError((e as Error).message);
+      if (!request.signal.aborted && latest.current === project) setError((e as Error).message);
     } finally {
       if (pending.current === request) {
         pending.current = null;
-        if (latest.current) setSaving(false);
+        if (!request.signal.aborted) setSaving(false);
       }
     }
+  }
+  function saveSketch(next: Sketch, checkSolid = false) {
+    if (!sketch || !values) return;
+    return commitDimensions({ ...project, sketches: project.sketches.map(s => s.id === sketch.id ? next : s) }, checkSolid, next);
   }
   function resize(range: ProfileRange, field: "size" | "lower", text: string) {
     if (!sketch || !values) return;
@@ -159,12 +167,16 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
       const parameters = project.parameters.map(p => p.name === name ? { ...p, expression } : p);
       const next = { ...project, parameters };
       const resolved = resolveParameters(parameters);
+      validateProjectScrewCones(next, resolved, project);
       if (sketch) {
         const root = project.features.find(f => f.operation === "new" && f.sketchId === sketch.id);
         if (root) prepareRefillSketch(next, root.id, sketch, resolved);
       }
-      setError("");
-      onChange(next);
+      if (screwCone) void commitDimensions(next, true);
+      else {
+        setError("");
+        onChange(next);
+      }
     } catch (cause) { setError((cause as Error).message); }
   }
   function setAmount(amount: string) {
@@ -179,12 +191,34 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
   }
   if (!named.length && !sketch && (!feature || feature.kind === "import" || feature.kind === "merge")) return null;
   const index = Math.min(point, (sketch?.points.length || 1) - 1);
+  const coneLabels = new Map<string | undefined, string>(screwCone ? [
+    [screwCone.opening, "Bore diameter"], [screwCone.tip, "Tip outside diameter"],
+    [screwCone.base, "Cone base diameter"], [screwCone.length, "Cone length"],
+  ] : []);
+  const primary = screwCone
+    ? [...coneLabels.keys()].flatMap(name => named.filter(p => p.name === name))
+    : named.slice(0, 5);
+  const more = screwCone ? named.filter(p => !coneLabels.has(p.name)) : named.slice(5);
   const parameterRow = (p: typeof named[number]) =>
-    <Row key={p.name} label={p.label} value={p.expression} edit={text => editParameter(p.name, text)} />;
+    <Row key={p.name} label={coneLabels.get(p.name) ?? p.label} value={p.expression} edit={text => editParameter(p.name, text)} />;
   return <fieldset className="selection-dimensions" disabled={saving} aria-label="Selected geometry dimensions">
-    {named.slice(0, 5).map(parameterRow)}
-    {named.length > 5 && <details className="additional-dimensions">
-      <summary>More dimensions ({named.length - 5})</summary>{named.slice(5).map(parameterRow)}
+    {primary.map(parameterRow)}
+    {screwCone && sketch && values && (["tip", "base"] as const).map(end => {
+      if (screwCone[end]) return null;
+      // Older sketches can have a directly edited outside radius at either end.
+      const i = end === "tip" ? 2 : 1;
+      const radius = sketch.points[i].y;
+      return <Row key={end} label={end === "tip" ? "Tip outside diameter" : "Cone base diameter"}
+        value={`(${radius}) * 2`} edit={text => {
+          const points = sketch.points.map((p, index) => index === i ? { ...p, y: `(${text}) / 2` } : p);
+          void saveSketch({ ...sketch, points }, true);
+        }} />;
+    })}
+    {screwCone && <p className="dimension-note">Bore diameter sets the hole for the refill.</p>}
+    {error && <p role="alert" className="error-text">{error}</p>}
+    {saving && (screwCone || cone) && <p role="status" className="dimension-note">Checking the solid…</p>}
+    {more.length > 0 && <details className="additional-dimensions">
+      <summary>More dimensions ({more.length})</summary>{more.map(parameterRow)}
     </details>}
     {cone && <>
       {cones.length > 1 && <label className="dim-field">Taper<select aria-label="Taper" value={cone.edge}
@@ -195,7 +229,6 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
         edit={s => resizeCone(cone, tipFirst ? "start" : "end", s)} />
       <Row label="Base outside diameter" value={tipFirst ? cone.endDiameter : cone.startDiameter}
         edit={s => resizeCone(cone, tipFirst ? "end" : "start", s)} />
-      {saving && <p role="status" className="dimension-note">Checking the solid…</p>}
     </>}
     {ranges.map((r) => r.radial ? <div key={r.axis}>
       {cones.length !== 1 && <Row label="Outside diameter" value={r.size} edit={(s) => resize(r, "size", s)} />}
@@ -239,6 +272,5 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
         })}
       </>}
     </div>}
-    {error && <p role="alert" className="error-text">{error}</p>}
   </fieldset>;
 }

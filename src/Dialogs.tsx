@@ -13,6 +13,7 @@ import { evaluate, resolveParameters } from "./expressions";
 import { uid } from "./projects";
 import { solveSketch } from "./solveSketch";
 import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
+import { validateProjectScrewCones } from "./screwConeProfile";
 export function Modal({
   title,
   children,
@@ -95,7 +96,8 @@ export function ParameterDialog({
         onSubmit={(e) => {
           e.preventDefault();
           try {
-            resolveParameters(rows);
+            const resolved = resolveParameters(rows);
+            validateProjectScrewCones({ ...project, parameters: rows }, resolved, project);
             onSave(rows);
           } catch (e) {
             setErr((e as Error).message);

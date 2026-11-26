@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowUpRight, Component, PenTool, SlidersHorizontal, Eye } from "lucide-react";
 import { evaluate, resolveParameters } from "./expressions";
+import { validateProjectScrewCones } from "./screwConeProfile";
 import { materials, massProperties, positionedProperties, type BodyProps } from "./materials";
 import type { EvaluatedFeature, Project } from "./types";
 import { refillCatalog, refillComponents, refillDimensions, reverseRefill } from "./refills";
@@ -59,8 +60,9 @@ export default function PenBench({ project, commit, solidFeatures, properties, m
   function dimension(key: string, expression: string) {
     try {
       const parameters = project.parameters.map((p) => p.name === key ? { ...p, expression } : p);
-      resolveParameters(parameters);
-      commit({ ...project, parameters }); setWarning("");
+      const next = { ...project, parameters };
+      validateProjectScrewCones(next, resolveParameters(parameters), project);
+      commit(next); setWarning("");
     } catch (e) { setWarning((e as Error).message); }
   }
   return <aside className="pen-bench tm-workspace" aria-label="Pen design bench">
