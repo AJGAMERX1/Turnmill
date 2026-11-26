@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { Matrix4, Vector3 } from "three";
 import { appUrl, measure, openBrowser } from "./browser.mjs";
-import { button, field, ready, saved } from "../projects/support.mjs";
+import { button, field, ready, saved, singleFileDownload } from "../projects/support.mjs";
 
 const barrel = {
   version: 1, id: "refill-seat-test", name: "Turned donor sleeve", parameters: [],
@@ -24,10 +24,8 @@ function sameMatrix(a, b) {
   a.elements.forEach((value, i) => near(value, b.elements[i], "Assembly transform " + i));
 }
 async function stlSpan(page, axis) {
-  await button(page, "Export").click();
-  const next = page.waitForEvent("download");
-  await page.getByRole("button", { name: /STL mesh/ }).click();
-  const stl = await readFile(await (await next).path());
+  const file = await singleFileDownload(page, "stl");
+  const stl = await readFile(await file.path());
   const triangles = stl.readUInt32LE(80);
   assert(triangles > 0 && stl.length === 84 + 50 * triangles);
   let lo = Infinity, hi = -Infinity;
@@ -57,6 +55,7 @@ try {
     await ready(page);
   }
   async function editPlacement(label, value) {
+    await page.locator(".joint-stage .joint-message").waitFor({ state: "hidden" });
     const input = field(page, label);
     if (!await input.isVisible()) await page.getByText("Position & rotation", { exact: true }).click();
     await input.fill(value);
@@ -137,6 +136,7 @@ try {
   await tab("Assembly").click();
   await selectComponent(id);
   await release.waitFor();
+  await page.locator(".joint-stage .joint-message").waitFor({ state: "hidden" });
   sameMatrix(pose(await measure(page), id), pose(moved, id));
   await release.click();
   await snap.waitFor();

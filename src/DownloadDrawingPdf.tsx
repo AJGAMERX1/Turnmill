@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
-import fontUrl from "dejavu-fonts-ttf/ttf/DejaVuSans.ttf?url";
+import { loadDrawingFont } from "./drawingFont";
 import type { TechSheet } from "./secondaryManufacturing";
 import { fileName, saveAs } from "./secondaryVector";
 
@@ -21,18 +21,14 @@ export default function DownloadDrawingPdf({
   async function download() {
     setBusy(true);
     try {
-      const [{ drawingPdf }, response] = await Promise.all([
+      const [{ drawingPdf }, font] = await Promise.all([
         import("./drawingPdf"),
-        fetch(fontUrl),
+        loadDrawingFont(),
       ]);
-      if (!response.ok)
-        throw Error(
-          "The drawing font could not load. Reopen Turnmill and try again.",
-        );
       const bytes = await drawingPdf(
         sheets.map((s) => s.sheet),
         title,
-        new Uint8Array(await response.arrayBuffer()),
+        font,
       );
       saveAs(
         new Uint8Array(bytes),

@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DrawingBase, DrawingCut, DrawingSource } from "./preparedDrawing";
-import type {
-  SectionAxis,
-  SectionPlaneSpec,
-  ProjectedBody,
-} from "./secondaryProjection";
-import type { AssemblyView } from "./secondaryAssemblySheet";
+import type { SectionAxis, SectionPlaneSpec } from "./secondaryProjection";
+import { combineProjection, type Projection } from "./linkedDrawing";
 import { evaluate } from "./expressions";
 
 type Plane = { spec?: SectionPlaneSpec; error?: string };
@@ -14,11 +10,6 @@ type SectionResult = {
   source: DrawingSource;
   plane: Plane;
   cut?: DrawingCut;
-  error?: string;
-};
-type Projection = {
-  result?: ProjectedBody;
-  assembly?: AssemblyView;
   error?: string;
 };
 
@@ -109,18 +100,6 @@ export function useDrawingProjection(
     const base = prepared.base,
       cut = section.cut;
     if (!base || !cut) return null;
-    if ("part" in base && "part" in cut) {
-      const { section: profile, ...station } = cut.part;
-      return {
-        result: {
-          ...base.part,
-          ...station,
-          views: { ...base.part.views, section: profile },
-        },
-      };
-    }
-    if ("assembly" in base && "assembly" in cut)
-      return { assembly: { ...base.assembly, section: cut.assembly } };
-    return null;
+    return combineProjection(base, cut);
   }, [source, plane, prepared, section]);
 }

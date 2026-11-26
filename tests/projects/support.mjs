@@ -148,6 +148,28 @@ export async function download(p, trigger, path) {
   await dl.saveAs(path);
   assert.equal(await dl.failure(), null);
 }
+export async function openExport(page, preset = "Production package") {
+  await button(page, "Export").click();
+  const dialog = page.getByRole("dialog", { name: "Export", exact: true });
+  await button(dialog, preset).click();
+  return dialog;
+}
+
+export async function singleFileDownload(page, format, scope) {
+  const dialog = await openExport(page, "Single file");
+  await dialog.getByRole("combobox", { name: /^File format/ }).selectOption(format);
+  if (scope) await dialog.getByRole("combobox", { name: /^Export geometry/ }).selectOption(scope);
+  const name = format === "turnmill" ? "project" : format.toUpperCase();
+  const [file] = await Promise.all([
+    page.waitForEvent("download", { timeout: 240000 }),
+    button(dialog, "Download " + name).click(),
+  ]);
+  assert.equal(await file.failure(), null);
+  if (await dialog.isVisible()) await page.keyboard.press("Escape");
+  await dialog.waitFor({ state: "hidden" });
+  return file;
+}
+
 export const native = (s, file) =>
   download(
     s.page,
@@ -168,12 +190,7 @@ export async function stepExport(s, file) {
       localCenters: view.bodies.map((body) => body.center),
     }, null, 2));
   }
-  await button(s.page, "Export").click();
-  await download(
-    s.page,
-    () => s.page.getByRole("button", { name: /STEP solid/ }).click(),
-    join(s.dir, file + ".step"),
-  );
+  await (await singleFileDownload(s.page, "step")).saveAs(join(s.dir, file + ".step"));
 }
 export async function newProject(p, label) {
   await p.locator(".project-trigger").click();

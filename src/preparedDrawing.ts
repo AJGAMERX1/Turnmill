@@ -1,5 +1,5 @@
 import type { Shape3D } from "replicad";
-import { buildBodies, releaseBodies } from "./geometry";
+import { buildBodies, releaseBodies, type Body } from "./geometry";
 import {
   exteriorDrawing,
   partSection,
@@ -33,30 +33,40 @@ export type PreparedDrawing = {
   dispose: () => void;
 };
 
-function cosmeticThreads(f: EvaluatedFeature): EvaluatedFeature {
+export function cosmeticThreads(f: EvaluatedFeature): EvaluatedFeature {
   return {
     ...f,
-    finishes: f.finishes?.map(g => g.kind === "thread" ? { ...g, mode: "cosmetic" } : g),
-    merge: f.merge && { ...f.merge, features: f.merge.features.map(cosmeticThreads) },
+    finishes: f.finishes?.map((g) =>
+      g.kind === "thread" ? { ...g, mode: "cosmetic" } : g,
+    ),
+    merge: f.merge && {
+      ...f.merge,
+      features: f.merge.features.map(cosmeticThreads),
+    },
   };
 }
 
 /** Exact solids live in the drawing worker only as long as this source stays open. */
-export function prepareDrawing({
-  features,
-  joints,
-  values: numericValues,
-  parameters,
-  modeled,
-}: DrawingSource): PreparedDrawing {
+export function prepareDrawing(
+  {
+    features,
+    joints,
+    values: numericValues,
+    parameters,
+    modeled,
+  }: DrawingSource,
+  borrowed?: { exact: Body[]; simplified?: Body[] },
+): PreparedDrawing {
   const values = parameters ? resolveParameters(parameters) : numericValues;
   const simplified = !modeled && features.some(hasModeledThread);
-  const bodies = buildBodies(features);
+  const bodies = borrowed?.exact ?? buildBodies(features);
   const exact: Shape3D[] = [],
     display: Shape3D[] = [];
   const dispose = () => exact.splice(0).forEach((s) => s.delete());
   try {
-    const screen = simplified ? buildBodies(features.map(cosmeticThreads)) : undefined;
+    const screen = simplified
+      ? (borrowed?.simplified ?? buildBodies(features.map(cosmeticThreads)))
+      : undefined;
     try {
       if (!joints) {
         if (bodies.length !== 1)
@@ -102,13 +112,13 @@ export function prepareDrawing({
         dispose,
       };
     } finally {
-      if (screen) releaseBodies(screen);
+      if (screen && screen !== borrowed?.simplified) releaseBodies(screen);
     }
   } catch (e) {
     dispose();
     throw e;
   } finally {
     display.forEach((s) => s.delete());
-    releaseBodies(bodies);
+    if (!borrowed) releaseBodies(bodies);
   }
 }

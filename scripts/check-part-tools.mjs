@@ -367,6 +367,8 @@ try {
       [densities[1]],
     );
     near(selected.mass, expectedMasses[1], "Selected part mass");
+    near(selected.weightNewtons, expectedMasses[1] / 1000 * 9.80665, "Selected part weight in newtons");
+    near(measured.weightNewtons, mass / 1000 * 9.80665, "Combined weight in newtons");
     selected.center.forEach((v, i) =>
       near(v, centers[1][i], "Selected part balance " + i),
     );

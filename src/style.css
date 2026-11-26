@@ -203,7 +203,6 @@ button.primary:hover:not(:disabled) {
   background: #ffd398;
 }
 .file-menu-holder,
-.export-holder,
 .view-holder {
   position: relative;
 }
@@ -1385,20 +1384,6 @@ button.primary {
   color: #d8c09d;
   font-size: 12px;
 }
-.scope-field {
-  display: block;
-  font: 11px var(--mono);
-  color: #bcc7c1;
-  margin: 5px 3px 7px;
-}
-.scope-field select {
-  display: block;
-  width: 100%;
-  font:
-    13px -apple-system,
-    sans-serif;
-  margin-top: 5px;
-}
 .toolbar-hardware {
   display: flex;
   align-items: center;
@@ -1722,25 +1707,3 @@ button.primary {
 .refill-snap-note { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .refill-snap-panel .outline-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .refill-snap-panel summary { font-size: 12px; }
-
-.shop-intro {
-  margin: 0 0 14px;
-  color: var(--muted);
-}
-.shop-parts {
-  display: grid;
-  max-height: 49vh;
-  overflow-y: auto;
-  margin-bottom: 18px;
-}
-.shop-parts label {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 4px;
-  border-bottom: 1px solid var(--line);
-}
-.shop-parts input { width: 16px; height: 16px; accent-color: var(--gold); }
-.shop-parts small { display: block; margin-top: 3px; color: var(--muted); }

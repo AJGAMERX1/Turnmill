@@ -23,6 +23,7 @@ export function massProperties(
   densities: number[],
 ): {
   mass: number;
+  weightNewtons: number;
   center: [number, number, number] | null;
 } {
   let mass = 0;
@@ -33,9 +34,10 @@ export function massProperties(
     for (let axis = 0; axis < 3; axis++)
       moment[axis] += grams * body.center[axis];
   });
-  if (!mass) return { mass: 0, center: null };
+  if (!mass) return { mass: 0, weightNewtons: 0, center: null };
   return {
     mass,
+    weightNewtons: (mass / 1000) * 9.80665,
     center: [moment[0] / mass, moment[1] / mass, moment[2] / mass],
   };
 }

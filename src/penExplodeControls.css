@@ -1,0 +1,30 @@
+.pen-explode-controls,
+.pen-explode-gap {display:inline-flex;align-items:center;gap:6px}
+
+.pen-explode-controls {flex-wrap:wrap}
+.pen-explode-controls button {white-space:nowrap}
+.photo-tools .pen-explode-controls button[aria-pressed="true"] {
+  border-color:#9b7946;
+  background:#383024;
+  color:#f3c780;
+}
+
+.pen-explode-gap {
+  margin:0;
+  padding:3px 7px;
+  min-height:28px;
+  border-left:1px solid var(--line);
+  font-size:11px;
+  color:#c1cdca;
+  white-space:nowrap;
+}
+.pen-explode-gap input[type="range"] {width:66px;min-width:0;height:18px;margin:0;padding:0;accent-color:var(--gold)}
+.photo-tools .pen-explode-gap span {min-width:4.4ch;font:11px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+
+.pen-studio-area .photo-tools:has(.pen-explode-controls) {height:auto;min-height:44px;padding-block:6px}
+.pen-studio-area .photo-tools:has(.pen-explode-controls)>span {flex:none}
+.photo-actions:has(.pen-explode-controls) {flex:1;min-width:0;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:520px) {
+  .photo-actions:has(.pen-explode-controls) {justify-content:flex-start}
+  .pen-explode-gap input[type="range"] {width:54px}
+}

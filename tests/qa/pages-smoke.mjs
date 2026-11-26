@@ -6,8 +6,7 @@ import {
   newProject,
   profile,
   feature,
-  button,
-  download,
+  singleFileDownload,
 } from "../projects/support.mjs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -53,12 +52,7 @@ try {
     [20, 10],
   ]);
   await feature(p, "Extrude", "Pages gauge", "5 mm");
-  await button(p, "Export").click();
-  await download(
-    p,
-    () => p.getByRole("button", { name: /STEP solid/ }).click(),
-    folder + "/gauge.step",
-  );
+  await (await singleFileDownload(p, "step")).saveAs(folder + "/gauge.step");
   await captureViewport(p, folder + "/gauge.png");
   await p.evaluate(async () => {
     await navigator.serviceWorker.ready;

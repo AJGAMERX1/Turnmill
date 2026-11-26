@@ -55,7 +55,7 @@ function direction(
   return d;
 }
 
-function forbiddenRange(box: [XY, XY], obstacle: [XY, XY], v: XY, gap: number) {
+export function projectedCollisionInterval(box: [XY, XY], obstacle: [XY, XY], v: XY, gap: number) {
   let entry = -Infinity,
     exit = Infinity;
   for (const k of [0, 1]) {
@@ -114,7 +114,7 @@ export function explodeAssembly(
       offset.fromArray(basis.offset);
       const initial = shiftBounds(part.view.bounds, project(offset));
       const intervals = Array.from(placed.values())
-        .map((p) => forbiddenRange(initial, p.bounds, planar, gap))
+        .map((p) => projectedCollisionInterval(initial, p.bounds, planar, gap))
         .filter((r): r is number[] => r !== null)
         .sort((a, b) => a[0] - b[0]);
       let step = gap / Math.hypot(...planar);

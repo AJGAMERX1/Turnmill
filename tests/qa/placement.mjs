@@ -2,6 +2,7 @@ import { captureViewport } from "./capture.mjs";
 import { openBrowser, appUrl, measure } from "./browser.mjs";
 import { resolve, join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { singleFileDownload } from "../projects/support.mjs";
 import assert from "node:assert/strict";
 
 const fixture = resolve("test-evidence/ASM-001/two-blocks.turnmill");
@@ -21,12 +22,8 @@ try {
     await p.locator(".joint-stage .joint-message").waitFor({ state: "hidden" });
   }
   async function exportFiles(stem, scope) {
-    for (const [format, name] of [["step", /STEP solid/], ["stl", /STL mesh/], ["3mf", /3MF model/]]) {
-      await button("Export").click();
-      await p.getByLabel("Export geometry").selectOption(scope);
-      const next = p.waitForEvent("download");
-      await p.getByRole("button", { name }).click();
-      const file = await next;
+    for (const format of ["step", "stl", "3mf"]) {
+      const file = await singleFileDownload(p, format, scope);
       if (scope === "selected") assert.equal(file.suggestedFilename(), "Upper block." + format);
       await file.saveAs(join(dir, stem + "." + format));
     }

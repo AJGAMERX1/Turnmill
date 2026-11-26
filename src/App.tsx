@@ -31,9 +31,12 @@ import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./Cont
 import { buildPoses, type JointConfig } from "./kinematics";
 import { resolveThreadMates } from "./threadMates";
 import PenBench from "./PenBench";
+import PenExplodeControls from "./PenExplodeControls";
 import { appearanceForBody, bodyMaterialName } from "./metalAppearance";
 import RefillDialog from "./RefillDialog";
 import ShopExportDialog from "./ShopExportDialog";
+import { packageDownload, type SnapshotReader } from "./packageDownload";
+import { packageFilenameStem, singleExportFilename } from "./shopExport";
 import { isSleeveDonor, refillComponents, refillMassGrams } from "./refills";
 import { boltPenProject } from "./boltPen";
 import "./penBench.css";
@@ -236,7 +239,7 @@ export default function App() {
     [view, setView] = useState<View>("iso"),
     [fit, setFit] = useState(0);
   const [dialog, setDialog] = useState<DialogName>(null),
-    [menu, setMenu] = useState<"file" | "export" | "views" | null>(null),
+    [menu, setMenu] = useState<"file" | "views" | null>(null),
     [notice, setNotice] = useState("");
   const [mergeSession, setMergeSession] = useState<MergeSession>();
   useEffect(() => {
@@ -298,6 +301,9 @@ export default function App() {
   const treeVisible = compact ? compactTree : showTree;
   const toggleTree = compact ? setCompactTree : setShowTree;
   const liveAssembly = useRef<LiveAssembly | null>(null);
+  const readSolids = useRef<SnapshotReader | null>(null);
+  const pendingExport = useRef<{ id: number; finish: (error?: string) => void } | null>(null);
+  const exportSerial = useRef(0);
   const [exportScope, setExportScope] = useState("all");
   const [exportRequest, setExportRequest] = useState<ExportRequest | null>(
       null,
@@ -322,6 +328,8 @@ export default function App() {
   const scaleConfig = project.workspaces?.scale;
   const showcasing = mode === "Pen Studio";
   const [showInternals, setShowInternals] = useState(false);
+  const [explodeProject, setExplodeProject] = useState<string>();
+  const [explodeGap, setExplodeGap] = useState(10);
   const writingCheck = useRef<import("./writingFitJob").WritingRequest | null>(null);
   const savePhoto = useRef<(() => Promise<Blob>) | null>(null);
   const modeledScale =
@@ -466,6 +474,8 @@ export default function App() {
       return { matrices: buildPoses(ids, joints, project.workspaces?.jointPose ?? {}, model.values) };
     } catch (e) { return { error: (e as Error).message }; }
   }, [showcasing, modelCurrent, model, modelSignature, kernel.builtSignature, kernel.threadFrames, project.workspaces?.joints, project.workspaces?.jointPose]);
+  const canExplode = !!studioPose.matrices && solidFeatures.length > 1;
+  const exploded = canExplode && explodeProject === project.id;
   const arranged = useMemo(() => allPartsMatrices(project, model.features.filter(f => f.operation === "new").map(f => f.id)),
     [model.features, project.workspaces?.allPartsPose]);
   const displayedPose = showcasing ? studioPose.matrices : mode === "Part" && !activePart ? arranged : undefined;
@@ -476,7 +486,7 @@ export default function App() {
   async function downloadPhoto() {
     try {
       if (!savePhoto.current) throw Error("The studio render is still opening.");
-      downloadFile(project.name.replace(/[/\\:*?"<>|]/g, "-") + ".png", await savePhoto.current());
+      downloadFile(project.name.replace(/[/\\:*?"<>|]/g, "-") + (exploded ? " - exploded.png" : ".png"), await savePhoto.current());
     } catch (e) { setNotice((e as Error).message); }
   }
   const measuringSingle =
@@ -560,6 +570,8 @@ export default function App() {
     commit(p);
     setPartSelection(undefined);
     setShowInternals(false);
+    setExplodeProject(undefined);
+    setExplodeGap(10);
     const nextGuide = penGuide(p);
     setMode(
       nextGuide && !nextGuide.paused ? guideMode(nextGuide.stage) : "Part",
@@ -876,40 +888,41 @@ export default function App() {
   }
   const save = () => {
     downloadFile(
-      project.name + ".turnmill",
+      singleExportFilename(project.name, "turnmill"),
       new Blob([JSON.stringify(project, null, 2)], {
         type: "application/json",
       }),
     );
     setMenu(null);
   };
-  function exportPartId() {
-    if (exportScope.startsWith("part:")) return exportScope.slice(5);
+  function exportPartId(scope: string) {
+    if (scope.startsWith("part:")) return scope.slice(5);
     if (solidFeatures.length === 1) return solidFeatures[0].id;
-    if (exportScope === "selected") return (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
+    if (scope === "selected") return (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
   }
-  const runExport = (format: "step" | "stl" | "3mf") => {
+  async function exportSingle(format: "step" | "stl" | "3mf" | "turnmill", scope: string) {
     setMenu(null);
-    if (!canExport) {
-      setNotice("Rebuild a valid solid before exporting.");
-      return;
-    }
+    if (format === "turnmill") { save(); return; }
+    if (pendingExport.current) throw Error("A file is already exporting.");
+    if (!valid) throw Error("Rebuild a valid solid before exporting.");
     const inAssembly = mode === "Assembly";
     const live = inAssembly ? liveAssembly.current : null;
-    const id = exportPartId();
+    const id = exportPartId(scope);
     const i = solidFeatures.findIndex((f) => f.id === id);
-    const single = (activePart && solidFeatures.length === 1) || exportScope.startsWith("part:") || (exportScope === "selected" && solidFeatures.length > 1);
+    const single = scope.startsWith("part:") || scope === "selected";
     if (single && i < 0) {
-      setNotice("Select the component you want to export.");
-      return;
+      throw Error("Select the component you want to export.");
     }
-    if (!single && showcasing && studioPose.error) { setNotice(studioPose.error); return; }
+    if (!single && showcasing && studioPose.error) throw Error(studioPose.error);
     if (!single && live?.problem) {
-      setNotice(live.problem);
-      return;
+      throw Error(live.problem);
     }
+    const jobId = ++exportSerial.current;
+    const done = new Promise<void>((resolve, reject) => {
+      pendingExport.current = { id: jobId, finish: error => error ? reject(Error(error)) : resolve() };
+    });
     setExportRequest({
-      id: Date.now(),
+      id: jobId,
       format,
       bodyIndex: single ? i : undefined,
       bodyId: single ? id : undefined,
@@ -921,7 +934,20 @@ export default function App() {
         parameters: project.parameters,
       } : !single && mode === "Part" && arranged ? { ids: solidFeatures.map(f => f.id), matrices: arranged } : undefined,
     });
-  };
+    return done;
+  }
+  function runExport(format: "step" | "stl" | "3mf") {
+    void exportSingle(format, exportScope).catch(error => setNotice(error.message));
+  }
+  function openPartDrawing(id: string) {
+    if (!solidFeatures.some(f => f.id === id)) return;
+    const current = project.workspaces?.drawing;
+    if (current?.feature !== id || current?.scope !== "finished")
+      commit({ ...project, workspaces: { ...project.workspaces, drawing: { ...current,
+        sources: drawingSources(current ?? {}, solidFeatures[0]?.id), feature: id, scope: "finished" } } });
+    setDialog(null);
+    switchMode("Drawing");
+  }
   function startGuide() {
     changeP(guidedPen());
     setInspect(true);
@@ -1192,7 +1218,7 @@ export default function App() {
       title: "CNC shop package",
       group: "Export",
       shortcut: "Alt P",
-      keywords: "download ZIP separate STEP files parts manufacturing machining CNC",
+      keywords: "export download ZIP STEP 3MF PDF drawings 3D printing slicer manufacturing machining CNC",
       run: () => { setMenu(null); setDialog("shop-export"); },
       disabled: !valid || !solidFeatures.length,
     },
@@ -1469,76 +1495,9 @@ export default function App() {
           {iconButton("Redo", Redo2, () => step(1), !canRedo)}
         </div>
         {cmds}
-        <div
-          className="export-holder"
-          ref={(el) => {
-            if (menu === "export") menuRef.current = el;
-          }}
-        >
-          <button
-            className="export-btn"
-            onClick={() => setMenu(menu === "export" ? null : "export")}
-          >
-            <ArrowDownToLine size={15} />
-            Export
-            <ChevronDown size={14} />
-          </button>
-          {menu === "export" && (
-            <div className="dropdown align-right">
-              {solidFeatures.length > 1 && (
-                <label className="scope-field">
-                  Export geometry
-                  <select
-                    aria-label="Export geometry"
-                    value={exportScope}
-                    onChange={(e) =>
-                      setExportScope(e.target.value as typeof exportScope)
-                    }
-                  >
-                    <option value="all">{(mode === "Assembly" || showcasing) ? "Assembly at current pose" : "All bodies"}</option>
-                    <option value="selected">Selected body (local coordinates)</option>
-                    <optgroup label="Individual parts in local coordinates">
-                      {solidFeatures.map((f, i) => <option key={f.id} value={"part:" + f.id}>
-                        {f.name}{solidFeatures.filter(other => other.name === f.name).length > 1 ? " · " + (i + 1) : ""}
-                      </option>)}
-                    </optgroup>
-                  </select>
-                </label>
-              )}
-              {menuItem(
-                "STEP solid",
-                Box,
-                () => runExport("step"),
-                ".step",
-                !canExport,
-              )}
-              {menuItem(
-                "STL mesh",
-                Layers3,
-                () => runExport("stl"),
-                ".stl",
-                !canExport,
-              )}
-              {menuItem(
-                "3MF model",
-                Box,
-                () => runExport("3mf"),
-                ".3mf",
-                !canExport,
-              )}
-              {exportPartId() && menuItem("Open part drawing", FileText, () => {
-                const id = exportPartId();
-                if (!solidFeatures.some(f => f.id === id)) return;
-                const current = project.workspaces?.drawing;
-                if (current?.feature !== id || current?.scope !== "finished")
-                  commit({ ...project, workspaces: { ...project.workspaces, drawing: { ...current, sources: drawingSources(current ?? {}, solidFeatures[0]?.id), feature: id, scope: "finished" } } });
-                switchMode("Drawing");
-              }, "PDF", !canExport)}
-              {menuItem("CNC shop package", Boxes, () => { setMenu(null); setDialog("shop-export"); }, ".zip", !valid || !solidFeatures.length)}
-              {menuItem("Native project", Save, save, ".turnmill")}
-            </div>
-          )}
-        </div>
+        <button className="export-btn" aria-haspopup="dialog" onClick={() => { setMenu(null); setDialog("shop-export"); }}>
+          <ArrowDownToLine size={15}/> Export
+        </button>
       </header>
       <div className="workspace-bar">
         <nav className="mode-tabs" aria-label="Workspaces">
@@ -1757,6 +1716,9 @@ export default function App() {
             <div className="photo-actions">
               <button onClick={openAppearance} disabled={!hasFinishablePart}><Palette size={15}/> Appearance</button>
               <button className="slim-tool" onClick={openSlimPen} title="Slim pen (Alt+L)"><Ruler size={15}/> Slim pen</button>
+              <PenExplodeControls exploded={exploded} gap={explodeGap} onGapChange={setExplodeGap}
+                onToggle={() => setExplodeProject(exploded ? undefined : project.id)} disabled={!canExplode}
+                disabledReason={solidFeatures.length < 2 ? "Add a second part to use exploded view." : "Wait for the assembly to finish rebuilding."}/>
               <button disabled={!valid || !!studioPose.error} onClick={downloadPhoto}><Camera size={15}/> Save PNG</button>
             </div></div> : <div className="model-tools">
             {!treeVisible &&
@@ -1810,9 +1772,14 @@ export default function App() {
               gripBodyId={gripBodyId} gripFeatureId={gripTarget?.featureId}
               gripBeforeFinishId={gripTarget?.beforeFinishId} gripPriorFinishes={gripTarget?.priorFinishes}
               photoMode={showcasing} placements={placementsById} ghostIds={ghostIds} savePhoto={savePhoto} writingCheck={writingCheck}
+              explosion={exploded ? { project, gap: explodeGap } : undefined}
               donorFinishes={donorFinishes}
               fitToken={fit}
-              exportRequest={exportRequest}
+              exportRequest={exportRequest} readSolids={readSolids}
+              onExportResult={(id, error) => {
+                const job = pendingExport.current;
+                if (job?.id === id) { pendingExport.current = null; job.finish(error); }
+              }}
               onStatus={setKernel}
               takeFinishBody={() => {
                 const checked = checkedSolids.current;
@@ -2156,7 +2123,11 @@ export default function App() {
                 <dl>
                   <div>
                     <dt>Mass</dt>
-                    <dd>{measured.center ? number(measured.mass) : "—"} g</dd>
+                    <dd>{measured.center ? number(measured.mass) + " g" : "—"}</dd>
+                  </div>
+                  <div>
+                    <dt title="At standard gravity (9.80665 m/s²)">Weight on Earth</dt>
+                    <dd>{measured.center ? number(measured.weightNewtons, 3) + " N" : "—"}</dd>
                   </div>
                   <div>
                     <dt>Balance along X</dt>
@@ -2435,11 +2406,14 @@ export default function App() {
         if (mode === "Drawing") switchMode("Part");
       }} />}
       {dialog === "shop-export" && <ShopExportDialog project={project} features={model.features} ready={valid}
-        onClose={close} onExport={parts => {
-          if (!valid || !parts.length) return;
-          setExportRequest({ id: Date.now(), name: project.name + " - CNC", format: "zip",
-            shop: { projectName: project.name, parts } });
-          close();
+        exportScope={exportScope} onScopeChange={setExportScope}
+        assemblyView={mode === "Assembly" || showcasing} selectedBodyId={(mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId}
+        onClose={close} onSingle={exportSingle} onOpenDrawing={openPartDrawing}
+        onExport={async (request, progress, signal) => {
+          if (!valid || !readSolids.current) throw Error("Wait for the model to finish rebuilding.");
+          const blob = await packageDownload(project, model.features, request, readSolids.current, progress, signal);
+          signal.throwIfAborted();
+          downloadFile(packageFilenameStem(request.name) + ".zip", blob);
         }}/>}
       {dialog === "import" && (
         <ExchangeDialog
@@ -2682,7 +2656,7 @@ export default function App() {
                     "In the Inspector, set Barrel length, Outside diameter, and Bore diameter. Try 1/2 in for the outside diameter. Press Enter to rebuild.",
                     "Choose Edit sketch to inspect the half-section. Coordinate fields can refer to named parameters. Finish the sketch, then orbit the model to check the result.",
                     "Choose the metal in Physical properties. The mass and balance position use the rebuilt solid and the displayed density.",
-                    "Choose Export → STEP solid. Open it in your CAM software and measure the bore before setting up the part.",
+                    "Choose Export → Single file → STEP solid, then Download STEP. Open it in CAM and measure the bore before setting up the part.",
                   ][helpStep]
                 }
               </p>

@@ -38,7 +38,7 @@ export default function PenBench({ project, commit, writingCheck, solidFeatures,
   onRefill, onThreads, onProject, onAssembly, onParameters, showInternals, setShowInternals }: Props) {
   const [warning, setWarning] = useState("");
   const mounted = properties && matrices ? positionedProperties(properties, matrices) : [];
-  const { mass, center } = massProperties(mounted, densities);
+  const { mass, weightNewtons, center } = massProperties(mounted, densities);
   const grip = String(project.workspaces?.gripStation ?? "30 mm");
   const bolt = project.workspaces?.boltPen;
   const preset = bolt ? ["grip_diameter", "pocket_recess", "tip_projection", "guide_clearance"]
@@ -90,6 +90,7 @@ export default function PenBench({ project, commit, writingCheck, solidFeatures,
       <button className="bench-text" onClick={onParameters}><SlidersHorizontal size={14}/> All parameters</button>
     </section>
     <section><h3>Balance</h3><dl><div><dt>Modeled mass</dt><dd>{center ? Number(mass.toFixed(2)) + " g" : "—"}</dd></div>
+      <div><dt title="At standard gravity (9.80665 m/s²)">Weight on Earth</dt><dd>{center ? Number(weightNewtons.toFixed(3)) + " N" : "—"}</dd></div>
       <div><dt>Balance along X</dt><dd>{center ? mm(center[0]) : "—"}</dd></div></dl>
       <label>Grip station<InputValue label="Grip station" value={grip} onCommit={(value) => {
         try { evaluate(value, resolveParameters(project.parameters)); commit({ ...project, workspaces: { ...project.workspaces, gripStation: value } }); setWarning(""); }

@@ -3,8 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDrawingProjection } from "./useDrawingProjection";
 import { Download, FileText, Printer, Plus, X } from "lucide-react";
 import type { JointConfig } from "./kinematics";
-import { assemblySheets } from "./secondaryAssemblySheet";
-import { evaluate } from "./expressions";
 import { hasModeledThread } from "./finishingTypes";
 import {
   changeWorkspace,
@@ -19,45 +17,30 @@ import {
   TextField,
   type WorkspaceProps,
 } from "./secondaryVector";
-import {
-  makeDrawing,
-  type DrawingData,
-  type Measure,
-} from "./secondaryDrawing";
-import {
-  manufacturingSheets,
-  surfaceKey,
-  type TechSheet,
-  type SheetOptions,
-} from "./secondaryManufacturing";
-import type { SectionAxis } from "./secondaryProjection";
+import type { Measure } from "./secondaryDrawing";
+import { surfaceKey, type TechSheet } from "./secondaryManufacturing";
 import SectionPlane from "./SectionPlane";
 import DownloadDrawingPdf from "./DownloadDrawingPdf";
 import ExplosionControls from "./ExplosionControls";
-import { assemblyParts } from "./AssemblyBom";
 import FinishedDimensionDialog, {
   type ViewSnaps,
 } from "./FinishedDimensionDialog";
 import { Modal } from "./Dialogs";
+import { type DrawingSheetSettings } from "./drawingSheetSettings";
 import {
-  drawingSources,
-  partSheetKey,
-  type DrawingSheetSettings,
-} from "./drawingSheetSettings";
-import {
-  dimensionSnaps,
-  sectionSnaps,
-  type DimensionGeometry,
-  formatDrawingLength,
-  formatTolerance,
   dimensionSheetName,
   measureDimension,
-  orthographic,
   viewName,
-  type FinishedDimension,
 } from "./drawingDimensions";
 
-const noDimensions: FinishedDimension[] = [];
+import {
+  drawingBody,
+  drawingDefinition,
+  drawingDetailWidth,
+  drawingDimensionViews,
+  drawingSnaps,
+  linkedDrawingSheets,
+} from "./linkedDrawing";
 const emptySnaps: ViewSnaps = { front: [], top: [], right: [], section: [] };
 const noJoints: JointConfig = {};
 export default function Drawing(
@@ -73,30 +56,30 @@ export default function Drawing(
   const chosen = cfg.feature
     ? features.find((f) => f.id === cfg.feature)
     : features[0];
-  const start = props.features.findIndex((f) => f.id === chosen?.id);
-  const following = props.features
-    .slice(start + 1)
-    .findIndex((f) => f.operation === "new");
   const body = useMemo(
-    () =>
-      start >= 0
-        ? props.features.slice(
-            start,
-            following >= 0 ? start + 1 + following : undefined,
-          )
-        : [],
-    [props.features, start, following],
+    () => drawingBody(props.features, chosen?.id),
+    [props.features, chosen?.id],
   );
-  const assembly = scope === "assembly";
-  const annotations =
-    (assembly
-      ? cfg.assemblyAnnotations
-      : cfg.annotations?.[chosen?.id || ""]) || {};
-  const hasSection =
-    scope === "finished" || (assembly && !!annotations.sectionEnabled);
+  const definition = useMemo(
+    () => drawingDefinition(props.project, props.features, scope, chosen),
+    [props.project, props.features, scope, chosen],
+  );
+  const {
+    assembly,
+    annotations,
+    hasSection,
+    savedDims,
+    sectionAxis,
+    sectionOffset,
+    blocks,
+    blockKey,
+    block,
+    data,
+    keys,
+  } = definition;
+  const { title, measures } = data;
+  const scaleChoice = block.scale;
   const source = assembly ? props.features : body;
-  const savedDims: FinishedDimension[] =
-    annotations.finishedDimensions || noDimensions;
   const [editingDimension, editDimension] = useState<string | null>(null);
   const [wantedPage, wantPage] = useState("");
   const exactDrawing =
@@ -104,12 +87,6 @@ export default function Drawing(
     (!!editingDimension || savedDims.length > 0) &&
     source.some(hasModeledThread);
   const modeled = cfg.modeled === true || exactDrawing;
-  const sectionAxis: SectionAxis = hasSection
-    ? annotations.sectionAxis || "Y"
-    : "Y";
-  const sectionOffset: string = hasSection
-    ? annotations.sectionOffset || "0 mm"
-    : "0 mm";
   const joints: JointConfig = props.project.workspaces?.joints || noJoints;
   const drawingJoints = assembly ? joints : undefined;
   const drawingSource = useMemo(
@@ -123,7 +100,15 @@ export default function Drawing(
             modeled,
           }
         : null,
-    [props.rebuilding, scope, source, drawingJoints, props.values, props.project.parameters, modeled],
+    [
+      props.rebuilding,
+      scope,
+      source,
+      drawingJoints,
+      props.values,
+      props.project.parameters,
+      modeled,
+    ],
   );
   const projected = useDrawingProjection(
     drawingSource,
@@ -131,10 +116,6 @@ export default function Drawing(
     sectionAxis,
     sectionOffset,
   );
-  const blocks = drawingSources(cfg, features[0]?.id);
-  const blockKey =
-    scope === "assembly" ? "assembly" : partSheetKey(chosen?.id || "");
-  const block = blocks[blockKey] || {};
   const patch = (v: Record<string, unknown>) =>
     changeWorkspace(props, "drawing", {
       ...(!cfg.sources ? { sources: blocks } : {}),
@@ -144,56 +125,36 @@ export default function Drawing(
     patch({ sources: { ...blocks, [blockKey]: { ...block, ...fields } } });
   const result = projected?.result,
     home = projected?.assembly;
-  const dimensionViews = useMemo<DimensionGeometry | undefined>(
-    () =>
-      result?.views ||
-      (home ? { ...home.views, section: home.section?.view } : undefined),
-    [result, home],
+  const dimensionViews = useMemo(
+    () => drawingDimensionViews(projected),
+    [projected],
   );
-  const cutBounds = dimensionViews?.section?.bounds;
-  const defaultDetailWidth =
-    cutBounds && cutBounds[1][0] > cutBounds[0][0]
-      ? formatDrawingLength((cutBounds[1][0] - cutBounds[0][0]) / 4) + " mm"
-      : "8 mm";
+  const defaultDetailWidth = drawingDetailWidth(dimensionViews);
   const snapNeeded = !!editingDimension || savedDims.length > 0;
-  const snaps = useMemo<ViewSnaps>(() => {
-    if (!dimensionViews || !snapNeeded) return emptySnaps;
-    const entries = orthographic.map(
-      (view) =>
-        [
-          view,
-          dimensionSnaps(
-            view,
-            dimensionViews[view],
-            body,
+  const snaps = useMemo<ViewSnaps>(
+    () =>
+      snapNeeded
+        ? drawingSnaps(
+            dimensionViews,
             props.project,
-            !assembly,
-          ),
-        ] as const,
-    );
-    return {
-      ...Object.fromEntries(entries),
-      section: dimensionViews.section
-        ? sectionSnaps(
-            dimensionViews.section,
+            body,
+            assembly,
             sectionAxis,
             result?.sectionOffset ?? home?.section?.offset ?? 0,
-            props.project,
-            assembly,
           )
-        : [],
-    } as ViewSnaps;
-  }, [
-    dimensionViews,
-    snapNeeded,
-    body,
-    props.project.features,
-    props.project.sketches,
-    assembly,
-    sectionAxis,
-    result?.sectionOffset,
-    home?.section?.offset,
-  ]);
+        : emptySnaps,
+    [
+      dimensionViews,
+      snapNeeded,
+      body,
+      props.project.features,
+      props.project.sketches,
+      assembly,
+      sectionAxis,
+      result?.sectionOffset,
+      home?.section?.offset,
+    ],
+  );
   const setAnnotation = (fields: Record<string, unknown>) => {
     if (assembly) patch({ assemblyAnnotations: { ...annotations, ...fields } });
     else if (chosen)
@@ -237,184 +198,30 @@ export default function Drawing(
       </select>
     </label>
   );
-  const modelFeature = props.project.features.find((f) => f.id === chosen?.id);
-  const sketch = props.project.sketches.find(
-    (s) => s.id === modelFeature?.sketchId,
-  );
-  const keys = sketch?.points.map((p) => JSON.stringify([p.x, p.y])) || [];
-  const measures: Measure[] = cfg.measures?.[chosen?.id || ""] || [];
-  const stale = measures.some(
-    (m) => keys[m.a] !== m.keyA || keys[m.b] !== m.keyB,
-  );
   const setMeasures = (items: Measure[]) => {
     if (chosen) patch({ measures: { ...cfg.measures, [chosen.id]: items } });
   };
-  const title =
-    block.title ??
-    (scope === "assembly"
-      ? props.project.name
-      : features.length > 1
-        ? chosen?.name
-        : props.project.name) ??
-    props.project.name;
-  const scaleChoice = block.scale;
-  const bom = useMemo(
-    () => assemblyParts(props.project, props.features),
-    [props.project, props.features],
-  );
-  const partRow = bom.find((row) => row.bodyId === chosen?.id);
-  const data: DrawingData = {
-    title,
-    number:
-      block.number ??
-      (scope === "assembly"
-        ? "TM-A01"
-        : "TM-" + String(partRow?.item || 1).padStart(3, "0")),
-    revision: block.revision ?? "A",
-    material:
-      block.material ?? (scope !== "assembly" ? (partRow?.material ?? "") : ""),
-    note: block.note ?? "",
-    dimensions: cfg.dimensions !== false,
-    hatch: cfg.hatch !== false,
-    scale: scaleChoice && scaleChoice !== "auto" ? Number(scaleChoice) : "auto",
-    measures,
-  };
   const { sheets, scale, err } = useMemo(() => {
-    let sheets: TechSheet[] = [],
-      scale = 1,
-      err = "";
     try {
       if (props.rebuilding) throw Error("Rebuilding the source geometry…");
-      if (!chosen && scope !== "assembly")
-        throw Error(
-          cfg.feature
-            ? "The linked body was removed or suppressed. Choose an available source."
-            : "Create or import a solid body to generate a linked drawing.",
-        );
-      if (assembly && !features.length)
-        throw Error(
-          "Create or import at least one solid body to draw an assembly.",
-        );
-      if (scope !== "profile" && !projected?.result && !projected?.assembly) {
-        throw Error(
-          projected?.error ||
-            (assembly
-              ? "Projecting the assembled components…"
-              : "Projecting the finished solid…"),
-        );
-      }
-      const tol =
-        scope !== "profile" && block.tolerance
-          ? evaluate(block.tolerance, props.values)
-          : 0;
-      if (tol < 0)
-        throw Error("Use a nonnegative general tolerance, or clear the field.");
-      const options: SheetOptions = {
-        manualDimensions: (scope === "profile" ? noDimensions : savedDims).map(
-          (d, i) => {
-            try {
-              if (d.view === "section" && !dimensionViews?.section)
-                throw Error(
-                  "Enable the assembly section or edit this dimension and choose another view.",
-                );
-              return measureDimension(d, snaps[d.view] || [], props.values);
-            } catch (e) {
-              throw Error(
-                "Dimension " +
-                  (i + 1) +
-                  " · " +
-                  viewName(d.view) +
-                  ". " +
-                  (e as Error).message,
-              );
-            }
-          },
-        ),
-      };
-      if (hasSection && block.detail)
-        options.detail = {
-          end: block.detailEnd === "start" ? "start" : "end",
-          width: evaluate(
-            String(block.detailWidth ?? defaultDetailWidth),
-            props.values,
-          ),
-        };
-      if (scope === "assembly") {
-        if (projected?.error) throw Error(projected.error);
-        if (!projected?.assembly)
-          throw Error("Projecting the assembled components…");
-        sheets = assemblySheets(projected.assembly, data, bom, {
-          manualDimensions: options.manualDimensions,
-          tolerance: tol > 0 ? formatTolerance(tol) : "",
-          detail: options.detail,
-          section: projected.assembly.section,
-          axis: cfg.explodeAxis || "joints",
-          gap: cfg.explodeGap
-            ? evaluate(cfg.explodeGap, props.values)
-            : undefined,
-        });
-      } else if (scope === "finished") {
-        if (projected?.error) throw Error(projected.error);
-        if (!projected?.result) throw Error("Projecting the finished solid…");
-        if (annotations.form)
-          options.form = {
-            kind:
-              annotations.formKind === "straightness"
-                ? "straightness"
-                : "roundness",
-            key: annotations.formKey || "",
-            value: evaluate(
-              String(annotations.formValue ?? "0.01 mm"),
-              props.values,
-            ),
-          };
-        if (annotations.datum)
-          options.datum = {
-            key: annotations.datumKey || "",
-            letter: annotations.letter || "A",
-          };
-        ({ sheets, scale } = manufacturingSheets(
-          projected.result,
-          data,
+      return {
+        ...linkedDrawingSheets(
+          definition,
           body,
-          tol > 0 ? formatTolerance(tol) : "",
-          options,
-        ));
-      } else {
-        if (!chosen) throw Error("Select a source body.");
-        if (chosen.kind === "import")
-          throw Error(
-            "This imported body has no editable base profile. Select Finished body to draw it.",
-          );
-        if (stale)
-          throw Error(
-            "A dimension references an edited or missing sketch point. Remove that dimension and select its endpoints again.",
-          );
-        const result = makeDrawing(chosen, data);
-        scale = result.scale;
-        sheets = [{ label: "Base feature", sheet: result.sheet }];
-      }
-    } catch (e) {
-      err = (e as Error).message;
+          props.values,
+          projected,
+          snaps,
+        ),
+        err: "",
+      };
+    } catch (error) {
+      return {
+        sheets: [] as TechSheet[],
+        scale: 1,
+        err: (error as Error).message,
+      };
     }
-    return { sheets, scale, err };
-  }, [
-    props.project,
-    props.features,
-    props.values,
-    props.rebuilding,
-    scope,
-    body,
-    chosen,
-    projected,
-    snaps,
-    savedDims,
-    hasSection,
-    defaultDetailWidth,
-    stale,
-    bom,
-    title,
-  ]);
+  }, [definition, body, props.values, props.rebuilding, projected, snaps]);
   const currentDocument = useRef<typeof props.project | null>(props.project);
   currentDocument.current = props.project;
   useEffect(
@@ -640,19 +447,18 @@ export default function Drawing(
             Section hatching
           </label>
         )}
-        {scope !== "profile" &&
-          source.some(hasModeledThread) && (
-            <label className="tm-check">
-              <input
-                type="checkbox"
-                disabled={exactDrawing}
-                checked={modeled}
-                onChange={(e) => patch({ modeled: e.target.checked })}
-              />
-              Show modeled flanks in exterior views
-              {exactDrawing ? " (used by linked dimensions)" : ""}
-            </label>
-          )}
+        {scope !== "profile" && source.some(hasModeledThread) && (
+          <label className="tm-check">
+            <input
+              type="checkbox"
+              disabled={exactDrawing}
+              checked={modeled}
+              onChange={(e) => patch({ modeled: e.target.checked })}
+            />
+            Show modeled flanks in exterior views
+            {exactDrawing ? " (used by linked dimensions)" : ""}
+          </label>
+        )}
         {scope !== "profile" && (
           <NumberField
             title="General linear tolerance (±)"

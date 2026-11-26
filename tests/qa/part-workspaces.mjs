@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { openBrowser, appUrl } from "./browser.mjs";
-import { button, download, ready, saved } from "../projects/support.mjs";
+import { button, ready, saved, singleFileDownload } from "../projects/support.mjs";
 
 const output = resolve(process.env.QA_PART_WORKSPACES_OUT || "test-evidence/part-workspaces");
 await mkdir(output, { recursive: true });
@@ -25,8 +25,7 @@ try {
   const dialog = (name) => page.getByRole("dialog", { name, exact: true });
   const row = (name) => page.locator(".tree-item").filter({ has: page.getByText(name, { exact: true }) });
   async function step(filename) {
-    await button(page, "Export").click();
-    await download(page, () => page.getByRole("button", { name: /STEP solid/ }).click(), join(output, filename + ".step"));
+    await (await singleFileDownload(page, "step")).saveAs(join(output, filename + ".step"));
   }
   async function edit(key, value) {
     await field(key).fill(value);

@@ -1,3 +1,4 @@
+import { penStudioIsoDirection } from "./penExplode";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -184,7 +185,7 @@ export function createStudio(
     const target = bounds.getCenter(new THREE.Vector3());
     const diagonal = Math.max(bounds.min.distanceTo(bounds.max), 1e-3);
     const directions = {
-      iso: productView ? [-0.92, -1.63, 1.02] : [1.13, -1.63, 1.02],
+      iso: productView ? penStudioIsoDirection : [1.13, -1.63, 1.02],
       front: [0, -1, 0],
       top: [0, -0.000001, 1],
       side: [1, 0, 0],
@@ -469,6 +470,29 @@ export function createStudio(
   orient(view);
   return {
     updateMeshes,
+    rememberFraming() {
+      const savedView = view, width = fittedWidth, height = fittedHeight;
+      const geometry = instances.map(instance => instance.body);
+      const position = camera.position.clone(), target = controls.target.clone();
+      const { near, far, zoom } = camera;
+      return () => {
+        if (view !== savedView || geometry.length !== instances.length || instances.some((instance, i) => instance.body !== geometry[i])) return;
+        fittedWidth = width; fittedHeight = height;
+        camera.position.copy(position);
+        controls.target.copy(target);
+        camera.near = near; camera.far = far; camera.zoom = zoom;
+        camera.lookAt(target);
+        updateProjection();
+        if (!controls.update()) render();
+      };
+    },
+    localBounds() {
+      return instances.map(({ mesh }) => {
+        const geometry = mesh.geometry;
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
+        return geometry.boundingBox!;
+      });
+    },
     setProductView(enabled: boolean, ghosts: boolean[], donors: (DonorFinish | undefined)[] = []) {
       productView = enabled;
       if (grid) grid.visible = !enabled;
@@ -542,7 +566,7 @@ export function createStudio(
         down: new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(-stepY),
       };
     },
-    setTransforms(matrices: number[][], reframe = false) {
+    setTransforms(matrices: number[][], reframe = false, preserveOrientation = false) {
       for (const object of group.children) {
         const matrix = matrices[object.userData.instanceIndex];
         if (!matrix) continue;
@@ -555,7 +579,7 @@ export function createStudio(
         object.updateMatrixWorld(true);
       }
       box = new THREE.Box3().setFromObject(group);
-      if (reframe) orient(view);
+      if (reframe) orient(view, preserveOrientation);
       else render();
     },
     setView: (next: View) => orient(next),

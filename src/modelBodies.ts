@@ -26,7 +26,7 @@ export interface MeshChange {
   mesh: RenderBody;
 }
 
-function bodyHistories(features: EvaluatedFeature[]): EvaluatedFeature[][] {
+export function bodyHistories(features: EvaluatedFeature[]): EvaluatedFeature[][] {
   const histories: EvaluatedFeature[][] = [];
   for (const feature of features) {
     if (feature.operation === "new") histories.push([]);

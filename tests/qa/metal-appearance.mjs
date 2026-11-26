@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { strFromU8, unzipSync } from "three/examples/jsm/libs/fflate.module.js";
 import { boxSketch, feature, project } from "../systems/runtime.mjs";
-import { button, field, ready, saved } from "../projects/support.mjs";
+import { button, field, openExport, ready, saved } from "../projects/support.mjs";
 import { appUrl, openBrowser } from "./browser.mjs";
 
 const tube = boxSketch("profile-one", 0, 2, 45, 5);
@@ -88,13 +88,15 @@ try {
   await active.selectOption("cap");
   await selected("Lathe-turned");
 
-  await button(page, "Export").click();
-  await page.getByRole("button", {name: /CNC shop package/}).click();
-  const dialog = page.getByRole("dialog", { name: "CNC shop package" });
-  const archive = unzipSync(await fileFrom(dialog.getByRole("button", {name: /Download ZIP \(2\)/})));
+  const dialog = await openExport(page);
+  const archive = unzipSync(await fileFrom(button(dialog, "Download ZIP")));
+  await page.keyboard.press("Escape");
   const manifest = strFromU8(archive["Shop manifest.txt"]);
-  assert.match(manifest, /Custom tube \| Qty 1 \| Aluminum[^\n]*\n  Surface appearance reference · Brushed · Custom anodizing \(sRGB #389FAE\)/);
-  assert.match(manifest, /End button \| Qty 1 \| Titanium[^\n]*\n  Surface appearance reference · Lathe-turned/);
+  const items = manifest.split(/(?=^Item \d)/m);
+  const tubeEntry = items.find(entry => entry.includes("Custom tube | Qty 1 | Aluminum"));
+  const capEntry = items.find(entry => entry.includes("End button | Qty 1 | Titanium"));
+  assert(tubeEntry?.includes("Surface appearance reference · Brushed · Custom anodizing (sRGB #389FAE)"));
+  assert(capEntry?.includes("Surface appearance reference · Lathe-turned"));
   await page.locator(".project-trigger").click();
   await page.getByRole("button", {name: /Import CAD file/}).click();
   const insert = page.getByRole("dialog", {name: "Import geometry"});

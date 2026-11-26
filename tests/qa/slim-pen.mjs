@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { unzipSync } from "three/examples/jsm/libs/fflate.module.js";
 import { boxSketch, feature, geometry, near, runtime } from "../systems/runtime.mjs";
-import { button, field, ready, saved } from "../projects/support.mjs";
+import { button, field, openExport, ready, saved } from "../projects/support.mjs";
 import { appUrl, openBrowser } from "./browser.mjs";
 import { barrelId, cappedPen, refillId } from "./fixtures/capped-pen.mjs";
 
@@ -71,14 +71,17 @@ async function inspect(api, doc, fixture) {
 }
 
 async function exportAndReadSteps(page, api, parts) {
-  await button(page, "Export").click();
-  await page.getByRole("button", { name: /CNC shop package/ }).click();
-  const dialog = page.getByRole("dialog", { name: "CNC shop package" });
+  const dialog = await openExport(page);
+  await button(dialog, "Machined only").click();
+  for (const name of ["3MF print models", "Part drawings", "Assembly drawing"]) {
+    await dialog.getByRole("checkbox", { name, exact: true }).uncheck();
+  }
   const event = page.waitForEvent("download", { timeout: 120000 });
-  await dialog.getByRole("button", { name: /Download ZIP \(3\)/ }).click();
+  await button(dialog, "Download ZIP").click();
   const file = await event;
   assert.equal(await file.failure(), null);
   const archive = unzipSync(await readFile(await file.path()));
+  await page.keyboard.press("Escape");
   const keys = Object.keys(archive).filter(name => name.endsWith(".step"));
   assert.equal(keys.length, parts.length, "Each manufactured component gets one STEP");
   const { importSolidFile } = await api.load("exchangeSolids");

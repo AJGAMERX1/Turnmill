@@ -1,3 +1,4 @@
+import { singleExportFilename } from "./shopExport";
 import type { DisplayAppearance } from "./metalAppearance";
 import type { MenuAnchor } from "./ContextMenu";
 import { observeGeometry } from "../tests/hook/observe";
@@ -5,7 +6,8 @@ import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { createStudio, type DonorFinish, type View } from "./studio";
 import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
-import type { EvaluatedFeature } from "./types";
+import type { EvaluatedFeature, Project } from "./types";
+import { explodePen } from "./penExplode";
 import type { EvaluatedFinish } from "./finishingTypes";
 import type { GripStock } from "./gripBands";
 
@@ -36,9 +38,8 @@ export type ExportRequest = {
   assembly?: import("./assemblyExport").AssemblyExport;
   bodyIndex?: number;
   bodyId?: string;
-  shop?: import("./shopExport").ShopPackage;
   id: number;
-  format: "step" | "stl" | "3mf" | "zip";
+  format: "step" | "stl" | "3mf";
   name: string;
 };
 type Props = {
@@ -47,9 +48,12 @@ type Props = {
   view: View;
   fitToken: number;
   exportRequest: ExportRequest | null;
+  onExportResult: (id: number, error?: string) => void;
+  readSolids: RefObject<import("./packageDownload").SnapshotReader | null>;
   appearances?: (DisplayAppearance | number)[];
   visibleBodyId?: string;
   photoMode?: boolean;
+  explosion?: { project: Project; gap: number };
   donorFinishes?: Record<string, DonorFinish>;
   measureRefillFit?: boolean;
   measureCapSeats?: boolean;
@@ -82,11 +86,11 @@ export type KernelReply = { revision: number } & (
   | {
       type: "exported";
       blob: Blob;
-      format: "step" | "stl" | "3mf" | "zip";
+      format: "step" | "stl" | "3mf";
       id: number;
       name: string;
     }
-  | { type: "error"; task: "build" | "export"; message: string; capFit?: import("./capSizing").CapDepthFit }
+  | { type: "error"; task: "build" | "export"; id?: number; message: string; capFit?: import("./capSizing").CapDepthFit }
 );
 
 function download(blob: Blob, filename: string) {
@@ -105,11 +109,11 @@ export function Viewport({
   features,
   view,
   fitToken,
-  exportRequest,
+  exportRequest, onExportResult, readSolids,
   onStatus,
   takeFinishBody,
   appearances = [], donorFinishes,
-  visibleBodyId, photoMode = false, placements, ghostIds = [], savePhoto, writingCheck, measureRefillFit = false, measureCapSeats = false,
+  visibleBodyId, photoMode = false, explosion, placements, ghostIds = [], savePhoto, writingCheck, measureRefillFit = false, measureCapSeats = false,
   gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
   onBodyPick,
@@ -127,10 +131,12 @@ export function Viewport({
   });
   const cb = useRef(onStatus);
   cb.current = onStatus;
+  const exportResult = useRef(onExportResult);
+  exportResult.current = onExportResult;
   const revision = useRef(0),
     lastExport = useRef<number | undefined>(undefined);
-  const presentation = useRef({ appearances, visibleBodyId, photoMode, placements, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick });
-  presentation.current = { appearances, visibleBodyId, photoMode, placements, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick };
+  const presentation = useRef({ appearances, visibleBodyId, photoMode, explosion, placements, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick });
+  presentation.current = { appearances, visibleBodyId, photoMode, explosion, placements, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick };
   const gripFeature = gripFeatureId ?? gripBodyId;
   const gripPriorKey = JSON.stringify(gripPriorFinishes);
   const gripTarget = useRef({ gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey });
@@ -149,14 +155,28 @@ export function Viewport({
   const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
   const photographed = useRef(false);
   const previouslyPosed = useRef(false);
+  const previousGap = useRef<number | undefined>(undefined);
+  const restoreAssembledFraming = useRef<(() => void) | undefined>(undefined);
   function presentBodies(reframe: boolean) {
-    const { photoMode: on, placements: pose, ghostIds: ghost, donorFinishes: donors } = presentation.current;
+    const { photoMode: on, explosion: layout, placements: pose, ghostIds: ghost, donorFinishes: donors } = presentation.current;
     if (on || photographed.current)
       studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)), showing.current.map(id => donors?.[id]));
     if (!pose && !previouslyPosed.current && !on && !photographed.current) return;
     const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
     const matrices = showing.current.map(id => pose?.[id] ?? identity);
-    studio.current?.setTransforms(matrices, reframe || on !== photographed.current || !!pose !== previouslyPosed.current);
+    const renderer = studio.current;
+    if (renderer) {
+      const gapChanged = layout?.gap !== previousGap.current;
+      if (layout && previousGap.current === undefined) restoreAssembledFraming.current = renderer.rememberFraming();
+      const transforms = layout ? explodePen(layout.project, showing.current, renderer.localBounds(), matrices, layout.gap) : matrices;
+      renderer.setTransforms(transforms, reframe || gapChanged || on !== photographed.current || !!pose !== previouslyPosed.current,
+        gapChanged && on === photographed.current);
+      if (!layout && gapChanged) {
+        if (on) restoreAssembledFraming.current?.();
+        restoreAssembledFraming.current = undefined;
+      }
+    }
+    previousGap.current = layout?.gap;
     previouslyPosed.current = !!pose;
     photographed.current = on;
   }
@@ -223,16 +243,32 @@ export function Viewport({
       name: "turnmill-solid-modeler",
     });
     engine.current = worker;
-    const pendingFits = new Set<(message: string) => void>();
+    const pendingModelReads = new Set<(message: string) => void>();
+    readSolids.current = (ids, signal) => new Promise((resolve, reject) => {
+      signal.throwIfAborted();
+      if (status.current.busy || status.current.error || revision.current !== builtRevision.current)
+        throw Error("Wait for the model to finish rebuilding.");
+      const channel = new MessageChannel(), started = revision.current;
+      const finish = () => { channel.port1.close(); pendingModelReads.delete(fail); signal.removeEventListener("abort", cancel); };
+      const fail = (message: string) => { finish(); reject(Error(message)); };
+      const cancel = () => { finish(); reject(signal.reason); };
+      pendingModelReads.add(fail);
+      signal.addEventListener("abort", cancel, { once: true });
+      channel.port1.onmessage = ({data}) => {
+        if (started !== revision.current || data.error) { fail(data.error || "The project changed. Export again."); return; }
+        finish(); resolve(data.snapshots);
+      };
+      worker.postMessage({ type: "export-solids", revision: started, ids, port: channel.port2 }, [channel.port2]);
+    });
     if (writingCheck) writingCheck.current = job => new Promise((resolve, reject) => {
       if (status.current.busy || status.current.error || revision.current !== builtRevision.current) {
         reject(Error("Wait for the pen to finish rebuilding."));
         return;
       }
       const channel = new MessageChannel(), started = revision.current;
-      const finish = () => { channel.port1.close(); pendingFits.delete(fail); };
+      const finish = () => { channel.port1.close(); pendingModelReads.delete(fail); };
       const fail = (message: string) => { finish(); reject(Error(message)); };
-      pendingFits.add(fail);
+      pendingModelReads.add(fail);
       channel.port1.onmessage = ({data}) => {
         if (started !== revision.current) { fail("The pen changed. Check the writing fit again."); return; }
         if (data.error) { fail(data.error); return; }
@@ -256,6 +292,8 @@ export function Viewport({
         (data.type === "error" && data.task === "build");
       if (buildReply) activeBuild.current = false;
       if (data.revision !== revision.current) {
+        if ((data.type === "exported" || data.type === "error") && data.id !== undefined)
+          exportResult.current(data.id, "The project changed during export.");
         // The worker may have installed this superseded build. The pending job
         // advertises only meshes actually retained by this viewport.
         dispatchBuild();
@@ -292,31 +330,30 @@ export function Viewport({
           center: data.center,
         });
       } else if (data.type === "exported") {
-        const filename =
-          data.name
-            .replace(/[/\\:*?"<>|]/g, "-")
-            .replace(/\.(step|stl|3mf|zip)$/i, "") || "Part";
-        download(data.blob, filename + "." + data.format);
+        download(data.blob, singleExportFilename(data.name, data.format));
+        exportResult.current(data.id);
         publish({ busy: false, error: "" });
+      } else if (data.task === "export") {
+        if (data.id !== undefined) exportResult.current(data.id, data.message);
+        publish({ busy: false });
       } else {
-        if (data.task === "build") {
-          retained.current.clear();
-          installed.current = { ids: [], meshes: [] };
-          displayInstalled();
-          publish({
-            builtSignature: undefined,
-            threadFrames: undefined,
-            volume: 0,
-            area: 0,
-            center: undefined,
-            bodyProperties: [],
-          });
-        }
+        retained.current.clear();
+        installed.current = { ids: [], meshes: [] };
+        displayInstalled();
+        publish({
+          builtSignature: undefined,
+          threadFrames: undefined,
+          volume: 0,
+          area: 0,
+          center: undefined,
+          bodyProperties: [],
+        });
         publish({ busy: false, error: data.message });
       }
     };
     worker.onerror = () => {
-      for (const fail of pendingFits) fail("The solid modeler stopped during the fit check.");
+      if (lastExport.current !== undefined) exportResult.current(lastExport.current, "The export engine stopped.");
+      for (const fail of pendingModelReads) fail("The solid modeler stopped during the request.");
       retained.current.clear();
       activeBuild.current = false;
       pendingBuild.current = null;
@@ -337,8 +374,10 @@ export function Viewport({
     };
     return () => {
       if(import.meta.env.VITE_CAD_QA==="1") observeGeometry();
-      for (const fail of pendingFits) fail("The writing-fit view was closed.");
+      for (const fail of pendingModelReads) fail("The model view was closed.");
       if (writingCheck) writingCheck.current = null;
+      readSolids.current = null;
+      if (lastExport.current !== undefined) exportResult.current(lastExport.current, "Export was interrupted.");
       worker.terminate();
       engine.current = undefined;
       retained.current.clear();
@@ -367,7 +406,7 @@ export function Viewport({
   useEffect(() => {
     displayInstalled(false);
   }, [visibleBodyId, JSON.stringify(appearances)]);
-  useEffect(() => { presentBodies(false); }, [photoMode, JSON.stringify(placements), ghostIds.join(","), JSON.stringify(donorFinishes)]);
+  useEffect(() => { presentBodies(false); }, [photoMode, explosion?.project, explosion?.gap, JSON.stringify(placements), ghostIds.join(","), JSON.stringify(donorFinishes)]);
   useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {
     studio.current?.setView(view);
