@@ -2436,14 +2436,15 @@ export default function App() {
             selectThreadFeature(hostId, featureId);
             setEntryId(finishId); setPresetFinish(undefined); setDialog("finish");
           }}
-          onSave={(next, id, showAssembly, hostId) => {
+          onSave={(next, id, showAssembly, hostId, adjustments) => {
             const posedBarrel = arranged?.[solidFeatures.findIndex(f => f.id === hostId)]
               ?.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-8);
             commit(next); switchMode(showAssembly || mode === "Assembly" || posedBarrel ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
             close();
             const partName = next.features.find(f => f.id === id)?.name || "Threaded part";
+            const fitted = adjustments?.length ? " " + adjustments.join(" ") : "";
             setNotice(next.workspaces?.capMounts?.[id]
-              ? partName + " is ready. Use Cap position in Assembly to cover the tip or post it on the back."
+              ? partName + " fits both ends." + fitted + " Switch ends in Assembly under Cap position."
               : partName + " is ready. Turn it in Assembly to unscrew it.");
           }} />
       )}

@@ -352,7 +352,8 @@ export function applyFinish(
       ? finish.preparationAxis === "X" ? "revolve" : "extrude" : kind;
     const frame = axialFrame(shape, axis, finish.end, !!finish.preparation,
       finish.preparation ? finish.preparationCenter : undefined);
-    const prepared = finish.preparation ? prepareThreadStock(shape, finish, frame) : undefined;
+    let autoFit: string | undefined;
+    const prepared = finish.preparation ? prepareThreadStock(shape, finish, frame, message => { autoFit = message; }) : undefined;
     try {
       if (finish.preparation === "tenon") {
         frame.endCoord += (finish.end === "start" ? -1 : 1) * finish.length;
@@ -364,6 +365,7 @@ export function applyFinish(
         ...applyThread(prepared ?? shape, finish, frame),
         thread: {
           finishId: finish.id,
+          ...(autoFit ? { autoFit } : {}),
           name: finish.name,
           axis: frame.axis === 0 ? "X" : "Z",
           entrance,

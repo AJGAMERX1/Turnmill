@@ -8,6 +8,8 @@ try {
   const { evaluateModel } = await api.load("buildModel");
   const { buildBodies, releaseBodies } = await api.load("geometry");
   const { threadMinorDiameter } = await api.load("finishingTypes");
+  const { fitCapEnvelope } = await api.load("capSizing");
+  const { evaluate, resolveParameters } = await api.load("expressions");
   const { resolveThreadMates } = await api.load("threadMates");
   const { buildPoses } = await api.load("kinematics");
   const { positioned } = await api.load("motionGeometry");
@@ -17,6 +19,18 @@ try {
   const endStock = end => ({axis:"X",centerline:[0,0,0],station:end === "end" ? 50 : 0,outside:10,bore:7});
   const settings = {end:"end",size:"M8 × 0.75",length:"2.25 mm",allowance:"0.1 mm",mode:"cosmetic",
     capLength:"16 mm",capDiameter:"12 mm",crown:"flat",crownLength:"3 mm",wall:"1.5 mm"};
+  const fitValues = resolveParameters([{ name: "desired", expression: "2 mm" }]);
+  const fitInput = { ...settings, crown: "domed", crownLength: "8 mm", capLength: "desired",
+    wall: "1.5 mm", length: "4 mm", capDiameter: "desired + 2 mm" };
+  const fitted = fitCapEnvelope(fitInput, fitValues, 8);
+  assert.equal(fitted.changes.length, 3);
+  near(evaluate(fitted.settings.capDiameter, fitValues), 10, 1e-7, "fitted capDiameter");
+  near(evaluate(fitted.settings.crownLength, fitValues), 5, 1e-7, "fitted crownLength");
+  near(evaluate(fitted.settings.capLength, fitValues), 10.75, 1e-7, "fitted capLength");
+  assert.match(fitted.settings.capLength, /desired/);
+  assert.match(fitted.settings.capDiameter, /desired/);
+  assert.deepEqual(fitCapEnvelope(fitted.settings, fitValues, 8).changes, []);
+  assert.throws(() => fitCapEnvelope({ ...fitInput, wall: "missing_wall" }, fitValues, 8), /unknown parameter/i);
   const { insertRefill } = await api.load("refills");
   const withGel = insertRefill(barrel, "energel-lr7", {}, {bodyId:"gel"}).project;
   const coneSettings = {...settings, coneLength:"12 mm", tipDiameter:"4 mm", opening:"2 mm"};

@@ -5,6 +5,7 @@ import type { JointConfig } from "./kinematics";
 export type ThreadRef = { featureId: string; finishId: string };
 export type ThreadFrame = ThreadRef & {
   bodyId: string;
+  autoFit?: string;
   name: string;
   axis: "X" | "Z";
   entrance: [number, number, number];

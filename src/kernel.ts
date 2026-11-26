@@ -84,7 +84,7 @@ type Request =
       features: EvaluatedFeature[];
       retainedMeshes?: number[];
       measureRefillFit?: boolean;
-      capPostingCheck?: { project: Project; capId: string };
+      capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number };
       previewBodyIndex?: number;
       finishBody?: FinishBodySnapshot;
     }
@@ -178,8 +178,13 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       }
       const solids = model.bodies;
       if (data.capPostingCheck) {
-        const { project, capId } = data.capPostingCheck;
-        verifyCapPosting(project, capId, solids, bodyIds(data.features));
+        const { project, capId, fitCavityDepth } = data.capPostingCheck;
+        const capFit = verifyCapPosting(project, capId, solids, bodyIds(data.features), fitCavityDepth);
+        if (capFit) {
+          worker.postMessage({ type: "error", task: "build", revision: data.revision, capFit,
+            message: "The cap needs a deeper pocket for " + capFit.part + "." });
+          return;
+        }
       }
       let fitSurfaces: FitSurface[][] | undefined;
       if (data.measureRefillFit) {

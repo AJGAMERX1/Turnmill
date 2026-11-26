@@ -201,10 +201,7 @@ try {
   await field(paired, "Crown length").fill("3 mm");
   await field(paired, "End wall thickness").fill("1.8 mm");
   await field(paired, "Cap length").fill("3 mm");
-  await button(paired, "Create threaded cap").click();
-  await paired.getByRole("alert").waitFor();
-  assert.equal((await measure(page)).bodies.length, 1);
-  await field(paired, "Cap length").fill("21 mm");
+  await paired.getByRole("status").filter({ hasText: "Cap length increased" }).waitFor();
   await createCap();
   const capped = await measure(page);
   const lid = capped.project.features.find(f => f.id !== "barrel" && f.operation === "new");
@@ -213,7 +210,7 @@ try {
     .filter(f => f.kind === "thread" && f.side === "external").map(f => f.end).sort(), ["end", "start"]);
   const lidBody = capped.bodies.find(b => b.name === lid.name);
   assert(lidBody.valid && lidBody.solids === 1);
-  near(lidBody.bbox[1][0] - lidBody.bbox[0][0], 21);
+  near(lidBody.bbox[1][0] - lidBody.bbox[0][0], 4.5 + 3 + 1.8 + 0.25);
   near(lidBody.bbox[1][1] - lidBody.bbox[0][1], 12.7);
   assert.equal(lid.finishes.find(f => f.kind === "thread").side, "internal");
   assert.equal(capped.project.workspaces.joints[lid.id].parent, "barrel");
@@ -264,13 +261,10 @@ try {
   assert.equal(await field(paired, "Front end").inputValue(), "end");
   await field(paired, "Thread geometry").selectOption("cosmetic");
   await field(paired, "Cap length").fill("16 mm");
-  await button(paired, "Create threaded cap").click();
-  await paired.getByRole("alert").waitFor({timeout:180000});
-  assert.match(await paired.getByRole("alert").innerText(), /cone/i);
-  assert.equal((await measure(page)).bodies.length, 2, "a cap hitting the cone is rejected before commit");
-  await field(paired, "Cap length").fill("28 mm");
+
   await createCap();
   const cappedCone = await measure(page);
+  assert(cappedCone.values.cap_length >= 4.5 + 15 + 2 + 1.5 + 0.249, "one Create must extend the roof past the seated cone");
   assert.equal(cappedCone.bodies.length, 3, "one cap covers and posts around the existing cone");
   assert.deepEqual(cappedCone.project.features.find(f => f.id === newPart.id), newPart);
   assert(cappedCone.project.features.find(f => f.id === "barrel").finishes.some(f => f.preparation === "collar"));

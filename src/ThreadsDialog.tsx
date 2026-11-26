@@ -3,6 +3,7 @@ import { LoaderCircle } from "lucide-react";
 import { Vector3 } from "three";
 import { Modal } from "./Dialogs";
 import { evaluateModel } from "./buildModel";
+import { fitCapEnvelope } from "./capSizing";
 import { validateCapProfile } from "./capProfile";
 import { evaluate, resolveParameters } from "./expressions";
 import { threadMinorDiameter, threadPresets } from "./finishingTypes";
@@ -23,7 +24,7 @@ type Props = {
   project: Project; bodyId: string; surfaces?: FitSurface[]; measurementError?: string; targetPicker?: ReactNode;
   initialPart?: Attachment; onPartChange?: (kind: Attachment) => void;
   onSingle: () => void; onParameters: () => void; onEdit: (featureId: string, finishId: string) => void;
-  onSave: (next: Project, id: string, showAssembly: boolean) => void; onClose: () => void;
+  onSave: (next: Project, id: string, showAssembly: boolean, adjustments?: string[]) => void; onClose: () => void;
 };
 
 function seatedRefillFront(project: Project, bodyId: string, axis: BarrelEnd["axis"]): PairSettings["end"] | undefined {
@@ -154,6 +155,11 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
     }
   }
   const capSettings = { end, size, length, mode, allowance, capLength, capDiameter, crown, crownLength, wall };
+  let previewFit: ReturnType<typeof fitCapEnvelope> | undefined;
+  if (cap && major) {
+    try { previewFit = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major); }
+    catch { /* Incomplete inputs stay editable. */ }
+  }
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const token = useRef(0), worker = useRef<Worker | null>(null);
   useLayoutEffect(() => () => { token.current++; worker.current?.terminate(); }, []);
@@ -164,34 +170,63 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
     setBusy(true); setError("");
     const request = ++token.current;
     try {
-      const result = cap ? createThreadedCap(project, bodyId, stock, capSettings, rear!)
+      const fitting = cap ? fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!) : undefined;
+      const result = cap ? createThreadedCap(project, bodyId, stock, fitting!.settings, rear!)
         : createThreadedCone(project, bodyId, stock, { end, size, length, coneLength, tipDiameter,
           opening, allowance, mode, ...(closeBack ? { backWall: thickness } : {}) });
-      const next = result.project;
+      let next = result.project;
       const partId = "capId" in result ? result.capId : result.coneId;
-      // Posting checks the cap against every installed body at both ends.
-      const history = cap ? next.features : next.features.filter(f => f.id === partId || features.some(s => f.id === s.id));
-      const model = await evaluateModel({ ...next, features: history });
-      if (token.current !== request) return;
+      let changes = fitting?.changes ?? [];
       const engine = new Worker(new URL("./kernel.ts", import.meta.url), { type: "module", name: "turnmill-thread-pair" });
       worker.current = engine;
-      const finish = () => { engine.terminate(); worker.current = null; setBusy(false); };
-      engine.onerror = () => { if (request !== token.current) return; finish(); setError("The geometry engine stopped. Try a shorter thread."); };
-      engine.onmessage = ({ data }: MessageEvent<KernelReply>) => {
-        if (request !== token.current || (data.type !== "built" && data.type !== "error")) return;
-        finish();
-        if (data.type === "error") { setError(data.message); return; }
-        try {
-          resolveThreadMates({ [partId]: next.workspaces!.joints[partId] }, data.threadFrames ?? [],
-            model.values, [bodyId, partId]);
-          onSave(next, partId, stock.axis !== "X" || stock.centerline.some(n => Math.abs(n) > 1e-6));
-        } catch (cause) { setError((cause as Error).message); }
-      };
-      engine.postMessage({ type: "build", revision: 1, features: model.features,
-        ...(cap ? { capPostingCheck: { project: next, capId: partId } } : {}) });
+      async function check(revision: number, fitCavityDepth?: number) {
+        const history = cap ? next.features : next.features.filter(f => f.id === partId || features.some(s => f.id === s.id));
+        const model = await evaluateModel({ ...next, features: history });
+        if (token.current !== request) return;
+        type Reply = Extract<KernelReply, { type: "built" | "error" }>;
+        const reply = await new Promise<Reply>((resolve, reject) => {
+          engine.onerror = () => reject(Error("The geometry engine stopped while checking the threads."));
+          engine.onmessage = ({ data }: MessageEvent<KernelReply>) => {
+            if (data.revision === revision && (data.type === "built" || data.type === "error")) resolve(data);
+          };
+          engine.postMessage({ type: "build", revision, features: model.features,
+            ...(cap ? { capPostingCheck: { project: next, capId: partId, fitCavityDepth } } : {}) });
+        });
+        if (reply.type === "built") resolveThreadMates({ [partId]: next.workspaces!.joints[partId] },
+          reply.threadFrames ?? [], model.values, [bodyId, partId]);
+        return reply;
+      }
+      let verified = await check(1, fitting?.cavityDepth);
+      if (!verified || token.current !== request) return;
+      if (cap && verified.type === "error" && verified.capFit) {
+        const corrected = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!, verified.capFit);
+        const profile = next.sketches.find(s => s.partId === partId)?.capProfile;
+        if (!profile || corrected.cavityDepth <= fitting!.cavityDepth) throw Error(verified.message);
+        const lengthName = profile.prefix + "_length";
+        next = { ...next, parameters: next.parameters.map(p =>
+          p.name === lengthName ? { ...p, expression: corrected.settings.capLength } : p) };
+        changes = corrected.changes;
+        verified = await check(2);
+      }
+      if (!verified || token.current !== request) return;
+      if (verified.type === "error") throw Error(verified.message);
+      if (cap) {
+        const mount = next.workspaces!.capMounts[partId];
+        const prepared = new Set(Object.values(mount.ends as JointConfig).map(j => j.threadMate?.mating.finishId));
+        const repaired = (verified.threadFrames ?? []).filter(frame => prepared.has(frame.finishId) && frame.autoFit);
+        if (repaired.length === 2) changes.push("Fitted both collar seats to the barrel profile.");
+        else if (repaired.length === 1) {
+          const endName = repaired[0].end === mount.front ? "front" : "back";
+          changes.push("Fitted the " + endName + " collar seat to the barrel profile.");
+        }
+      }
+      onSave(next, partId, stock.axis !== "X" || stock.centerline.some(n => Math.abs(n) > 1e-6), changes);
     } catch (cause) {
-      if (token.current !== request) return;
-      worker.current?.terminate(); worker.current = null; setError((cause as Error).message); setBusy(false);
+      if (token.current === request) setError((cause as Error).message);
+    } finally {
+      if (token.current === request) {
+        worker.current?.terminate(); worker.current = null; setBusy(false);
+      }
     }
   }
   function input(label: string, v: string, edit: (s: string) => void) {
@@ -219,8 +254,9 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         {existing.length > 0 && <details><summary>Edit existing threads ({existing.length})</summary>
           {existing.map(({ feature, finish }) => <button key={finish.id} disabled={busy} type="button"
             onClick={() => onEdit(feature.id, finish.id)}>{finish.name} · {feature.name}</button>)}</details>}
-        {size && (cap ? <CapSection project={project} stock={stock} rear={rear} settings={capSettings}/>
+        {size && (cap ? <CapSection project={project} stock={stock} rear={rear} settings={previewFit?.settings ?? capSettings}/>
           : <JointSection start={end === "start"} closed={closeBack}/>)}
+        {previewFit && previewFit.changes.length > 0 && <p className="helper" role="status">Automatic fit · {previewFit.changes.join(" ")}</p>}
         <fieldset disabled={busy}>
           <div className="thread-pair-grid">
             <label>{cap ? "Front end" : "Barrel end"}<select aria-label={cap ? "Front end" : "Barrel end"} value={end} onChange={e => { setEnd(e.target.value as PairSettings["end"]); setSize(""); }}>

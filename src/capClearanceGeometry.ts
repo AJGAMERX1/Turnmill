@@ -7,6 +7,7 @@ import { findThread, resolveThreadMates, type ThreadFrame } from "./threadMates"
 import { buildPoses, type Joint } from "./kinematics";
 import type { Body } from "./geometry";
 import { resolveParameters } from "./expressions";
+import type { CapDepthFit } from "./capSizing";
 import { setCapMount } from "./threadedCone";
 import type { Project } from "./types";
 
@@ -52,7 +53,21 @@ function interferenceVolume(overlap: Shape3D, socket: ThreadFrame | undefined, t
   } finally { remainder?.delete(); teeth.delete(); }
 }
 
-export function verifyCapMount(bodies: Body[], ids: string[], capId: string, matrices: number[][], joint?: CapJoint) {
+type RoofFit = { depth: number; attachments: Set<string> };
+
+function axialExtent(shape: Shape3D, frame: ThreadFrame) {
+  const box = shape.boundingBox;
+  try {
+    const [low, high] = box.bounds, axis = frame.axis === "X" ? 0 : 2;
+    const entrance = frame.entrance[axis];
+    return frame.end === "start"
+      ? [low[axis] - entrance, high[axis] - entrance]
+      : [entrance - high[axis], entrance - low[axis]];
+  } finally { box.delete(); }
+}
+
+export function verifyCapMount(bodies: Body[], ids: string[], capId: string, matrices: number[][], joint?: CapJoint, roof?: RoofFit) {
+  let fit: CapDepthFit | undefined;
   const index = ids.indexOf(capId);
   if (index < 0 || bodies.length !== ids.length || matrices.length !== ids.length || !matrices.every(isRigidTransform))
     throw Error("Rebuild the assembly before checking the cap position.");
@@ -72,28 +87,48 @@ export function verifyCapMount(bodies: Body[], ids: string[], capId: string, mat
         const tenon = joint?.parent === ids[i] ? findThread(other.threadFrames ?? [], ids[i], joint.threadMate?.mating) : undefined;
         const volume = interferenceVolume(overlap, socket, tenon, relative);
         if (!Number.isFinite(volume)) throw Error("Turnmill could not measure the cap against " + other.name + ".");
-        if (volume > margin) throw Error("The cap hits " + other.name + ". Deepen or widen the cap cavity, or move the part clear.");
+        if (volume <= margin) continue;
+        if (roof && socket && roof.attachments.has(ids[i])) {
+          // An interference confined to the roof can be fixed by lengthening the new cap.
+          // Contacts at the socket or along a side wall need a different design.
+          const [firstHit] = axialExtent(overlap, socket);
+          const [, reach] = axialExtent(placed, socket);
+          if (firstHit >= roof.depth - 1e-5 && reach > roof.depth) {
+            if (!fit || reach > fit.requiredDepth) fit = { part: other.name, requiredDepth: reach };
+            continue;
+          }
+        }
+        throw Error("The cap hits " + other.name + ". Deepen or widen the cap cavity, or move the part clear.");
       } finally { overlap?.delete(); placed.delete(); }
     }
   } finally { capBox.delete(); }
+  return fit;
 }
 
 // Both positions use the same freshly built solids and measured thread frames.
-export function verifyCapPosting(project: Project, capId: string, bodies: Body[], ids: string[]) {
+export function verifyCapPosting(project: Project, capId: string, bodies: Body[], ids: string[], cavityDepth?: number) {
   const mount = project.workspaces?.capMounts?.[capId];
   if (!mount) throw Error("This cap needs a thread connection at each barrel end.");
   const values = resolveParameters(project.parameters);
   const frames = bodies.flatMap(body => body.threadFrames ?? []);
   const back = mount.front === "start" ? "end" : "start";
+  let fit: CapDepthFit | undefined;
+  const attachments = new Set(ids.filter(id => {
+    const joint = project.workspaces?.joints?.[id] as Joint | undefined;
+    return id !== capId && joint && joint.parent === mount.barrelId && (joint.refillSnap || joint.threadMate);
+  }));
+  const roof = cavityDepth === undefined ? undefined : { depth: cavityDepth, attachments };
   for (const end of [mount.front, back] as const) {
     try {
       const { workspaces } = setCapMount(project, capId, end);
       const config = resolveThreadMates(workspaces!.joints, frames, values, ids);
       const matrices = buildPoses(ids, config, workspaces!.jointPose ?? {}, values);
-      verifyCapMount(bodies, ids, capId, matrices, config[capId]);
+      const result = verifyCapMount(bodies, ids, capId, matrices, config[capId], roof);
+      if (result && (!fit || result.requiredDepth > fit.requiredDepth)) fit = result;
     } catch (cause) {
       const location = end === mount.front ? "Front" : "Back";
       throw Error(location + " seat — " + (cause instanceof Error ? cause.message : "The cap clearance could not be measured."));
     }
   }
+  return fit;
 }

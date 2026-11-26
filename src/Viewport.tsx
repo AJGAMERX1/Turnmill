@@ -77,7 +77,7 @@ export type KernelReply = { revision: number } & (
       id: number;
       name: string;
     }
-  | { type: "error"; task: "build" | "export"; message: string }
+  | { type: "error"; task: "build" | "export"; message: string; capFit?: import("./capSizing").CapDepthFit }
 );
 
 function download(blob: Blob, filename: string) {
