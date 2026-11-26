@@ -14,7 +14,9 @@ import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
 import { collectFitSurfaces, type FitSurface } from "./fitSurfaces";
 import type { Shape3D } from "replicad";
-import type { EvaluatedFeature } from "./types";
+import type { EvaluatedFeature, Project } from "./types";
+import { verifyCapPosting } from "./capClearanceGeometry";
+import { bodyIds } from "./kinematics";
 import type { EvaluatedFinish } from "./finishingTypes";
 import { measureGripStock, type GripStock } from "./gripBands";
 
@@ -82,6 +84,7 @@ type Request =
       features: EvaluatedFeature[];
       retainedMeshes?: number[];
       measureRefillFit?: boolean;
+      capPostingCheck?: { project: Project; capId: string };
       previewBodyIndex?: number;
       finishBody?: FinishBodySnapshot;
     }
@@ -174,6 +177,10 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
         }
       }
       const solids = model.bodies;
+      if (data.capPostingCheck) {
+        const { project, capId } = data.capPostingCheck;
+        verifyCapPosting(project, capId, solids, bodyIds(data.features));
+      }
       let fitSurfaces: FitSurface[][] | undefined;
       if (data.measureRefillFit) {
         const roots = data.features.filter(f => f.operation === "new");
@@ -199,6 +206,12 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       data.bodyIndex === undefined
         ? bodies
         : bodies.slice(data.bodyIndex, data.bodyIndex + 1);
+    if (data.assembly) {
+      const roots = latestBuild?.features.filter(f => f.operation === "new") ?? [];
+      const start = data.bodyIndex ?? 0;
+      if (data.assembly.ids.some((id, i) => id !== roots[start + i]?.id))
+        throw Error("The assembly changed. Rebuild it before exporting.");
+    }
     const blob = data.assembly
       ? exportAssemblyBodies(selected, data.format, data.assembly)
       : exportBodies(selected, data.format);

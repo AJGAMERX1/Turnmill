@@ -13,6 +13,7 @@ export type MergeSession = {
   keepId: string;
   assembly: boolean;
   poses?: Record<string, number[]>;
+  partPoses?: Record<string, number[]>;
   drivers?: Record<string, number[]>;
   poseError?: string;
 };
@@ -43,8 +44,13 @@ export default function MergePartsDialog({ session, onSave, onClose, onPosition 
     setKeepId(id);
     setError("");
   }
-  const posed = !!poses && Object.values(poses).some(matrix =>
-    matrix.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-9));
+  const posed = !!poses && [poses, session.partPoses ?? {}].some(positions => Object.values(positions).some(matrix =>
+    matrix.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-9)));
+
+  function relative(positions: Record<string, number[]>) {
+    return new Matrix4().fromArray(positions[keepId]).invert()
+      .multiply(new Matrix4().fromArray(positions[toolId])).toArray();
+  }
 
   async function merge() {
     if (busy) return;
@@ -52,12 +58,12 @@ export default function MergePartsDialog({ session, onSave, onClose, onPosition 
     setBusy(true);
     try {
       if (assembly && (!poses || session.poseError)) throw Error(session.poseError || "Open the 3D assembly to position the parts.");
-      const relativePose = poses && new Matrix4().fromArray(poses[keepId]).invert()
-        .multiply(new Matrix4().fromArray(poses[toolId])).toArray();
-      const identity = new Matrix4().toArray();
+      const relativePose = poses && relative(poses);
+      const transform = assembly && relativePose ? relativePose
+        : session.partPoses ? relative(session.partPoses) : new Matrix4().toArray();
       const source = assembly && session.drivers
         ? { ...project, workspaces: { ...project.workspaces, jointPose: session.drivers } } : project;
-      const next = mergeParts(source, keepId, toolId, (assembly && relativePose) || identity, relativePose);
+      const next = mergeParts(source, keepId, toolId, transform, relativePose);
       const { features } = await evaluateModel(next);
       if (!mounted.current) return;
       const start = features.findIndex(f => f.id === keepId && f.operation === "new");

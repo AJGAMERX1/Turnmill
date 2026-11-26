@@ -130,6 +130,15 @@ try {
   near(empty.bodies[0].volume, Math.PI * (25 - 3.5 ** 2) * 127);
   await button(page, "Threads").click();
   const paired = page.getByRole("dialog", { name: /^Threads/ });
+  async function createCap() {
+    await button(paired, "Create threaded cap").click();
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector(".thread-pair-dialog");
+      return !dialog || !!dialog.querySelector('[role="alert"]')?.textContent;
+    }, null, { timeout: 180000 });
+    assert.equal(await paired.getByRole("alert").allTextContents().then(text => text.join(" ")), "");
+    await ready(page);
+  }
   await field(paired, "Barrel end").selectOption("end");
   await field(paired, "Thread size").selectOption({ label: "M8 × 0.75" });
   await field(paired, "Thread length").fill("3 mm");
@@ -177,6 +186,94 @@ try {
   assert.deepEqual(reverted.project.sketches, empty.project.sketches);
   assert.deepEqual(reverted.project.workspaces?.joints, empty.project.workspaces?.joints);
   near(reverted.bodies[0].volume, empty.bodies[0].volume);
+
+  await button(page, "Threads").click();
+  await button(paired, "Screw-on cap").click();
+  await field(paired, "Front end").selectOption("end");
+  const capProfile = field(paired, "Cap profile");
+  for (const shape of ["flat", "tapered", "domed"]) {
+    await capProfile.selectOption(shape);
+    await paired.getByRole("img", { name: `Section of ${shape} screw-on cap` }).waitFor();
+    assert.equal(await field(paired, "Crown length").count(), shape === "flat" ? 0 : 1);
+  }
+  await field(paired, "Cap outside diameter").fill("1/2 in");
+  await field(paired, "Thread geometry").selectOption("cosmetic");
+  await field(paired, "Crown length").fill("3 mm");
+  await field(paired, "End wall thickness").fill("1.8 mm");
+  await field(paired, "Cap length").fill("3 mm");
+  await button(paired, "Create threaded cap").click();
+  await paired.getByRole("alert").waitFor();
+  assert.equal((await measure(page)).bodies.length, 1);
+  await field(paired, "Cap length").fill("21 mm");
+  await createCap();
+  const capped = await measure(page);
+  const lid = capped.project.features.find(f => f.id !== "barrel" && f.operation === "new");
+  assert.equal(lid.name, "Screw-on cap");
+  assert.deepEqual(capped.project.features.find(f => f.id === "barrel").finishes
+    .filter(f => f.kind === "thread" && f.side === "external").map(f => f.end).sort(), ["end", "start"]);
+  const lidBody = capped.bodies.find(b => b.name === lid.name);
+  assert(lidBody.valid && lidBody.solids === 1);
+  near(lidBody.bbox[1][0] - lidBody.bbox[0][0], 21);
+  near(lidBody.bbox[1][1] - lidBody.bbox[0][1], 12.7);
+  assert.equal(lid.finishes.find(f => f.kind === "thread").side, "internal");
+  assert.equal(capped.project.workspaces.joints[lid.id].parent, "barrel");
+  await saved(page);
+  await page.reload();
+  await ready(page);
+  near((await measure(page)).bodies.find(b => b.name === lid.name).volume, lidBody.volume);
+  await button(page, "Assembly").click();
+  await field(page, "Component").selectOption(lid.id);
+  const mounts = field(page, "Cap position");
+  const settledMount = position => page.locator(`.cap-position select:enabled:has(option[value="${position}"]:checked)`).waitFor();
+  await settledMount("front");
+  assert.equal(await mounts.inputValue(), "front");
+  const crownAt = async () => {
+    await ready(page);
+    const state = await measure(page);
+    assert.equal(state.bodies.length, 2);
+    const matrix = state.joints.matrices[state.joints.ids.indexOf(lid.id)];
+    return matrix[0] * lidBody.bbox[1][0] + matrix[12];
+  };
+  const covered = await crownAt();
+  assert(covered > 127, "the covered cap extends beyond the front shoulder");
+  // Changing mounts first runs a solid clearance check. The select re-enables
+  // at its new value once the edit is committed to the project.
+  await mounts.selectOption("back");
+  await settledMount("back");
+  const posted = await crownAt();
+  assert(posted < 0, `the posted crown at ${posted} mm must extend past the rear shoulder at 0 mm (covered crown ${covered} mm)`);
+  await saved(page);
+  await page.reload();
+  await button(page, "Assembly").click();
+  await field(page, "Component").selectOption(lid.id);
+  await settledMount("back");
+  assert.equal(await mounts.inputValue(), "back");
+  near(await crownAt(), posted);
+  await mounts.selectOption("front");
+  await settledMount("front");
+  near(await crownAt(), covered);
+  await field(page, "Drive value").fill("360 deg");
+  await field(page, "Drive value").press("Enter");
+  await page.getByText("Axial travel 0.750 mm", {exact:true}).waitFor();
+  await button(page, "Part").click();
+  await openProject({ ...finished.project, id: "cone-under-cap", name: "Postable cap over a cone" });
+  await page.getByRole("tab", { name: "Pen barrel", exact: true }).click();
+  await button(page, "Threads").click();
+  await button(paired, "Screw-on cap").click();
+  await paired.getByText(/Raised collars carry the cap threads/).waitFor();
+  assert.equal(await field(paired, "Front end").inputValue(), "end");
+  await field(paired, "Thread geometry").selectOption("cosmetic");
+  await field(paired, "Cap length").fill("16 mm");
+  await button(paired, "Create threaded cap").click();
+  await paired.getByRole("alert").waitFor({timeout:180000});
+  assert.match(await paired.getByRole("alert").innerText(), /cone/i);
+  assert.equal((await measure(page)).bodies.length, 2, "a cap hitting the cone is rejected before commit");
+  await field(paired, "Cap length").fill("28 mm");
+  await createCap();
+  const cappedCone = await measure(page);
+  assert.equal(cappedCone.bodies.length, 3, "one cap covers and posts around the existing cone");
+  assert.deepEqual(cappedCone.project.features.find(f => f.id === newPart.id), newPart);
+  assert(cappedCone.project.features.find(f => f.id === "barrel").finishes.some(f => f.preparation === "collar"));
   assert.deepEqual(errors, []);
-  console.log("PASS cone and cap threads, bore and taper preservation, mate size copy, invalid drafts, modeled and cosmetic solids, end placement, undo, automatically paired barrel and cone, closed rear wall and screw travel.");
+  console.log("PASS threads, cone and barrel pairing, closed back, cap presets, saved dimensions and single-cap posting to front/back screw joints.");
 } finally { await browser.close(); }

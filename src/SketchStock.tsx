@@ -18,7 +18,7 @@ function stockProfile(sketch: Sketch, start: Point, length: string, outside: str
   const points = [{ x: left, y: bottom }, { x: right, y: bottom },
     { x: right, y: top }, { x: left, y: top }];
   return {
-    ...sketch, points, constraints: [],
+    ...sketch, points, constraints: [], capProfile: undefined,
     sizing: {
       x: { radial: false, lower: start.x, size: length, coordinates: points.map(p => p.x) },
       y: { radial: turned, lower, size: outside, coordinates: points.map(p => p.y) },

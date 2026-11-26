@@ -229,6 +229,9 @@ function finishNotes(features: EvaluatedFeature[]) {
         );
         if (op.preparation === "tenon")
           notes.push(`Tenon extends ${formatDrawingLength(op.length)} mm from the original shoulder`);
+        if (op.preparation === "collar") {
+          notes.push(`External cap collar behind the end face · stop flange Ø${formatDrawingLength(op.diameter + op.pitch)} mm × ${formatDrawingLength(op.pitch)} mm wide`);
+        }
         if (op.preparation === "socket") {
           notes.push(`Socket pilot Ø${formatDrawingLength(threadMinorDiameter(op.diameter, op.pitch))} mm × ${formatDrawingLength(op.length)} mm deep`);
           if (op.backWall !== undefined)

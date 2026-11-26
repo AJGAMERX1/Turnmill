@@ -1,10 +1,14 @@
 import { observeJoints } from "../tests/hook/observe";
 import { Matrix4, Vector3 } from "three";
-import { Grip, Combine, Nut } from "lucide-react";
+import { Grip, Combine, Nut, Magnet, Layers } from "lucide-react";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
-import { refillTipX } from "./refills";
+import { refillComponents, refillTipX } from "./refills";
+import RefillSnapPanel from "./RefillSnapPanel";
+import { canSnapRefill } from "./assemblyRefillSnap";
+import type { RefillBodyBounds } from "./refillSeating";
+import { setCapMount, type CapMount } from "./threadedCone";
 import BoltActionPanel from "./BoltActionPanel";
 import { defaultBoltTrack, resolveBoltTrack } from "./boltTrack";
 import CamStudy from "./CamStudy";
@@ -94,7 +98,7 @@ export type LiveAssembly = {
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
+type PartNavigation = { initialComponent?: string; onApplyPose: () => void; onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -177,6 +181,8 @@ export default function Mechanisms(
           <FolderOpen size={15} />
           Import part
         </button>
+        {tab === "motion" && ids.length > 0 && <button className="assembly-apply" onClick={props.onApplyPose}
+          title="Save the current positions and open the All parts tab"><Layers size={15}/>Apply to All parts</button>}
       </div>
       {tab === "cam" ? (
         <CamStudy
@@ -225,14 +231,16 @@ function JointStudio({
   onFrames,
   guideAssist,
   liveAssembly,
+  initialComponent,
   onOpenPart,
   onMillGrip, onThreads, onMergeParts,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
   const guidedProbe=useRef<Project | null>(null);
-  const ids = bodyIds(features),
-    bodies = features.filter((f) => f.operation === "new");
+  const bodies = useMemo(() => features.filter(f => f.operation === "new"), [features]);
+  const ids = bodies.map(b => b.id);
+  const refills = useMemo(() => refillComponents(project), [project]);
   const raw = (project.workspaces?.joints || {}) as JointConfig;
   const [freePreview, setFreePreview] = useState<{ id: string; placement: Placement; project: Project } | null>(null);
   const [menu, setMenu] = useState<{ anchor: MenuAnchor; id?: string } | null>(null);
@@ -242,12 +250,18 @@ function JointStudio({
   const selectionMenu = useRef<(anchor:MenuAnchor, which:number | null)=>void>(()=>{});
   const [threadFrames, setThreadFrames] = useState<ThreadFrame[]>([]),
     [fitSurfaces, setFitSurfaces] = useState<FitSurface[][]>([]);
+  const [bodyBounds, setBodyBounds] = useState<RefillBodyBounds[]>([]);
+  const snapButton = useRef<HTMLButtonElement>(null);
+  const placementToken = useRef(0);
+  const placementRequest = useRef<{ token: number; resolve: () => void; reject: (error: Error) => void } | null>(null);
+  const [capCheck, setCapCheck] = useState<{ id: string; pending?: boolean; error?: string }>();
   const [mateOpen, setMateOpen] = useState(false),
     [inputError, setInputError] = useState("");
   const gapText = String(
     project.workspaces?.assemblyClearance?.requiredGap ?? "0 mm",
   );
-  const [sel, setSel] = useState(ids.find(id => raw[id]?.kind === "bolt") ?? (penGuide(project) && !penGuide(project)?.paused && ids.includes("pen-cap") ? "pen-cap" : ids[1] || ids[0])),
+  const [sel, setSel] = useState(initialComponent && ids.includes(initialComponent) ? initialComponent
+    : ids.find(id => raw[id]?.kind === "bolt") ?? (penGuide(project) && !penGuide(project)?.paused && ids.includes("pen-cap") ? "pen-cap" : ids[1] || ids[0])),
     [compare, setCompare] = useState(ids[0]),
     [component, setComponent] = useState(0),
     [poses, setPoses] = useState<Record<string, number[]>>(
@@ -261,6 +275,8 @@ function JointStudio({
           ? compare
           : ids.find((id) => id !== selected)!;
   const oldIds = useRef(ids);
+  const selectedRefill = refills.find(r => r.bodyId === selected);
+  const capMount: CapMount | undefined = project.workspaces?.capMounts?.[selected];
   useEffect(() => {
     const added = ids.filter((id) => !oldIds.current.includes(id));
     if (added.length) {
@@ -317,6 +333,10 @@ function JointStudio({
     d = Math.min(component, Math.max(0, doFs.length - 1)),
     spec = doFs[d],
     manualDrive = !!spec && !joint.cam;
+  const expectedCapMate = capMount?.ends?.[capMount.active]?.threadMate;
+  const onCapMount = expectedCapMate && joint.parent === capMount?.barrelId
+    && joint.threadMate?.mating.finishId === expectedCapMate.mating.finishId
+    && joint.threadMate?.moving.finishId === expectedCapMate.moving.finishId;
   let min = 0,
     max = 0,
     current = 0,
@@ -471,9 +491,18 @@ function JointStudio({
       setThreadFrames([]);
       setFitSurfaces([]);
     }
-    w.postMessage({ type: "build", version: v, features });
+    w.postMessage({ type: "build", version: v, features, measureRefillFit: refills.length > 0 });
     w.onmessage = (e) => {
       if (worker.current !== w || e.data.version !== v) return;
+      if (e.data.type === "refillSnapResult" || e.data.type === "capMountResult") {
+        const request = placementRequest.current;
+        if (request && request.token === e.data.token) {
+          placementRequest.current = null;
+          if (e.data.error) request.reject(Error(e.data.error));
+          else request.resolve();
+        }
+        return;
+      }
       if (e.data.type === "progress") {
         if (req.current === e.data.token) setReport(e.data.message);
         return;
@@ -483,10 +512,11 @@ function JointStudio({
           studio.current?.updateMeshes(e.data.meshes);
           setThreadFrames(e.data.threadFrames || []);
           onFrames(e.data.threadFrames || []);
-          setFitSurfaces(e.data.fitSurfaces || []);
           displayedGeometry.current = signature;
           setMeshVersion(v);
         }
+        setFitSurfaces(e.data.fitSurfaces || []);
+        setBodyBounds(e.data.bodyBounds || []);
         setStatus("");
         setCheckerReady(true);
       } else if (e.data.type === "report") {
@@ -508,15 +538,19 @@ function JointStudio({
       }
     };
     w.onerror = () => {
+      placementRequest.current?.reject(Error("The geometry engine stopped. Rebuild the assembly and try again."));
+      placementRequest.current = null;
       setStatus("Assembly calculation stopped. Rebuild to retry.");
       setCheckerReady(false);
       setChecking(false);
     };
     return () => {
+      placementRequest.current?.reject(Error("The assembly changed. Select a placement again."));
+      placementRequest.current = null;
       w.terminate();
       worker.current = null;
     };
-  }, [signature, generation]);
+  }, [signature, generation, refills.length > 0]);
   useEffect(() => {
     const cancel = (e: KeyboardEvent) => {
       if (e.key === "Escape" && freeDrag.current) {
@@ -628,6 +662,7 @@ function JointStudio({
   }
   function patch(p: Partial<Joint>) {
     const next = { ...(raw[selected] || defaultJoint()), ...p };
+    if (p.kind || p.parent !== undefined) delete next.refillSnap;
     if (p.kind || p.parent !== undefined) delete next.floating;
     if (p.kind && p.kind !== "slider") {
       delete next.cam;
@@ -660,6 +695,37 @@ function JointStudio({
     const input = positionPanel.current.querySelector("input");
     input?.focus();
     input?.select();
+  }
+  function checkPlacement(message: { type: "refillSnapCheck"; refillId: string; bodyId: string; relative: number[] }
+    | { type: "capMountCheck"; capId: string; matrices: number[][]; joint: Joint }) {
+    return new Promise<void>((resolve, reject) => {
+      if (!checkerReady || !worker.current || displayedGeometry.current !== signature)
+        throw Error("Wait for the assembly to finish rebuilding.");
+      play(false);
+      stopGuideTwist();
+      const token = ++placementToken.current;
+      placementRequest.current?.reject(Error("The selected placement changed."));
+      placementRequest.current = { token, resolve, reject };
+      worker.current.postMessage({ ...message, version: version.current, token });
+    });
+  }
+  async function moveCap(position: string) {
+    if (!capMount) return;
+    const end = position === "front" ? capMount.front : capMount.front === "end" ? "start" : "end";
+    setCapCheck({ id: selected, pending: true });
+    try {
+      const candidate = setCapMount(project, selected, end, poses);
+      const joints = resolveThreadMates(candidate.workspaces!.joints, threadFrames, values, ids);
+      const target = buildPoses(ids, joints, candidate.workspaces!.jointPose, values);
+      await checkPlacement({ type: "capMountCheck", capId: selected, matrices: target, joint: joints[selected] });
+      const live = liveAssembly.current;
+      if (live?.project !== project || live.selected !== selected || live.drivers !== poses)
+        throw Error("The assembly moved during the fit check. Choose the cap position again.");
+      onChange(candidate);
+      setCapCheck(undefined);
+    } catch (cause) {
+      setCapCheck({ id: selected, error: (cause as Error).message });
+    }
   }
   const limitText =
     d === 0
@@ -762,6 +828,9 @@ function JointStudio({
   const targetBody = bodies.find((body) => body.id === targetId);
   if (targetId && targetBody) {
     const free = isFloating(raw[targetId]);
+    if (refills.some(r => r.bodyId === targetId) && canSnapRefill(raw[targetId]))
+      menuItems.push({ label: raw[targetId]?.refillSnap ? "Release to free move" : "Snap to fit", icon: Magnet,
+        disabled: !snapButton.current || snapButton.current.disabled, run: () => snapButton.current?.click() });
     if (onMergeParts && bodies.length > 1)
       menuItems.push({ label: "Merge parts…", icon: Combine, shortcut: "U", run: () => onMergeParts(targetId) });
     if (onThreads) menuItems.push({ label: "Threads", icon: Nut, shortcut: "T", run: () => onThreads(targetId) });
@@ -1013,6 +1082,22 @@ function JointStudio({
             ))}
           </select>
         </label>
+        {selectedRefill && <RefillSnapPanel key={"refill-seat-" + selected} project={project} refill={selectedRefill}
+          bodies={bodies} surfaces={fitSurfaces} bounds={bodyBounds} config={raw} values={values}
+          ready={checkerReady && displayedGeometry.current === signature && !problem} action={snapButton}
+          check={(refillId, bodyId, local) => checkPlacement({ type: "refillSnapCheck", refillId, bodyId, relative: local.toArray() })}
+          onSnap={next => { saveJoint(selected, next, true); }} onRelease={() => changeAttachment(selected, true)}/>}
+        {capMount && <div className="cap-position"><label>Cap position<select aria-label="Cap position"
+          value={onCapMount ? (capMount.active === capMount.front ? "front" : "back") : ""}
+          disabled={!checkerReady || (capCheck?.id === selected && capCheck.pending)}
+          onChange={e => void moveCap(e.target.value)}>
+          {!onCapMount && <option value="">Choose mount</option>}
+          <option value="front">Front · cover the tip</option>
+          <option value="back">Back · post for writing</option>
+        </select></label>
+          {capCheck?.id === selected && (capCheck.pending ? <small role="status">Checking cap clearance…</small>
+            : <p role="alert" className="error-text">{capCheck.error}</p>)}
+        </div>}
         {ids.length > 1 && (threadFrames.some((f) => f.bodyId === selected) ||
           joint.threadMate) && (
           <button
@@ -1410,7 +1495,7 @@ function JointStudio({
         <MatingFits
           project={project}
           onChange={onChange}
-          surfaces={fitSurfaces.flat()}
+          surfaces={fitSurfaces.flat().filter(s => s.endDiameter === undefined)}
           loading={!meshVersion}
         />
         <AssemblyBom project={project} features={features} />

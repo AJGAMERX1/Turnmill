@@ -55,6 +55,21 @@ try {
   const release = placementFromMatrix(positioned[1]);
   const detached = matrix(joint("fixed", { floating: true, placement: release }), []);
   detached.elements.forEach((v, i) => near(v, positioned[1].elements[i], "detaching preserves a driven world pose"));
+  const { canSnapRefill, makeRefillSnapJoint } = await server.ssrLoadModule("/src/assemblyRefillSnap.ts");
+  const mount = new Matrix4().makeRotationY(Math.PI).setPosition(3, 2, 1);
+  const snapped = makeRefillSnapJoint(placed, "refill", "slide", mount);
+  const snappedTree = { ...placed, refill: snapped };
+  const posedRefill = (travel) => new Matrix4().fromArray(
+    buildPoses(["base", "slide", "refill"], snappedTree, { slide: [travel] }, { span: 20 })[2],
+  );
+  at(posedRefill(3), [1, 0, 0], [8, 7, 0], "seated reversed refill follows its moving barrel");
+  at(posedRefill(4), [1, 0, 0], [8, 8, 0], "seated refill travels with the parent joint");
+  const released = matrix(joint("fixed", { floating: true, placement: placementFromMatrix(posedRefill(4)) }), []);
+  released.elements.forEach((v, i) => near(v, posedRefill(4).elements[i], "release keeps the seated world pose"));
+  assert.ok(canSnapRefill(snapped), "a snapped refill can choose another opening");
+  assert.throws(() => makeRefillSnapJoint(snappedTree, "slide", "base", mount), /already has a joint/);
+  assert.throws(() => makeRefillSnapJoint({ base: joint("fixed", { parent: "refill" }) }, "refill", "base", mount), /loop/);
+  assert.throws(() => makeRefillSnapJoint({}, "refill", "base", new Matrix4().makeScale(2, 2, 2)), /invalid placement/);
   for (const rotation of [["23", "-67", "89"], ["8", "90", "-28"], ["-31", "-90", "12"]]) {
     const m = placementMatrix({ position: ["1", "2", "3"], rotation }, {});
     const roundTrip = placementMatrix(placementFromMatrix(m), {});

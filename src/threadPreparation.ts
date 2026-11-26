@@ -105,6 +105,43 @@ function closeBack(shape: Shape3D, f: Thread, frame: ThreadAxisFrame, depth: num
 export function prepareThreadStock(shape: Shape3D, f: Thread, frame: ThreadAxisFrame): Shape3D {
   const radius = f.diameter / 2;
   const minor = threadMinorDiameter(f.diameter, f.pitch) / 2;
+  if (f.preparation === "collar") {
+    // External stock behind the original end keeps the socket and its fitted
+    // cone in place. The unthreaded flange provides a positive stop for the cap.
+    const stock = (f.collarStockDiameter ?? 0) / 2;
+    if (!(stock > 0) || minor <= stock + tolerance)
+      throw Error("Choose a larger cap thread so its root clears the original barrel diameter.");
+    const span = f.length + f.pitch;
+    if (span > frame.span + tolerance)
+      throw Error("Shorten the cap thread to leave room for its stop collar on the barrel.");
+    const start = frame.endCoord - (f.end === "end" ? span : 0);
+    const overlapRadius = stock - Math.min(stock / 20, 0.01);
+    const support = boreOrRing(frame, start, span, stock, overlapRadius);
+    try {
+      const missing = support.cut(shape);
+      try {
+        if (measureVolume(missing) > Math.max(1e-8, measureVolume(support) * 1e-7))
+          throw Error("The cap collar needs a straight, unbroken cylindrical land behind the barrel end. Shorten the thread or move nearby grooves.");
+      } finally { missing.delete(); }
+    } finally { support.delete(); }
+    const outside = boreOrRing(frame, start, span, stock + 0.01, stock);
+    try {
+      const blocked = outside.intersect(shape);
+      try {
+        if (measureVolume(blocked) > Math.max(1e-8, measureVolume(outside) * 1e-7))
+          throw Error("The cap collar reaches a shoulder, another collar, or a raised detail. Shorten the thread or leave a longer straight land.");
+      } finally { blocked.delete(); }
+    } finally { outside.delete(); }
+    const band = boreOrRing(frame, start, span, radius, overlapRadius);
+    const flangeStart = f.end === "end" ? start : start + f.length;
+    try {
+      const flange = boreOrRing(frame, flangeStart, f.pitch, radius + f.pitch / 2, overlapRadius);
+      try {
+        const tool = band.fuse(flange);
+        try { return shape.fuse(tool); } finally { tool.delete(); }
+      } finally { flange.delete(); }
+    } finally { band.delete(); }
+  }
   if (f.preparation === "tenon") {
     const { outer, bore } = tenonFace(shape, frame);
     if (radius > outer + tolerance)

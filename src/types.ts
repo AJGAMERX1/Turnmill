@@ -14,6 +14,7 @@ export type Sketch = {
   partId?: string;
   points: Point[];
   constraints: Constraint[];
+  capProfile?: import("./capProfile").CapProfile;
   coneEdge?: { edge: number; pointCount: number; stations: [string, string]; tipEnd: "start" | "end" };
   sizing?: Partial<Record<"x" | "y", {
     radial: boolean;

@@ -117,6 +117,13 @@ function availableMates(project: Project, ownerId: string, frames: ThreadFrame[]
 }
 
 function PlacementDiagram({thread}: {thread: Thread}) {
+  if (thread.preparation === "collar") return <svg viewBox="0 0 188 53" role="img" aria-label="Section of an external cap collar around the barrel bore">
+    <g transform={thread.end === "end" ? "translate(188 0) scale(-1 1)" : undefined}>
+      <path d="M18 17H170V36H18ZM18 22H170V31H18Z" fill="#46514f" fillRule="evenodd" stroke="#adb9b5"/>
+      <path d="M18 17V10H68V17ZM18 36V43H68V36Z" fill="#aa8656" stroke="#edba76"/>
+      {[22,30,38,46,54,62].map(x => <path key={x} d={`M${x} 10l3 4 3-4 M${x} 43l3-4 3 4`} stroke="#edba76" fill="none"/>)}
+    </g>
+  </svg>;
   const socket = thread.preparation === "socket";
   // Longitudinal half-section: hatching marks the threaded area. Mirror about the end of the part.
   const stock = socket ? "M50 7 H174 V46 H50 Z" : "M40 7 H91 L174 18 V35 L91 46 H40 Z";
@@ -145,7 +152,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     copied.diameter === thread.diameter && copied.pitch === thread.pitch && copied.hand === thread.hand && copied.length === thread.length;
   const automaticName = ["Thread", "Threaded socket", "Threaded tenon"].includes(thread.name);
   function place(preparation: Thread["preparation"]) {
-    const side = preparation === "tenon" ? "external" : preparation === "socket" ? "internal" : thread.side;
+    const side = preparation === "tenon" || preparation === "collar" ? "external" : preparation === "socket" ? "internal" : thread.side;
     const name = preparation === "tenon" ? "Threaded tenon" : preparation === "socket" ? "Threaded socket" : "Thread";
     const end = side === thread.side ? thread.end : preferredEnd(ctx, side);
     update({ preparation, end, side,
@@ -158,7 +165,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     const source = choices.find(c => c.key === key)?.finish;
     if (!source) return;
     const side = source.side === "internal" ? "external" : "internal";
-    const preparation = thread.preparation && (side === "internal" ? "socket" : "tenon");
+    const preparation = thread.preparation && (side === "internal" ? "socket" : thread.preparation === "collar" ? "collar" : "tenon");
     update({ preset: source.preset, diameter: source.diameter, pitch: source.pitch, hand: source.hand, length: source.length,
       side, preparation, ...(side !== thread.side ? {
         end: preferredEnd(ctx, side), ...(preparation ? threadPosition(ctx, preferredEnd(ctx, side)) : {}),
@@ -191,6 +198,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
         onChange={e => place(e.target.value === "existing" ? undefined : e.target.value as Thread["preparation"])}>
         <option value="tenon">Add external tenon</option>
         <option value="socket">Cut internal socket</option>
+        {placement === "collar" && <option value="collar">External cap collar</option>}
         <option value="existing">Use existing stock</option>
       </select></label>
       <label>End<select aria-label="End" value={thread.end} onChange={e => {
@@ -204,6 +212,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     {placement && <div className="thread-placement-note">
       <PlacementDiagram thread={thread}/>
       <p>{placement === "tenon" ? "Extends the chosen end with a straight threaded shaft. A center bore continues through the shaft."
+        : placement === "collar" ? "Adds the outside cap thread around the barrel behind the end face. The bore and cone socket pass through the collar."
         : "Cuts a straight threaded socket into the chosen end. The cap opening sits at the selected face."}</p>
     </div>}
     {choices.length > 0 && <label>Copy mating thread<select aria-label="Copy mating thread" value={stillMatches ? copiedKey : ""} onChange={e => copy(e.target.value)}>
@@ -245,7 +254,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     </div>
     {placement === "socket" && pilot !== undefined && <p className="thread-pilot">Modeled pilot diameter <strong>Ø{mm(pilot)}</strong></p>}
     <p className="helper">{thread.mode === "cosmetic" ? placement
-      ? "STEP and STL include the smooth tenon or socket. The helical guide is visible in Turnmill."
+      ? "STEP and STL include the prepared solid. The helical guide is visible in Turnmill."
       : "The guide appears in Turnmill. STEP and STL retain the original smooth solid."
       : "The major diameter and pitch drive the single-start 60° thread cut in STEP and STL."}</p>
   </div>;

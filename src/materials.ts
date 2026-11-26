@@ -1,3 +1,5 @@
+import { Matrix4, Vector3 } from "three";
+
 export const materials: Record<string, { density: number; color: number }> = {
   Brass: { density: 8.5, color: 0xd6a761 },
   Aluminum: { density: 2.7, color: 0xc0c9cc },
@@ -11,6 +13,11 @@ export type BodyProps = {
   center: [number, number, number];
   dimensions?: [number, number, number];
 };
+export function positionedProperties(properties: BodyProps[], matrices: number[][]): BodyProps[] {
+  if (properties.length !== matrices.length) return [];
+  return properties.map((body, i) => ({ ...body, center: new Vector3(...body.center)
+    .applyMatrix4(new Matrix4().fromArray(matrices[i])).toArray() as BodyProps["center"] }));
+}
 export function massProperties(
   bodies: BodyProps[],
   densities: number[],

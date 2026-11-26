@@ -380,6 +380,7 @@ export default function SketchEditor({
     }
     const next = { ...draft, points: points.map((p, i) => expressions[i] || toPoint(p)), constraints };
     delete next.sizing;
+    delete next.capProfile;
     commitProfile(next);
   }
   function place(point: XY, expression = toPoint(point), pointer = false) {

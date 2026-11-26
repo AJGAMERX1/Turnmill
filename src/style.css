@@ -1710,3 +1710,15 @@ button.primary {
 .selection-dimensions select {
   max-width: 100%;
 }
+
+.mech-tabs .assembly-apply { color: var(--accent); }
+.refill-snap-panel {
+  border: 1px solid var(--border, #394444);
+  border-radius: 6px;
+  margin: 10px 0;
+  padding: 10px 12px;
+}
+.refill-snap-panel p { margin: 5px 0 9px; }
+.refill-snap-note { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.refill-snap-panel .outline-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.refill-snap-panel summary { font-size: 12px; }

@@ -68,6 +68,8 @@ export type Joint = {
   mount?: number[];
   floating?: boolean;
   placement?: Placement;
+  /** Catalog refill seated in a barrel by the Assembly snap tool. */
+  refillSnap?: true;
 };
 export const isFloating = (j?: Joint) => !j || (j.kind === "fixed" && !j.parent && j.floating === true);
 export function jointMount(j: Joint, values: Record<string, number>) {

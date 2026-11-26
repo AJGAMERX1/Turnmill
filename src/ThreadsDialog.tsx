@@ -1,13 +1,17 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { Vector3 } from "three";
 import { Modal } from "./Dialogs";
 import { evaluateModel } from "./buildModel";
-import { threadPresets } from "./finishingTypes";
+import { evaluate, resolveParameters } from "./expressions";
+import { threadMinorDiameter, threadPresets } from "./finishingTypes";
 import type { FitSurface } from "./fitSurfaces";
-import type { JointConfig } from "./kinematics";
+import { jointMount, type JointConfig } from "./kinematics";
+import { refillComponents } from "./refills";
 import { partFeatures } from "./partTabs";
 import { resolveThreadMates } from "./threadMates";
-import { barrelAxis, barrelEnd, createThreadedCone, suggestedPairSize, type PairSettings } from "./threadedCone";
+import { barrelAxis, barrelEnd, capNeedsCollars, createThreadedCap, createThreadedCone, suggestedCapCollarSize,
+  suggestedPairSize, type BarrelEnd, type CapSettings, type PairSettings } from "./threadedCone";
 import type { Project } from "./types";
 import type { KernelReply } from "./Viewport";
 import "./threadsDialog.css";
@@ -17,6 +21,20 @@ type Props = {
   onSingle: () => void; onParameters: () => void; onEdit: (featureId: string, finishId: string) => void;
   onSave: (next: Project, id: string, showAssembly: boolean) => void; onClose: () => void;
 };
+
+function seatedRefillFront(project: Project, bodyId: string, axis: BarrelEnd["axis"]): PairSettings["end"] | undefined {
+  const joints: JointConfig = project.workspaces?.joints ?? {};
+  const ends = new Set<PairSettings["end"]>();
+  const values = resolveParameters(project.parameters);
+  for (const refill of refillComponents(project)) {
+    const joint = joints[refill.bodyId];
+    if (!joint?.refillSnap || joint.parent !== bodyId) continue;
+    const direction = new Vector3(refill.reversed ? -1 : 1, 0, 0).transformDirection(jointMount(joint, values));
+    const along = axis === "X" ? direction.x : direction.z;
+    if (Math.abs(along) > 1 - 1e-6) ends.add(along > 0 ? "start" : "end");
+  }
+  return ends.size === 1 ? [...ends][0] : undefined;
+}
 
 function JointSection({ start, closed }: { start: boolean; closed: boolean }) {
   // Schematic longitudinal section. The cone and socket use contrasting materials.
@@ -31,19 +49,76 @@ function JointSection({ start, closed }: { start: boolean; closed: boolean }) {
   </svg>;
 }
 
+function CapSection({ project, stock, rear, settings }: { project: Project; stock?: BarrelEnd; rear?: BarrelEnd; settings: CapSettings }) {
+  if (!stock || !rear) return null;
+  try {
+    const values = resolveParameters(project.parameters);
+    const mm = (expression: string) => evaluate(expression, values);
+    const preset = threadPresets.find(item => item.label === settings.size);
+    if (!preset) return null;
+    const length = mm(settings.capLength), diameter = mm(settings.capDiameter), major = mm(preset.diameter);
+    const thread = mm(settings.length), wall = mm(settings.wall);
+    const crown = settings.crown === "flat" ? 0 : mm(settings.crownLength);
+    if (!(length - wall - crown >= thread && thread > 0 && diameter > major + 1e-5 && wall > 0 &&
+      (settings.crown === "flat" || crown > 0) && (settings.crown !== "domed" || crown <= diameter / 2)))
+      throw Error();
+    const scale = Math.min(190 / length, 56 / Math.max(diameter, stock.outside, rear.outside));
+    const shoulder = 96, end = shoulder + length * scale, turn = end - crown * scale;
+    const cavity = turn - wall * scale, r = diameter * scale / 2, bore = major * scale / 2;
+    const shaft = stock.outside * scale / 2, passage = stock.bore * scale / 2;
+    const rearRadius = rear.outside * scale / 2, rearBore = rear.bore * scale / 2;
+    const rearEnd = Math.max(6, 44 - thread * scale);
+    const runout = shoulder + thread * scale;
+    const blend = crown * scale;
+    const arc = blend ? (r * r + blend * blend) / (2 * blend) : 0;
+    const top = settings.crown === "domed" ? `A${arc} ${arc} 0 0 1 ${end} 0`
+      : settings.crown === "tapered" ? `L${end} ${-r / 2}V0` : `H${end}V0`;
+    const lower = settings.crown === "domed" ? `A${arc} ${arc} 0 0 1 ${turn} ${r}`
+      : settings.crown === "tapered" ? `V${r / 2}L${turn} ${r}` : `V${r}`;
+    const pocket = threadMinorDiameter(major, mm(preset.pitch));
+    return <><svg className="thread-pair-section cap-section" role="img" aria-label={`Section of ${settings.crown} screw-on cap`}
+      viewBox="0 0 320 76">
+      <g transform={settings.end === "start" ? "translate(320 38) scale(-1 1)" : "translate(0 38)"}>
+        <path fill="#526c6f" stroke="#9eb8bb" d={`M${rearEnd} ${-bore}H44V${-rearRadius}L${shoulder} ${-shaft}V${-bore}H${runout}V${-passage}L${rearEnd} ${-rearBore}Z M${rearEnd} ${bore}H44V${rearRadius}L${shoulder} ${shaft}V${bore}H${runout}V${passage}L${rearEnd} ${rearBore}Z`}/>
+        <path fill="#987241" stroke="#edbc73" d={`M${shoulder} ${-r}H${turn}${top}${lower}H${shoulder}V${bore}H${cavity}V${-bore}H${shoulder}Z`}/>
+        <path d={`M${shoulder} ${-bore}H${runout} M${shoulder} ${bore}H${runout} M${rearEnd} ${-bore}H44 M${rearEnd} ${bore}H44`} stroke="#f7d7a7" strokeDasharray="2 2" strokeWidth="2"/>
+      </g>
+      <path d="M4 38H316" stroke="#81908d" strokeDasharray="6 4"/>
+    </svg><p className="helper">Room beyond threads · {Number((length - wall - crown - thread).toFixed(3))} mm deep × Ø{Number(pocket.toFixed(3))} mm</p></>;
+  } catch {
+    return <p className="helper">The section appears when the cap dimensions fit around the thread.</p>;
+  }
+}
+
 export default function ThreadsDialog({ project, bodyId, surfaces, measurementError, onSingle, onParameters, onEdit, onSave, onClose }: Props) {
   const features = partFeatures(project, bodyId).filter(f => !f.suppressed);
   const root = features[0];
   const axis = barrelAxis(root, surfaces);
   const [end, setEnd] = useState<PairSettings["end"]>("end");
   const stock = surfaces && barrelEnd(surfaces, axis, end);
+  const [part, setPart] = useState<"cone" | "cap">("cone");
+  const cap = part === "cap";
+  const collars = cap && capNeedsCollars(project, bodyId);
+  const rear = cap && surfaces ? barrelEnd(surfaces, axis, end === "end" ? "start" : "end") : undefined;
   const [requestedSize, setSize] = useState("");
-  const size = requestedSize || (stock && suggestedPairSize(stock)) || "";
+  const candidate = stock && rear ? { ...stock, outside: Math.min(stock.outside, rear.outside),
+    bore: Math.max(stock.bore, rear.bore) + 0.1 } : stock;
+  const suggestion = collars && stock && rear ? suggestedCapCollarSize(Math.max(stock.outside, rear.outside))
+    : candidate && suggestedPairSize(candidate);
+  const size = requestedSize || suggestion || "";
   const [length, setLength] = useState("4.5 mm"), [coneLength, setConeLength] = useState("15 mm");
   const [tipDiameter, setTip] = useState("4 mm"), [opening, setOpening] = useState("2.5 mm");
   const [closeBack, setCloseBack] = useState(false), [thickness, setThickness] = useState("2 mm");
   const [allowance, setAllowance] = useState("0.10 mm");
   const [mode, setMode] = useState<PairSettings["mode"]>("modeled");
+  const [capLengthInput, setCapLength] = useState<string>(), [outside, setOutside] = useState<string>();
+  const [crown, setCrown] = useState<CapSettings["crown"]>("domed");
+  const [crownLength, setCrownLength] = useState("2 mm"), [wall, setWall] = useState("1.5 mm");
+  const preset = threadPresets.find(p => p.label === size);
+  const capLength = capLengthInput ?? (collars ? "28 mm" : "18 mm");
+  const capDiameter = outside ?? (collars && preset ? Number((evaluate(preset.diameter, {}) + 2).toFixed(6)) + " mm"
+    : stock ? Number(stock.outside.toFixed(6)) + " mm" : "");
+  const capSettings = { end, size, length, mode, allowance, capLength, capDiameter, crown, crownLength, wall };
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const token = useRef(0), worker = useRef<Worker | null>(null);
   useLayoutEffect(() => () => { token.current++; worker.current?.terminate(); }, []);
@@ -52,15 +127,17 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const connected = Object.entries((project.workspaces?.joints ?? {}) as JointConfig)
     .some(([id, joint]) => joint.threadMate && (id === bodyId || joint.parent === bodyId));
   async function create() {
-    if (!stock || busy) return;
+    if (!stock || (cap && !rear) || busy) return;
     setBusy(true); setError("");
     const request = ++token.current;
     try {
-      const result = createThreadedCone(project, bodyId, stock, { end, size, length, coneLength, tipDiameter,
-        opening, allowance, mode, ...(closeBack ? { backWall: thickness } : {}) });
+      const result = cap ? createThreadedCap(project, bodyId, stock, capSettings, rear!)
+        : createThreadedCone(project, bodyId, stock, { end, size, length, coneLength, tipDiameter,
+          opening, allowance, mode, ...(closeBack ? { backWall: thickness } : {}) });
       const next = result.project;
-      // Check the two new mating solids, including the barrel's earlier machining.
-      const history = next.features.filter(f => f.id === result.coneId || features.some(s => f.id === s.id));
+      const partId = "capId" in result ? result.capId : result.coneId;
+      // Posting checks the cap against every installed body at both ends.
+      const history = cap ? next.features : next.features.filter(f => f.id === partId || features.some(s => f.id === s.id));
       const model = await evaluateModel({ ...next, features: history });
       if (token.current !== request) return;
       const engine = new Worker(new URL("./kernel.ts", import.meta.url), { type: "module", name: "turnmill-thread-pair" });
@@ -72,12 +149,13 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         finish();
         if (data.type === "error") { setError(data.message); return; }
         try {
-          resolveThreadMates({ [result.coneId]: next.workspaces!.joints[result.coneId] }, data.threadFrames ?? [],
-            model.values, [bodyId, result.coneId]);
-          onSave(next, result.coneId, stock.axis !== "X" || stock.centerline.some(n => Math.abs(n) > 1e-6));
+          resolveThreadMates({ [partId]: next.workspaces!.joints[partId] }, data.threadFrames ?? [],
+            model.values, [bodyId, partId]);
+          onSave(next, partId, stock.axis !== "X" || stock.centerline.some(n => Math.abs(n) > 1e-6));
         } catch (cause) { setError((cause as Error).message); }
       };
-      engine.postMessage({ type: "build", revision: 1, features: model.features });
+      engine.postMessage({ type: "build", revision: 1, features: model.features,
+        ...(cap ? { capPostingCheck: { project: next, capId: partId } } : {}) });
     } catch (cause) {
       if (token.current !== request) return;
       worker.current?.terminate(); worker.current = null; setError((cause as Error).message); setBusy(false);
@@ -86,18 +164,38 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   function input(label: string, v: string, edit: (s: string) => void) {
     return <label>{label}<input aria-label={label} value={v} onChange={e => edit(e.target.value)}/></label>;
   }
+  function choosePart(kind: "cone" | "cap") {
+    if (kind === part) return;
+    if (kind === "cap") {
+      const socket = existing.find(({finish}) => finish.kind === "thread" && !finish.suppressed && finish.side === "internal")?.finish;
+      if (socket?.kind === "thread") setEnd(socket.end);
+      else {
+        try {
+          const front = seatedRefillFront(project, bodyId, axis);
+          if (front) setEnd(front);
+        } catch { /* An unresolved placement can still be selected manually. */ }
+      }
+    }
+    setPart(kind); setSize(""); setError("");
+  }
   return <Modal title="Threads" onClose={onClose} className="thread-pair-dialog">
-    <div className="thread-task"><strong>Create screw-on cone</strong><button type="button" onClick={onSingle} disabled={busy}>Thread one part</button></div>
-    <p className="helper">Add a removable cone to {root?.name ?? "the barrel"}. Its threaded stem screws into a matching socket.</p>
+    <div className="thread-task"><div className="thread-part-choice" role="group" aria-label="Screw-on part">
+      {(["cone", "cap"] as const).map(kind => <button key={kind} type="button" aria-pressed={part === kind} disabled={busy}
+        onClick={() => choosePart(kind)}>Screw-on {kind}</button>)}</div>
+      <button type="button" onClick={onSingle} disabled={busy}>Thread one part</button></div>
+    <p className="helper">{cap ? `Cut matching threads on both ends of ${root?.name ?? "the barrel"}. The same cap covers the tip or screws onto the back while you write.`
+      : `Add a removable cone to ${root?.name ?? "the barrel"}. Its threaded stem screws into a matching socket.`}</p>
+    {collars && <p className="helper">Raised collars carry the cap threads behind the barrel openings, leaving room for the refill seat or cone socket. Allow stock for the larger collar diameter.</p>}
     {connected && <button className="thread-shared" type="button" disabled={busy} onClick={onParameters}>Edit shared thread parameters</button>}
     {existing.length > 0 && <details><summary>Edit existing threads ({existing.length})</summary>
       {existing.map(({ feature, finish }) => <button key={finish.id} disabled={busy} type="button"
         onClick={() => onEdit(feature.id, finish.id)}>{finish.name} · {feature.name}</button>)}</details>}
-    <JointSection start={end === "start"} closed={closeBack}/>
+    {cap ? <CapSection project={project} stock={stock} rear={rear} settings={capSettings}/>
+      : <JointSection start={end === "start"} closed={closeBack}/>}
     <form onSubmit={e => { e.preventDefault(); void create(); }} onChange={() => setError("")}>
       <fieldset disabled={busy}>
         <div className="thread-pair-grid">
-          <label>Barrel end<select aria-label="Barrel end" value={end} onChange={e => { setEnd(e.target.value as PairSettings["end"]); setSize(""); }}>
+          <label>{cap ? "Front end" : "Barrel end"}<select aria-label={cap ? "Front end" : "Barrel end"} value={end} onChange={e => { setEnd(e.target.value as PairSettings["end"]); setSize(""); }}>
             <option value="start">Start · min {axis}</option><option value="end">End · max {axis}</option>
           </select></label>
           <label>Thread size<select aria-label="Thread size" value={size} onChange={e => setSize(e.target.value)}>
@@ -105,27 +203,39 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
             {threadPresets.map(p => <option key={p.label}>{p.label}</option>)}
           </select></label>
           {input("Thread length", length, setLength)}
-          {input("Cone length", coneLength, setConeLength)}
-          {input("Tip outside diameter", tipDiameter, setTip)}
-          {input("Tip opening diameter", opening, setOpening)}
+          {cap ? <>
+            {input("Cap length", capLength, setCapLength)}
+            {input("Cap outside diameter", capDiameter, setOutside)}
+            <label>Cap profile<select aria-label="Cap profile" value={crown} onChange={e => setCrown(e.target.value as CapSettings["crown"])}>
+              <option value="flat">Flat</option><option value="domed">Domed</option><option value="tapered">Tapered</option>
+            </select></label>
+            {crown !== "flat" && input("Crown length", crownLength, setCrownLength)}
+            {input("End wall thickness", wall, setWall)}
+          </> : <>
+            {input("Cone length", coneLength, setConeLength)}
+            {input("Tip outside diameter", tipDiameter, setTip)}
+            {input("Tip opening diameter", opening, setOpening)}
+          </>}
         </div>
-        {stock && <p className="helper">Barrel Ø{Number(stock.outside.toFixed(3))} mm · {stock.bore > 0 ? "Bore Ø" + Number(stock.bore.toFixed(3)) + " mm" : "Solid end"}</p>}
-        <label className="thread-close-back"><input type="checkbox" checked={closeBack}
-          onChange={e => setCloseBack(e.target.checked)}/> Close back of barrel</label>
-        {closeBack && input("Back wall thickness", thickness, setThickness)}
+        {stock && <p className="helper">{cap && rear ? `Front Ø${Number(stock.outside.toFixed(3))} mm · Back Ø${Number(rear.outside.toFixed(3))} mm`
+          : `Barrel Ø${Number(stock.outside.toFixed(3))} mm · ${stock.bore > 0 ? "Bore Ø" + Number(stock.bore.toFixed(3)) + " mm" : "Solid end"}`}</p>}
+        {!cap && <label className="thread-close-back"><input type="checkbox" checked={closeBack}
+          onChange={e => setCloseBack(e.target.checked)}/> Close back of barrel</label>}
+        {!cap && closeBack && input("Back wall thickness", thickness, setThickness)}
         <label>Thread geometry<select aria-label="Thread geometry" value={mode} onChange={e => setMode(e.target.value as PairSettings["mode"])}>
           <option value="modeled">Modeled · cut helical grooves</option><option value="cosmetic">Cosmetic · show thread guides</option>
         </select></label>
         <details><summary>Fit allowance</summary>
           {input("Diametral allowance", allowance, setAllowance)}
-          <p className="helper">This reduces the cone’s thread diameter relative to the socket. Verify the fit for your material and process.</p>
+          <p className="helper">This reduces the {cap ? "barrel" : "cone"}’s thread diameter relative to the socket. Verify the fit for your material and process.</p>
         </details>
       </fieldset>
       {(error || measurementError) && <p role="alert" className="error-text">{error || measurementError}</p>}
       {!stock && !error && !measurementError && <p className="helper">{surfaces ? "Choose a barrel with a round axial end, or use Thread one part." : "Measuring the barrel ends…"}</p>}
+      {cap && stock && !rear && <p className="helper">Choose a barrel with round ends at both the front and the back.</p>}
       <div className="dialog-actions"><button type="button" onClick={onClose}>Cancel</button>
-        <button className="primary" type="submit" disabled={busy || !stock || !size || !!measurementError}>
-          {busy && <LoaderCircle size={14} className="spin"/>}{busy ? "Checking both parts…" : "Create threaded cone"}
+        <button className="primary" type="submit" disabled={busy || !stock || (cap && !rear) || !size || !!measurementError}>
+          {busy && <LoaderCircle size={14} className="spin"/>}{busy ? (cap ? "Checking both cap positions…" : "Checking both parts…") : `Create threaded ${part}`}
         </button></div>
     </form>
   </Modal>;

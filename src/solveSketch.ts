@@ -5,6 +5,7 @@ import {
 } from "@salusoft89/planegcs";
 import solverUrl from "@salusoft89/planegcs/dist/planegcs_dist/planegcs.wasm?url";
 import { evaluate, isExpression } from "./expressions";
+import { validateCapProfile } from "./capProfile";
 import { validateProfileSizing } from "./profileSizing";
 import type { Constraint, Point, Sketch } from "./types";
 
@@ -96,6 +97,7 @@ export async function solveSketch(
   sketch: Sketch,
   parameters: Record<string, number>,
 ): Promise<SketchSolution> {
+  if (sketch.capProfile) validateCapProfile(sketch.capProfile, parameters);
   validateProfileSizing(sketch, parameters);
   const seeds = coordinateSeeds(sketch.points, parameters),
     n = seeds.length;

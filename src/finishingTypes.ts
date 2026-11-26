@@ -39,7 +39,7 @@ export type GripSettings<T> = {
   count: T;
 };
 
-export type ThreadPreparation = "tenon" | "socket";
+export type ThreadPreparation = "tenon" | "socket" | "collar";
 
 /** Basic minor diameter of the 60-degree single-start profile used by this kernel. */
 export function threadMinorDiameter(majorDiameter: number, pitch: number) {
@@ -88,6 +88,7 @@ export type Finish = Common &
         preparation?: ThreadPreparation;
         preparationAxis?: "X" | "Z";
         preparationCenter?: [number, number, number];
+        collarStockDiameter?: string;
         backWall?: string;
         diameter: string;
         length: string;
@@ -134,6 +135,7 @@ export type EvaluatedFinish = Common &
         preparation?: ThreadPreparation;
         preparationAxis?: "X" | "Z";
         preparationCenter?: [number, number, number];
+        collarStockDiameter?: number;
         backWall?: number;
         diameter: number;
         length: number;
@@ -174,6 +176,10 @@ export const threadPresets = [
     [10, 1],
     [10, 0.75],
     [12, 1],
+    [14, 1],
+    [16, 1],
+    [18, 1.5],
+    [20, 1.5],
   ].map(metricPreset),
   ...(
     [
@@ -328,9 +334,9 @@ export function evaluateFinish(
     );
   if (reach < pitch) throw Error("Use a length of at least one thread pitch.");
   if (finish.preparation !== undefined) {
-    if ((finish.preparation !== "tenon" && finish.preparation !== "socket") ||
-        (finish.preparation === "tenon") !== (finish.side === "external"))
-      throw Error("Choose an external thread for a tenon or an internal thread for a socket.");
+    if (!["tenon", "collar", "socket"].includes(finish.preparation) ||
+        (finish.preparation === "socket") !== (finish.side === "internal"))
+      throw Error("Use an external thread on a tenon or collar and an internal thread in a socket.");
     if (finish.preparationAxis !== undefined && finish.preparationAxis !== "X" && finish.preparationAxis !== "Z")
       throw Error("Choose a valid part axis for the prepared thread.");
     if (finish.preparationCenter !== undefined &&
@@ -340,9 +346,10 @@ export function evaluateFinish(
     if (finish.end !== "start" && finish.end !== "end")
       throw Error("Choose the end where the thread starts.");
   }
-  const { backWall, ...thread } = finish;
+  const { backWall, collarStockDiameter, ...thread } = finish;
   if (backWall !== undefined && finish.preparation !== "socket")
     throw Error("A solid back wall belongs on a threaded socket.");
   return { ...thread, diameter, pitch, length: reach,
+    ...(finish.preparation === "collar" ? { collarStockDiameter: length("collar stock diameter", collarStockDiameter ?? "") } : {}),
     ...(backWall === undefined ? {} : { backWall: length("back wall thickness", backWall) }) };
 }

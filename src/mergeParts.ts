@@ -5,6 +5,7 @@ import { bindHistoryTargets, bodyOwners } from "./partTabs";
 import { uid } from "./projects";
 import { refillComponents } from "./refills";
 import { isRigidTransform } from "./rigidTransform";
+import { remainingCapMounts } from "./capProfile";
 import type { Feature, Project } from "./types";
 
 /** Remove the absorbed node from the assembly tree while keeping its other children in place. */
@@ -84,10 +85,11 @@ export function mergeParts(
   features.splice(nextBody < 0 ? features.length : nextBody, 0, merged);
 
   const ws = { ...project.workspaces };
+  if (ws.capMounts) ws.capMounts = remainingCapMounts(ws.capMounts, toolId);
   if (ws.joints) ws.joints = mergedJoints(project, keep, tool, new Matrix4().fromArray(assemblyTransform));
   // The combined stock uses the kept part's material, mass calculation, and part number.
   // A composite body no longer represents one purchased refill or catalog item.
-  for (const key of ["bodyMaterials", "bodyDensities", "jointPose", "refills", "refillDiameterChecks", "hardwareComponents"]) {
+  for (const key of ["bodyMaterials", "bodyDensities", "jointPose", "allPartsPose", "refills", "refillDiameterChecks", "hardwareComponents"]) {
     if (!ws[key]) continue;
     const records = { ...ws[key] };
     delete records[toolId];

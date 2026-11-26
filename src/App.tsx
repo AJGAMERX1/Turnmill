@@ -1,6 +1,8 @@
 import InputValue from "./InputValue";
 import SelectionDimensions from "./SelectionDimensions";
 import ThreadsDialog from "./ThreadsDialog";
+import { allPartsMatrices, applyAllPartsPose } from "./allPartsPose";
+import { remainingCapMounts } from "./capProfile";
 import { observeModel } from "../tests/hook/observe";
 import PenGuidePanel, { GuideProfile } from "./PenGuidePanel";
 import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
@@ -139,7 +141,7 @@ const modes = [
   { name: "Drawing", Icon: FileText },
   { name: "Pen Studio", Icon: Aperture },
 ] as const;
-import { materials, parseDensity, massProperties } from "./materials";
+import { materials, parseDensity, massProperties, positionedProperties } from "./materials";
 const number = (n: number, d = 2) =>
   Number.isFinite(n)
     ? n.toLocaleString("en-US", { maximumFractionDigits: d })
@@ -226,7 +228,7 @@ export default function App() {
       setDialog(null);
     }
   }, [dialog, mergeSession, project]);
-  const [threadSession, setThreadSession] = useState<{ project: Project; bodyId: string }>();
+  const [threadSession, setThreadSession] = useState<{ project: Project; posedProject: Project; bodyId: string }>();
   const [gripRequest, setGripRequest] = useState<GripRequest>();
   const [presetFinish, setPresetFinish] = useState<FinishKind>(),
     [presetAdvanced, setPresetAdvanced] = useState<Advanced["kind"]>();
@@ -458,6 +460,10 @@ export default function App() {
       return { matrices: buildPoses(ids, joints, project.workspaces?.jointPose ?? {}, model.values) };
     } catch (e) { return { error: (e as Error).message }; }
   }, [showcasing, model, kernel.threadFrames, project.workspaces?.joints, project.workspaces?.jointPose]);
+  const arranged = useMemo(() => allPartsMatrices(project, model.features.filter(f => f.operation === "new").map(f => f.id)),
+    [model.features, project.workspaces?.allPartsPose]);
+  const displayedPose = showcasing ? studioPose.matrices : mode === "Part" && !activePart ? arranged : undefined;
+  const placementsById = displayedPose && Object.fromEntries(solidFeatures.map((f, i) => [f.id, displayedPose[i]]));
   const ghostIds = showcasing && showInternals && project.workspaces?.boltPen
     ? [project.workspaces.boltPen.barrelId, project.workspaces.boltPen.noseId] : [];
   async function downloadPhoto() {
@@ -473,13 +479,12 @@ export default function App() {
     (!exportBodyId || solidFeatures.some((f) => f.id === exportBodyId));
   const inScope = (_: unknown, i: number) =>
     !measuringSingle || solidFeatures[i]?.id === selectedBodyId;
-  const measured = massProperties(
-    (valid ? kernel.bodyProperties || [] : []).filter(inScope),
-    effectiveDensities.filter(inScope),
-  );
+  const localProperties = valid ? kernel.bodyProperties || [] : [];
+  const visibleProperties = displayedPose ? positionedProperties(localProperties, displayedPose) : localProperties;
+  const measured = massProperties(visibleProperties.filter(inScope), effectiveDensities.filter(inScope));
   useEffect(()=>{
     if(import.meta.env.VITE_CAD_QA==="1") observeModel(()=>{
-      const total=massProperties(valid ? kernel.bodyProperties || [] : [],effectiveDensities);
+      const total=massProperties(visibleProperties,effectiveDensities);
       return {project, features:project.features,parameters:project.parameters,values:model.values,mode,busy,error,
         volume:valid?kernel.volume:0,area:valid?kernel.area:0,mass:total.mass,centerOfMass:total.center,selected,saveState};
     });
@@ -609,7 +614,8 @@ export default function App() {
         (ref) => ref.featureId === featureId && (finishId === undefined || ref.finishId === finishId)));
   function withoutPartRecords(id: string) {
     const workspaces = { ...project.workspaces };
-    for (const key of ["joints", "jointPose", "bodyMaterials", "bodyDensities", "hardwareComponents", "refills", "refillDiameterChecks"]) {
+    if (workspaces.capMounts) workspaces.capMounts = remainingCapMounts(workspaces.capMounts, id);
+    for (const key of ["joints", "jointPose", "allPartsPose", "bodyMaterials", "bodyDensities", "hardwareComponents", "refills", "refillDiameterChecks"]) {
       if (workspaces[key] && Object.hasOwn(workspaces[key], id)) {
         workspaces[key] = { ...workspaces[key] };
         delete workspaces[key][id];
@@ -691,6 +697,7 @@ export default function App() {
       project, parts: solidFeatures.map(({id, name}) => ({id, name})),
       keepId: ids.includes(keep) ? keep : ids[0],
       assembly: mode === "Assembly" || showcasing,
+      partPoses: arranged && Object.fromEntries(ids.map((id, i) => [id, arranged[i]])),
     };
     try {
       if (live) {
@@ -716,14 +723,36 @@ export default function App() {
   function mergeItem(bodyId: string): MenuItem {
     return { label: "Merge parts…", icon: Combine, shortcut: "U", disabled: !canMerge, run: () => openMerge(bodyId) };
   }
+  function transferToAllParts() {
+    const live = liveAssembly.current;
+    try {
+      if (!valid || !live || live.project !== project)
+        throw Error("Wait for the 3D assembly to finish rebuilding.");
+      if (live.problem) throw Error(live.problem);
+      const next = applyAllPartsPose(project, live.matrices, live.drivers);
+      live.pause();
+      commit(next);
+      openPart();
+      setSelected(live.selected);
+      setFit(n => n + 1);
+      setNotice("Assembly positions applied to All parts.");
+    } catch (cause) { setNotice((cause as Error).message); }
+  }
   function openThreads(bodyId: string) {
     const target = partFeatures(project, bodyId).filter(f => !f.suppressed).at(-1);
     if (!target || isScaleFeature(project, target.id)) return;
+    const live = mode === "Assembly" ? liveAssembly.current : null;
+    if (mode === "Assembly" && (live?.project !== project || live.problem)) {
+      setNotice(live?.problem || "Wait for the assembly positions to finish rebuilding.");
+      return;
+    }
+    live?.pause();
+    const posedProject = live ? { ...project, workspaces: { ...project.workspaces, jointPose: live.drivers } } : project;
     if (activePart && activePart.id !== bodyId) setPartSelection({ projectId: project.id, id: bodyId });
     setMenu(null);
     setSelected(target.id);
     setEntryId(undefined);
-    setThreadSession({ project, bodyId });
+    setThreadSession({ project, posedProject, bodyId });
     setDialog("threads");
   }
   const threadsBody = (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
@@ -858,7 +887,7 @@ export default function App() {
         joints: project.workspaces?.joints ?? {},
         drivers: live?.drivers ?? project.workspaces?.jointPose ?? {},
         parameters: project.parameters,
-      } : undefined,
+      } : !single && mode === "Part" && arranged ? { ids: solidFeatures.map(f => f.id), matrices: arranged } : undefined,
     });
   };
   function startGuide() {
@@ -1709,7 +1738,7 @@ export default function App() {
               measureRefillFit={cartridges.length > 0 || dialog === "threads" || dialog === "finish"}
               gripBodyId={gripBodyId} gripFeatureId={gripTarget?.featureId}
               gripBeforeFinishId={gripTarget?.beforeFinishId} gripPriorFinishes={gripTarget?.priorFinishes}
-              photoMode={showcasing} photoMatrices={studioPose.matrices} ghostIds={ghostIds} savePhoto={savePhoto}
+              photoMode={showcasing} placements={placementsById} ghostIds={ghostIds} savePhoto={savePhoto}
               donorFinishes={donorFinishes}
               fitToken={fit}
               exportRequest={exportRequest}
@@ -2090,6 +2119,8 @@ export default function App() {
             <Assembly
               {...props}
               liveAssembly={liveAssembly}
+              initialComponent={project.workspaces?.capMounts?.[selected] || cartridges.some(r => r.bodyId === selected) ? selected : undefined}
+              onApplyPose={transferToAllParts}
               onMillGrip={millGrip} onThreads={openThreads} onMergeParts={openMerge}
               onOpenPart={(id) => {
                 const part = parts.find((p) => p.id === id);
@@ -2380,14 +2411,20 @@ export default function App() {
           setNotice("Parts merged into " + (next.features.find(f => f.id === keepId)?.name ?? "one solid") + ".");
         }}/>}
       {dialog === "threads" && threadSession?.project === project && (
-        <ThreadsDialog project={project} bodyId={threadSession.bodyId}
+        <ThreadsDialog project={threadSession.posedProject} bodyId={threadSession.bodyId}
           surfaces={valid ? kernel.fitSurfaces?.[solidFeatures.findIndex(f => f.id === threadSession.bodyId)] : undefined}
           measurementError={error || undefined}
           onClose={close} onParameters={() => setDialog("parameters")} onSingle={() => { setEntryId(undefined); setPresetFinish("thread"); setDialog("finish"); }}
           onEdit={(featureId, finishId) => { setSelected(featureId); setEntryId(finishId); setPresetFinish(undefined); setDialog("finish"); }}
           onSave={(next, id, showAssembly) => {
-            commit(next); switchMode(showAssembly ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
-            close(); setNotice("Cone and barrel threaded. Turn the cone in Assembly to unscrew it.");
+            const posedBarrel = arranged?.[solidFeatures.findIndex(f => f.id === threadSession.bodyId)]
+              ?.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-8);
+            commit(next); switchMode(showAssembly || mode === "Assembly" || posedBarrel ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);
+            close();
+            const partName = next.features.find(f => f.id === id)?.name || "Threaded part";
+            setNotice(next.workspaces?.capMounts?.[id]
+              ? partName + " is ready. Use Cap position in Assembly to cover the tip or post it on the back."
+              : partName + " is ready. Turn it in Assembly to unscrew it.");
           }} />
       )}
       {dialog === "finish" && currentF && (

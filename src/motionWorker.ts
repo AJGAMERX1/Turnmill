@@ -7,9 +7,12 @@ import {
   releaseBodies,
   type Body,
 } from "./geometry";
-import { bodyIds } from "./kinematics";
+import { bodyIds, type Joint } from "./kinematics";
 import { collectFitSurfaces } from "./fitSurfaces";
+import { solidBounds } from "./secondaryProjection";
+import { measureRefillSurfaces, verifyRefillSeat } from "./refillSeatingGeometry";
 import { checkPair, type Probe, type ClearanceResult } from "./clearance";
+import { verifyCapMount } from "./capClearanceGeometry";
 import type { EvaluatedFeature } from "./types";
 
 const ready = initOC({ locateFile: () => wasmUrl }).then(setOC);
@@ -19,7 +22,9 @@ let bodies: Body[] = [],
   active = 0;
 type Request =
   | Probe
-  | { type: "build"; version: number; features: EvaluatedFeature[] }
+  | { type: "capMountCheck"; version: number; token: number; capId: string; matrices: number[][]; joint: Joint }
+  | { type: "refillSnapCheck"; version: number; token: number; refillId: string; bodyId: string; relative: number[] }
+  | { type: "build"; version: number; features: EvaluatedFeature[]; measureRefillFit?: boolean }
   | { type: "cancel"; version: number; token: number };
 self.onmessage = async ({ data: msg }: MessageEvent<Request>) => {
   try {
@@ -36,12 +41,26 @@ self.onmessage = async ({ data: msg }: MessageEvent<Request>) => {
         type: "meshes",
         version: revision,
         meshes,
-        fitSurfaces: bodies.map((b, i) => collectFitSurfaces(b.shape, ids[i])),
+        fitSurfaces: bodies.map((b, i) => msg.measureRefillFit
+          ? measureRefillSurfaces(b.shape, ids[i]) : collectFitSurfaces(b.shape, ids[i])),
+        bodyBounds: msg.measureRefillFit ? bodies.map(b => solidBounds(b.shape)) : [],
         threadFrames: bodies.flatMap((b) => b.threadFrames || []),
       });
       return;
     }
     if (revision !== msg.version) return;
+    if (msg.type === "capMountCheck") {
+      verifyCapMount(bodies, ids, msg.capId, msg.matrices, msg.joint);
+      self.postMessage({ type: "capMountResult", version: revision, token: msg.token });
+      return;
+    }
+    if (msg.type === "refillSnapCheck") {
+      const refill = bodies[ids.indexOf(msg.refillId)], host = bodies[ids.indexOf(msg.bodyId)];
+      if (!refill || !host || refill === host) throw Error("Choose a refill and a different part with an open bore.");
+      verifyRefillSeat(refill.shape, host.shape, msg.relative);
+      self.postMessage({ type: "refillSnapResult", version: revision, token: msg.token });
+      return;
+    }
     if (msg.type === "cancel") {
       if (msg.token === active) active++;
       return;
@@ -85,6 +104,16 @@ self.onmessage = async ({ data: msg }: MessageEvent<Request>) => {
       results,
     });
   } catch (e) {
+    if (msg.type === "capMountCheck") {
+      self.postMessage({ type: "capMountResult", version: msg.version, token: msg.token,
+        error: e instanceof Error ? e.message : "Turnmill could not check the cap against the assembly. Rebuild the parts and try again." });
+      return;
+    }
+    if (msg.type === "refillSnapCheck") {
+      self.postMessage({ type: "refillSnapResult", version: msg.version, token: msg.token,
+        error: e instanceof Error ? e.message : "Turnmill could not check these two solids. Rebuild them and try again." });
+      return;
+    }
     if (
       msg.type === "check" &&
       (active !== msg.token || msg.version !== revision)

@@ -11,6 +11,7 @@ try {
   const { ModelBodies } = await api.load("modelBodies");
   const { buildPoses, defaultJoint } = await api.load("kinematics");
   const { importSolidFile } = await api.load("exchangeSolids");
+  const { exportAssemblyBodies } = await api.load("assemblyExport");
   const target = feature("base", "base-profile", 2);
   const tool = feature("lug", "lug-profile", "lug_height");
   const sketches = [
@@ -23,6 +24,22 @@ try {
   const translation = (x, y = 0, z = 0) => new Matrix4().makeTranslation(x, y, z).toArray();
   const original = structuredClone(source);
   const fuse = (transform, input = source) => mergeParts(input, "base", "lug", transform);
+
+  const placed = buildBodies((await evaluateModel(source)).features);
+  try {
+    const matrices = [translation(-8), new Matrix4().makeRotationZ(Math.PI / 2).setPosition(20, 6, 0).toArray()];
+    const pose = { ids: ["base", "lug"], matrices };
+    assert.throws(() => exportAssemblyBodies(placed, "step", { ...pose, matrices: [] }), /invalid position/);
+    const file = exportAssemblyBodies(placed, "step", pose);
+    const imported = await importSolidFile("step", file, "applied positions");
+    try {
+      const solids = imported.map(b => geometry(b.shape)).sort((a, b) => a.volume - b.volume);
+      assert.equal(solids.length, 2);
+      near(solids[0].center[0], 19, 1e-6, "transferred lug rotation and X in STEP");
+      near(solids[0].center[1], 8, 1e-6, "transferred lug rotation and Y in STEP");
+      near(solids[1].center[0], -3, 1e-6, "transferred base position in STEP");
+    } finally { releaseBodies(imported); }
+  } finally { releaseBodies(placed); }
 
   async function readSolid(input, expected, step = false) {
     const model = await evaluateModel(input);

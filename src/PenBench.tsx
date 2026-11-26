@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { ArrowUpRight, Component, PenTool, SlidersHorizontal, Eye } from "lucide-react";
-import { Matrix4, Vector3 } from "three";
 import { evaluate, resolveParameters } from "./expressions";
-import { materials, massProperties, type BodyProps } from "./materials";
+import { materials, massProperties, positionedProperties, type BodyProps } from "./materials";
 import type { EvaluatedFeature, Project } from "./types";
 import { refillCatalog, refillComponents, refillDimensions, reverseRefill } from "./refills";
 import InputValue from "./InputValue";
@@ -31,9 +30,7 @@ const mm = (v: number) => Number(v.toFixed(2)) + " mm";
 export default function PenBench({ project, commit, solidFeatures, properties, matrices, surfaces, values, densities,
   onRefill, onProject, onAssembly, onParameters, showInternals, setShowInternals }: Props) {
   const [warning, setWarning] = useState("");
-  const mounted = properties && matrices && properties.length === matrices.length
-    ? properties.map((body, i) => ({ ...body, center: new Vector3(...body.center)
-        .applyMatrix4(new Matrix4().fromArray(matrices[i])).toArray() as BodyProps["center"] })) : [];
+  const mounted = properties && matrices ? positionedProperties(properties, matrices) : [];
   const { mass, center } = massProperties(mounted, densities);
   const grip = String(project.workspaces?.gripStation ?? "30 mm");
   const bolt = project.workspaces?.boltPen;

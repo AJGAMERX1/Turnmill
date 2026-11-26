@@ -42,6 +42,9 @@ const synonyms: [RegExp, string][] = [
     "variables dimensions equations formulas parameter table",
   ],
   [/mating fits/, "ISO 286 tolerance H7 g6 allowance"],
+  [/snap to fit/, "align center seat snap refill bore cartridge"],
+  [/apply to all parts/, "transfer assembly layout keep positions pose part studio"],
+  [/cap position/, "post pen cap front back writing carry"],
   [/full travel/, "sweep motion range interference collision clearance cap"],
   [/check pose/, "check interference collision clearance gap distance"],
   [/bill of materials/, "BOM parts list components quantities"],
@@ -399,6 +402,8 @@ type WorkspaceDestination = {
   tab?: string;
 };
 const destinations: WorkspaceDestination[] = [
+  { mode: "Assembly", title: "Apply to All parts", control: "Apply to All parts", words: "transfer assembly pose positions" },
+  { mode: "Assembly", title: "Refill fit", control: "Component", words: "snap refill seat align bore", needsPair: true },
   {
     mode: "Drawing",
     title: "PDF drawing export",

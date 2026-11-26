@@ -50,7 +50,7 @@ type Props = {
   gripFeatureId?: string;
   gripBeforeFinishId?: string;
   gripPriorFinishes?: EvaluatedFinish[];
-  photoMatrices?: number[][];
+  placements?: Record<string, number[]>;
   ghostIds?: string[];
   savePhoto?: RefObject<(() => Promise<Blob>) | null>;
   onBodyContextMenu?: (anchor: MenuAnchor, bodyId: string | null) => void;
@@ -100,7 +100,7 @@ export function Viewport({
   onStatus,
   takeFinishBody,
   appearances = [], donorFinishes,
-  visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto, measureRefillFit = false,
+  visibleBodyId, photoMode = false, placements, ghostIds = [], savePhoto, measureRefillFit = false,
   gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
   onBodyPick,
@@ -120,8 +120,8 @@ export function Viewport({
   cb.current = onStatus;
   const revision = useRef(0),
     lastExport = useRef<number | undefined>(undefined);
-  const presentation = useRef({ appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick });
-  presentation.current = { appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick };
+  const presentation = useRef({ appearances, visibleBodyId, photoMode, placements, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick });
+  presentation.current = { appearances, visibleBodyId, photoMode, placements, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick };
   const gripFeature = gripFeatureId ?? gripBodyId;
   const gripPriorKey = JSON.stringify(gripPriorFinishes);
   const gripTarget = useRef({ gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey });
@@ -139,13 +139,16 @@ export function Viewport({
   const building = useRef<string[]>([]);
   const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
   const photographed = useRef(false);
-  function stylePhoto(reframe: boolean) {
-    const { photoMode: on, photoMatrices: pose, ghostIds: ghost, donorFinishes: donors } = presentation.current;
-    if (!on && !photographed.current) return;
-    studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)), showing.current.map(id => donors?.[id]));
+  const previouslyPosed = useRef(false);
+  function presentBodies(reframe: boolean) {
+    const { photoMode: on, placements: pose, ghostIds: ghost, donorFinishes: donors } = presentation.current;
+    if (on || photographed.current)
+      studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)), showing.current.map(id => donors?.[id]));
+    if (!pose && !previouslyPosed.current && !on && !photographed.current) return;
     const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
-    const matrices = showing.current.map((id) => (on && pose?.[installed.current.ids.indexOf(id)]) || identity);
-    studio.current?.setTransforms(matrices, reframe || on !== photographed.current);
+    const matrices = showing.current.map(id => pose?.[id] ?? identity);
+    studio.current?.setTransforms(matrices, reframe || on !== photographed.current || !!pose !== previouslyPosed.current);
+    previouslyPosed.current = !!pose;
     photographed.current = on;
   }
   function displayInstalled(reframe = true) {
@@ -157,7 +160,7 @@ export function Viewport({
       scope === undefined ? meshes : index < 0 ? [] : [meshes[index]],
       scope === undefined ? colors : index < 0 ? [] : [colors[index]],
     );
-    stylePhoto(reframe);
+    presentBodies(reframe);
   }
   const signature = useMemo(
     () => inputSignature ?? JSON.stringify(features),
@@ -328,7 +331,7 @@ export function Viewport({
   useEffect(() => {
     displayInstalled(false);
   }, [visibleBodyId, appearances.join(",")]);
-  useEffect(() => { stylePhoto(false); }, [photoMode, JSON.stringify(photoMatrices), ghostIds.join(","), JSON.stringify(donorFinishes)]);
+  useEffect(() => { presentBodies(false); }, [photoMode, JSON.stringify(placements), ghostIds.join(","), JSON.stringify(donorFinishes)]);
   useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {
     studio.current?.setView(view);
