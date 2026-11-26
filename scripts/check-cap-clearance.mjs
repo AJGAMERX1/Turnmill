@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { makeCylinder, measureVolume } from "replicad";
 import { geometry, near, project, runtime } from "../tests/systems/runtime.mjs";
 
 const api = await runtime();
 try {
-  const { createThreadedCap } = await api.load("threadedCone");
+  const { createThreadedCap, compatiblePairSizes, legacyCapBarrelStock, legacyCapForBarrel, repairCapDiameter, shoulderOutside } = await api.load("threadedCone");
   const { defaultJoint, bodyIds } = await api.load("kinematics");
   const { evaluateModel } = await api.load("buildModel");
   const { buildBodies, releaseBodies } = await api.load("geometry");
@@ -34,7 +35,7 @@ try {
       assert.throws(() => verifyAt(-17), /back seat.*cap hits Writing refill/is);
     } finally { releaseBodies(bodies); }
   }
-  // Shallow exterior machining can sit beneath a collar. A radial port that communicates
+  // Saved projects can still contain raised collars. A radial port that communicates
   // with a bore must stay open, even when the channel is eccentric and misses the axis.
   const { prepareThreadStock } = await api.load("threadPreparation");
   const { applyGripMilling } = await api.load("gripMilling");
@@ -68,47 +69,76 @@ try {
       near(measureVolume(drilled), before, 1e-6, "the original ported barrel is untouched");
     }
   } finally { owned.reverse().forEach(shape => shape.delete()); }
-  // The same 5 mm engagement must fit the cap over a tapered rear and a grooved front,
-  // while the original internal socket and the grip groove outside both collars stay usable.
   const { collectFitSurfaces } = await api.load("fitSurfaces");
   const { barrelEnd } = await api.load("threadedCone");
-  const landProfile = [[0, 3.5], [0, 7.5], [5, 6.6], [10, 7.5], [56, 7.5], [56, 6.4],
-    [58, 6.4], [58, 7.5], [119, 7.5], [119, 6.9], [121, 6.9], [121, 7.5], [125, 7.5], [125, 3.5]];
-  const machined = project([{ id: "profile", name: "Grip and taper", constraints: [],
-    points: landProfile.map(([x, y]) => ({ x: String(x), y: String(y) })) }], [
-    { id: "barrel", name: "Machined barrel", sketchId: "profile", kind: "revolve", operation: "new", amount: "360 deg",
-      suppressed: false, finishes: [{ id: "nose-socket", name: "Existing nose socket", kind: "thread", preset: "M8 × 0.75",
-        diameter: "8 mm", pitch: "0.75 mm", length: "4 mm", end: "end", side: "internal", hand: "right",
-        preparation: "socket", preparationAxis: "X", mode: "cosmetic" }] }
-  ]);
+  const oldProject = JSON.parse(await readFile(new URL("../tests/projects/fixtures/raised-cap-mounts.turnmill", import.meta.url), "utf8"));
+  const [capId] = Object.keys(oldProject.workspaces.capMounts);
+  assert.equal(legacyCapForBarrel(oldProject, "barrel"), capId);
+  const [barrel] = oldProject.features;
+  const restoredStock = legacyCapBarrelStock(oldProject, capId);
+  const machined = project([oldProject.sketches[0]], restoredStock.features);
+  const socket = barrel.finishes.find(f => f.id === "nose-socket");
+  const legacyBodies = buildBodies((await evaluateModel(oldProject)).features);
+  try {
+    const bounds = geometry(legacyBodies[0].shape).bbox;
+    assert(bounds[1][1] - bounds[0][1] > 18, "the saved M18 mounting collars exceed the original 15 mm stock");
+  } finally { releaseBodies(legacyBodies); }
   const stock = buildBodies((await evaluateModel(machined)).features);
   try {
     const surfaces = collectFitSurfaces(stock[0].shape, "barrel", true);
     const front = barrelEnd(surfaces, "X", "end"), back = barrelEnd(surfaces, "X", "start");
     assert.equal(front.outside, 15);
     assert.equal(back.outside, 15);
-    const { project: pen, capId } = createThreadedCap(machined, "barrel", front, {
-      ...settings, size: "M18 × 1.5", length: "5 mm", capLength: "40 mm", capDiameter: "20 mm", mode: "modeled",
-    }, back);
+    near(shoulderOutside(front, 5), 13.8, 1e-6, "graduated front seat");
+    near(shoulderOutside(back, 5), 13.2, 1e-6, "tapered back seat");
+    const sizes = compatiblePairSizes(machined, "barrel", front, "cap", back, 0.1, 5);
+    assert(sizes.includes("M12 × 1"));
+    assert(!sizes.includes("M18 × 1.5"), "a new cap cannot enlarge the barrel");
+    assert.throws(() => createThreadedCap(machined, "barrel", front, { ...settings, size: "M18 × 1.5" }, back));
+    const fresh = createThreadedCap(machined, "barrel", front, { ...settings, size: sizes[0],
+      length: "5 mm", matchBarrel: true }, back);
+    assert.deepEqual(fresh.project.features[0].finishes.filter(f => f.side === "external").map(f => f.preparation), ["flush", "flush"]);
+    const { project: pen, capId: repairedId } = repairCapDiameter(oldProject, capId, surfaces);
+    const custom = repairCapDiameter(oldProject, capId, surfaces, undefined, false);
+    assert.equal(custom.project.parameters.find(p => p.name === "cap_diameter").expression, "20 mm", "explicit custom cap diameter");
+    assert.equal(repairedId, capId);
+    assert.equal(pen.workspaces.capMounts[capId].active, "start", "repair preserves the active back mount");
+    assert.equal(pen.workspaces.capMounts[capId].front, "end");
+    assert.deepEqual(pen.features.map(f => f.id), oldProject.features.map(f => f.id));
+    assert.deepEqual(pen.sketches.find(s => s.id === barrel.sketchId), oldProject.sketches[0]);
+    assert.deepEqual(pen.features[0].finishes.find(f => f.id === "nose-socket"), socket);
+    assert.equal(pen.parameters.find(p => p.name === "cap_length").expression, "40 mm");
+    assert.equal(pen.parameters.find(p => p.name === "cap_wall").expression, "1.5 mm");
+    assert.equal(oldProject.parameters.find(p => p.name === "cap_major").expression, "18 mm", "repair leaves the saved input intact");
     const model = await evaluateModel(pen);
     const built = buildBodies(model.features);
     try {
       const ids = bodyIds(model.features);
       assert.deepEqual(ids, ["barrel", capId]);
-      for (const body of built) {
-        const measured = geometry(body.shape);
-        assert(measured.valid && measured.solids === 1, body.name + " must be one valid solid");
-      }
-      const collars = built[0].threadFrames.filter(f => f.side === "external");
-      assert.deepEqual(collars.map(f => f.end).sort(), ["end", "start"]);
-      for (const frame of collars) {
+      const [barrelGeometry, capGeometry] = built.map(body => geometry(body.shape));
+      assert(barrelGeometry.valid && barrelGeometry.solids === 1, "the repaired barrel must be one valid solid");
+      assert(capGeometry.valid && capGeometry.solids === 1, "the repaired cap must be one valid solid");
+      const capBounds = capGeometry.bbox;
+      near(capBounds[1][1] - capBounds[0][1], 13.8, 1e-5, "the cap meets the original front shoulder");
+      const mounts = built[0].threadFrames.filter(f => f.side === "external");
+      assert.deepEqual(mounts.map(f => f.end).sort(), ["end", "start"]);
+      for (const frame of mounts) {
         assert.equal(frame.mode, "modeled");
         near(frame.length, 5, 1e-7, "requested engaged length");
-        near(frame.pitch, 1.5, 1e-7, "M18 pitch");
-        near(frame.diameter, 17.9, 1e-7, "M18 external major with diametral allowance");
+        near(frame.pitch, model.values.cap_pitch, 1e-7, "pitch matches the cap");
+        near(frame.diameter, model.values.cap_major - model.values.cap_allowance, 1e-7, "external major with allowance");
+        assert(frame.diameter < 15);
       }
       assert(built[0].threadFrames.some(f => f.finishId === "nose-socket"), "original nose socket still present");
       verifyCapPosting(pen, capId, built, ids);
+
+      const bounds = barrelGeometry.bbox;
+      for (const axis of [1, 2]) near(bounds[1][axis] - bounds[0][axis], 15, 1e-5, "original barrel diameter");
+      near(bounds[0][0], 0, 1e-5, "original start");
+      near(bounds[1][0], 125, 1e-5, "original end");
+      const addedMaterial = built[0].shape.cut(stock[0].shape);
+      try { near(Math.abs(measureVolume(addedMaterial)), 0, 1e-5, "neither flush mount adds material outside the original profile"); }
+      finally { addedMaterial.delete(); }
 
       // Intersect exact cylinders with the resulting B-rep rather than trusting the feature parameters.
       const witnesses = [
@@ -126,6 +156,6 @@ try {
       }
     } finally { releaseBodies(built); }
   } finally { releaseBodies(stock); }
-  console.log("PASS one modeled M18 cap seats on a grooved and tapered barrel with both 5 mm engagements and the original socket and through bore.");
+  console.log("PASS an existing raised M18 cap is refitted inside the original Ø15 stock at both ends. The taper, middle groove, socket and through bore survive.");
   console.log("PASS exact front and posted cap clearance against a protruding refill and both mated barrel ends, modeled and cosmetic");
 } finally { await api.close(); }

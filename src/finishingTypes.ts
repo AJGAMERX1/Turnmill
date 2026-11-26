@@ -39,7 +39,7 @@ export type GripSettings<T> = {
   count: T;
 };
 
-export type ThreadPreparation = "tenon" | "socket" | "collar";
+export type ThreadPreparation = "tenon" | "socket" | "collar" | "flush";
 
 /** Basic minor diameter of the 60-degree single-start profile used by this kernel. */
 export function threadMinorDiameter(majorDiameter: number, pitch: number) {
@@ -175,7 +175,9 @@ export const threadPresets = [
     [9, 0.75],
     [10, 1],
     [10, 0.75],
+    [12, 1.5],
     [12, 1],
+    [14, 1.5],
     [14, 1],
     [16, 1],
     [18, 1.5],
@@ -334,9 +336,9 @@ export function evaluateFinish(
     );
   if (reach < pitch) throw Error("Use a length of at least one thread pitch.");
   if (finish.preparation !== undefined) {
-    if (!["tenon", "collar", "socket"].includes(finish.preparation) ||
+    if (!["tenon", "collar", "flush", "socket"].includes(finish.preparation) ||
         (finish.preparation === "socket") !== (finish.side === "internal"))
-      throw Error("Use an external thread on a tenon or collar and an internal thread in a socket.");
+      throw Error("Use an internal thread for a socket or an external thread for the turned barrel end, tenon, or collar.");
     if (finish.preparationAxis !== undefined && finish.preparationAxis !== "X" && finish.preparationAxis !== "Z")
       throw Error("Choose a valid part axis for the prepared thread.");
     if (finish.preparationCenter !== undefined &&

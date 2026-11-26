@@ -12,7 +12,7 @@ import { jointMount, type JointConfig } from "./kinematics";
 import { refillComponents } from "./refills";
 import { partFeatures } from "./partTabs";
 import { resolveThreadMates } from "./threadMates";
-import { barrelAxis, barrelEnd, capNeedsCollars, compatiblePairSizes, createThreadedCap, createThreadedCone, type BarrelEnd, type CapSettings, type PairSettings } from "./threadedCone";
+import { barrelAxis, barrelEnd, capAttachmentIssue, hasCapAttachments, legacyCapBarrelStock, legacyCapForBarrel, repairCapDiameter, shoulderOutside, compatiblePairSizes, createThreadedCap, createThreadedCone, type BarrelEnd, type CapSettings, type PairSettings } from "./threadedCone";
 import type { Project } from "./types";
 import type { KernelReply } from "./Viewport";
 import "./threadsDialog.css";
@@ -24,7 +24,7 @@ type Props = {
   project: Project; bodyId: string; surfaces?: FitSurface[]; measurementError?: string; targetPicker?: ReactNode;
   initialPart?: Attachment; onPartChange?: (kind: Attachment) => void;
   onSingle: () => void; onParameters: () => void; onEdit: (featureId: string, finishId: string) => void;
-  onSave: (next: Project, id: string, showAssembly: boolean, adjustments?: string[]) => void; onClose: () => void;
+  onSave: (next: Project, id: string, showAssembly: boolean, adjustments?: string[], restoredBarrelId?: string) => void; onClose: () => void;
 };
 
 function seatedRefillFront(project: Project, bodyId: string, axis: BarrelEnd["axis"]): PairSettings["end"] | undefined {
@@ -71,8 +71,8 @@ function CapSection({ project, stock, rear, settings }: { project: Project; stoc
     const scale = Math.min(190 / length, 56 / Math.max(diameter, stock.outside, rear.outside));
     const shoulder = 96, end = shoulder + length * scale, turn = end - crown * scale;
     const cavity = turn - wall * scale, r = diameter * scale / 2, bore = major * scale / 2;
-    const shaft = stock.outside * scale / 2, passage = stock.bore * scale / 2;
-    const rearRadius = rear.outside * scale / 2, rearBore = rear.bore * scale / 2;
+    const shaft = shoulderOutside(stock, thread) * scale / 2, passage = stock.bore * scale / 2;
+    const rearRadius = shoulderOutside(rear, thread) * scale / 2, rearBore = rear.bore * scale / 2;
     const rearEnd = Math.max(6, 44 - thread * scale);
     const runout = shoulder + thread * scale;
     const blend = crown * scale;
@@ -112,16 +112,10 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const [end, setEnd] = useState<PairSettings["end"]>(() => (initialPart === "cap" && capFront()) || "end");
   const stock = surfaces && barrelEnd(surfaces, axis, end);
   const cap = part === "cap";
-  const collars = cap && capNeedsCollars(project, bodyId);
+  const hasAttachments = cap && hasCapAttachments(project, bodyId);
   const rear = cap && surfaces ? barrelEnd(surfaces, axis, end === "end" ? "start" : "end") : undefined;
   const [requestedSize, setSize] = useState("");
   const [allowance, setAllowance] = useState("0.10 mm");
-  let allowanceMm: number | undefined;
-  try { allowanceMm = evaluate(allowance, resolveParameters(project.parameters)); }
-  catch { /* Keep incomplete expressions editable. */ }
-  const compatibleSizes = stock && allowanceMm !== undefined && allowanceMm >= 0
-    ? compatiblePairSizes(project, bodyId, stock, part, rear, allowanceMm) : [];
-  const size = compatibleSizes.includes(requestedSize) ? requestedSize : compatibleSizes[0] ?? "";
   const [length, setLength] = useState("4.5 mm"), [coneLength, setConeLength] = useState("15 mm");
   const [tipInput, setTip] = useState<string>(), [openingInput, setOpening] = useState<string>();
   const [closeBack, setCloseBack] = useState(false), [thickness, setThickness] = useState("2 mm");
@@ -129,14 +123,26 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
   const [capLengthInput, setCapLength] = useState<string>(), [outside, setOutside] = useState<string>();
   const [crown, setCrown] = useState<CapSettings["crown"]>("domed");
   const [crownInput, setCrownLength] = useState<string>(), [wall, setWall] = useState("1.5 mm");
+  function read(expression: string) {
+    try { return evaluate(expression, resolveParameters(project.parameters)); }
+    catch { return undefined; }
+  }
+  const allowanceMm = read(allowance), threadLengthMm = read(length);
+  const shoulder = stock && threadLengthMm && threadLengthMm > 0 ? shoulderOutside(stock, threadLengthMm) : undefined;
+  const backShoulder = rear && threadLengthMm && threadLengthMm > 0 ? shoulderOutside(rear, threadLengthMm) : undefined;
+  const capDiameter = outside ?? (shoulder ? mmField(shoulder) : "");
+  const capOD = read(capDiameter);
+  const candidates = stock && allowanceMm !== undefined && allowanceMm >= 0 && threadLengthMm !== undefined
+    ? compatiblePairSizes(project, bodyId, stock, part, rear, allowanceMm, threadLengthMm) : [];
+  const compatibleSizes = cap ? candidates.filter(label => {
+    const preset = threadPresets.find(p => p.label === label);
+    return preset && capOD !== undefined && capOD > evaluate(preset.diameter, {}) + 1e-5;
+  }) : candidates;
+  const size = compatibleSizes.includes(requestedSize) ? requestedSize : compatibleSizes[0] ?? "";
   const preset = threadPresets.find(p => p.label === size);
-  const capLength = capLengthInput ?? (collars ? "28 mm" : "18 mm");
+  const capLength = capLengthInput ?? (hasAttachments ? "28 mm" : "18 mm");
   const major = preset && evaluate(preset.diameter, {});
-  const measuredOutside = Math.max(stock?.outside ?? 0, rear?.outside ?? 0);
-  const defaultCapDiameter = major !== undefined && stock && rear
-    ? collars || measuredOutside <= major + 1e-5 ? major + 2 : measuredOutside : undefined;
-  const capDiameter = outside ?? (defaultCapDiameter ? mmField(defaultCapDiameter) : "");
-  const crownLength = crownInput ?? mmField(Math.min(2, (defaultCapDiameter ?? 4) / 2));
+  const crownLength = crownInput ?? mmField(Math.min(2, (capOD ?? 4) / 2));
   const defaultTip = stock && Math.min(4, stock.outside * 0.75);
   const tipDiameter = tipInput ?? (defaultTip ? mmField(defaultTip) : "");
   const rootDiameter = major && preset && threadMinorDiameter(major - (allowanceMm ?? 0), evaluate(preset.pitch, {}));
@@ -149,83 +155,105 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         : "This end has no flat, round mounting face. Choose the other barrel end, or add a flat land for the socket.";
     } else if (allowanceMm === undefined || allowanceMm < 0) {
       stockIssue = "Enter a nonnegative length under Fit allowance.";
+    } else if (threadLengthMm === undefined || threadLengthMm <= 0) {
+      stockIssue = "Enter a positive thread length.";
+    } else if (cap && (!Number.isFinite(shoulder) || !Number.isFinite(backShoulder))) {
+      stockIssue = "Choose a thread length that ends on a round shoulder at both ends of the barrel.";
+    } else if (cap && candidates.length && !size) {
+      stockIssue = "Increase the cap outside diameter to leave a wall around its threaded opening.";
     } else if (!size) {
-      stockIssue = collars ? "No standard collar thread clears this barrel. Choose a narrower barrel or reduce the fit allowance."
-        : "No standard thread fits between the bore and the outside of this barrel. Choose a barrel with a thicker wall or adjust its dimensions.";
+      stockIssue = (cap && capAttachmentIssue(project, bodyId)) ||
+        "No standard thread fits between the bore and the barrel surface. Try a shorter thread or a thicker barrel wall.";
     }
   }
-  const capSettings = { end, size, length, mode, allowance, capLength, capDiameter, crown, crownLength, wall };
+  const capSettings = { end, size, length, mode, allowance, capLength, capDiameter, crown, crownLength, wall, matchBarrel: outside === undefined };
   let previewFit: ReturnType<typeof fitCapEnvelope> | undefined;
   if (cap && major) {
     try { previewFit = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major); }
     catch { /* Incomplete inputs stay editable. */ }
   }
-  const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [busy, setBusy] = useState<"create" | "restore" | null>(null), [error, setError] = useState("");
+  const repairHost = project.workspaces?.capMounts?.[bodyId]?.barrelId ?? bodyId;
+  const repairId = legacyCapForBarrel(project, repairHost);
+  const [otherTools, setOtherTools] = useState(false);
+  const restoreView = !!repairId && !otherTools;
   const token = useRef(0), worker = useRef<Worker | null>(null);
   useLayoutEffect(() => () => { token.current++; worker.current?.terminate(); }, []);
   const connected = Object.entries((project.workspaces?.joints ?? {}) as JointConfig)
     .some(([id, joint]) => joint.threadMate && (id === bodyId || joint.parent === bodyId));
-  async function create() {
-    if (!stock || (cap && !rear) || !size || measurementError || busy) return;
-    setBusy(true); setError("");
+  async function create(restore = false) {
+    if (busy || (restore ? !repairId : !stock || (cap && !rear) || !size || measurementError)) return;
+    setBusy(restore ? "restore" : "create"); setError("");
     const request = ++token.current;
     try {
-      const fitting = cap ? fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!) : undefined;
-      const result = cap ? createThreadedCap(project, bodyId, stock, fitting!.settings, rear!)
-        : createThreadedCone(project, bodyId, stock, { end, size, length, coneLength, tipDiameter,
-          opening, allowance, mode, ...(closeBack ? { backWall: thickness } : {}) });
-      let next = result.project;
-      const partId = "capId" in result ? result.capId : result.coneId;
-      let changes = fitting?.changes ?? [];
       const engine = new Worker(new URL("./kernel.ts", import.meta.url), { type: "module", name: "turnmill-thread-pair" });
       worker.current = engine;
-      async function check(revision: number, fitCavityDepth?: number) {
-        const history = cap ? next.features : next.features.filter(f => f.id === partId || features.some(s => f.id === s.id));
-        const model = await evaluateModel({ ...next, features: history });
-        if (token.current !== request) return;
+      const host = restore ? repairHost : bodyId;
+      const checkingCap = restore || cap;
+      let revision = 0;
+      async function build(next: Project, options: { measureRefillFit?: boolean; capPostingCheck?: { project: Project; capId: string; fitCavityDepth?: number } } = {}) {
+        const model = await evaluateModel(next);
+        if (token.current !== request) throw Error("Thread operation closed.");
+        const rev = ++revision;
         type Reply = Extract<KernelReply, { type: "built" | "error" }>;
         const reply = await new Promise<Reply>((resolve, reject) => {
           engine.onerror = () => reject(Error("The geometry engine stopped while checking the threads."));
           engine.onmessage = ({ data }: MessageEvent<KernelReply>) => {
-            if (data.revision === revision && (data.type === "built" || data.type === "error")) resolve(data);
+            if (data.revision === rev && (data.type === "built" || data.type === "error")) resolve(data);
           };
-          engine.postMessage({ type: "build", revision, features: model.features,
-            ...(cap ? { capPostingCheck: { project: next, capId: partId, fitCavityDepth } } : {}) });
+          engine.postMessage({ type: "build", revision: rev, features: model.features, ...options });
         });
+        return { reply, model };
+      }
+      let next: Project, partId: string, changes: string[] = [];
+      let fitting: ReturnType<typeof fitCapEnvelope> | undefined;
+      if (restore && repairId) {
+        const original = legacyCapBarrelStock(project, repairId);
+        const { reply } = await build(original, { measureRefillFit: true });
+        if (reply.type === "error") throw Error(reply.message);
+        const measured = reply.fitSurfaces?.[0];
+        if (!measured?.length) throw Error("Could not measure the original barrel at its cap seats.");
+        const restored = repairCapDiameter(project, repairId, measured, undefined, true);
+        next = restored.project; partId = repairId;
+        changes = ["Changed " + restored.oldSize + " to " + restored.size + ". Cap and front shoulder now meet at Ø" + mmField(restored.outside) + "."];
+      } else if (cap) {
+        fitting = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!);
+        const created = createThreadedCap(project, bodyId, stock!, fitting.settings, rear!);
+        next = created.project; partId = created.capId; changes = fitting.changes;
+      } else {
+        const created = createThreadedCone(project, bodyId, stock!, { end, size, length, coneLength, tipDiameter,
+          opening, allowance, mode, ...(closeBack ? { backWall: thickness } : {}) });
+        next = created.project; partId = created.coneId;
+      }
+      async function check(fitCavityDepth?: number) {
+        const history = checkingCap ? next.features : next.features.filter(f => f.id === partId || features.some(s => f.id === s.id));
+        const { reply, model } = await build({ ...next, features: history }, checkingCap
+          ? { capPostingCheck: { project: next, capId: partId, fitCavityDepth } } : {});
         if (reply.type === "built") resolveThreadMates({ [partId]: next.workspaces!.joints[partId] },
-          reply.threadFrames ?? [], model.values, [bodyId, partId]);
+          reply.threadFrames ?? [], model.values, [host, partId]);
         return reply;
       }
-      let verified = await check(1, fitting?.cavityDepth);
-      if (!verified || token.current !== request) return;
-      if (cap && verified.type === "error" && verified.capFit) {
+      let verified = await check(fitting?.cavityDepth);
+      if (token.current !== request) return;
+      if (fitting && verified.type === "error" && verified.capFit) {
         const corrected = fitCapEnvelope(capSettings, resolveParameters(project.parameters), major!, verified.capFit);
         const profile = next.sketches.find(s => s.partId === partId)?.capProfile;
-        if (!profile || corrected.cavityDepth <= fitting!.cavityDepth) throw Error(verified.message);
+        if (!profile || corrected.cavityDepth <= fitting.cavityDepth) throw Error(verified.message);
         const lengthName = profile.prefix + "_length";
         next = { ...next, parameters: next.parameters.map(p =>
           p.name === lengthName ? { ...p, expression: corrected.settings.capLength } : p) };
         changes = corrected.changes;
-        verified = await check(2);
+        verified = await check();
       }
-      if (!verified || token.current !== request) return;
+      if (token.current !== request) return;
       if (verified.type === "error") throw Error(verified.message);
-      if (cap) {
-        const mount = next.workspaces!.capMounts[partId];
-        const prepared = new Set(Object.values(mount.ends as JointConfig).map(j => j.threadMate?.mating.finishId));
-        const repaired = (verified.threadFrames ?? []).filter(frame => prepared.has(frame.finishId) && frame.autoFit);
-        if (repaired.length === 2) changes.push("Fitted both collar seats to the barrel profile.");
-        else if (repaired.length === 1) {
-          const endName = repaired[0].end === mount.front ? "front" : "back";
-          changes.push("Fitted the " + endName + " collar seat to the barrel profile.");
-        }
-      }
-      onSave(next, partId, stock.axis !== "X" || stock.centerline.some(n => Math.abs(n) > 1e-6), changes);
+      onSave(next, partId, !restore && (stock!.axis !== "X" || stock!.centerline.some(n => Math.abs(n) > 1e-6)), changes,
+        restore ? host : undefined);
     } catch (cause) {
       if (token.current === request) setError((cause as Error).message);
     } finally {
       if (token.current === request) {
-        worker.current?.terminate(); worker.current = null; setBusy(false);
+        worker.current?.terminate(); worker.current = null; setBusy(null);
       }
     }
   }
@@ -239,25 +267,40 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
     onPartChange?.(kind);
     setPart(kind); setSize(""); setError("");
   }
+  if (restoreView) return <Modal title="Threads" onClose={onClose} className="thread-pair-dialog">
+    <div className="thread-pair-scroll">
+      <h3>Fit the cap flush to the barrel</h3>
+      <p>Turn both raised mounts down inside the barrel’s original diameter. The cap rim will meet the front shoulder, and the same cap will still screw onto the back.</p>
+      <button type="button" className="thread-shared" disabled={!!busy} onClick={() => { setOtherTools(true); setError(""); }}>Other thread tools</button>
+    </div>
+    <div className="thread-pair-footer">
+      {error && <p role="alert" className="error-text">{error}</p>}
+      <div className="dialog-actions"><button type="button" onClick={onClose}>Cancel</button>
+        <button type="button" className="primary" disabled={!!busy} onClick={() => void create(true)}>
+          {busy && <LoaderCircle size={14} className="spin"/>}{busy ? "Checking both cap positions…" : "Fit flush to barrel"}</button></div>
+    </div>
+  </Modal>;
   return <Modal title="Threads" onClose={onClose} className="thread-pair-dialog">
     <form className="thread-pair-form" onSubmit={e => { e.preventDefault(); void create(); }} onChange={() => setError("")}>
       <div className="thread-pair-scroll">
         <div className="thread-task"><div className="thread-part-choice" role="group" aria-label="Screw-on part">
-          {(["cone", "cap"] as const).map(kind => <button key={kind} type="button" aria-pressed={part === kind} disabled={busy}
+          {(["cone", "cap"] as const).map(kind => <button key={kind} type="button" aria-pressed={part === kind} disabled={!!busy}
             onClick={() => choosePart(kind)}>Screw-on {kind}</button>)}</div>
-          <button type="button" onClick={onSingle} disabled={busy}>Thread one part</button></div>
-        {targetPicker && <fieldset disabled={busy}>{targetPicker}</fieldset>}
+          <button type="button" onClick={onSingle} disabled={!!busy}>Thread one part</button></div>
+        {targetPicker && <fieldset disabled={!!busy}>{targetPicker}</fieldset>}
+        {repairId && <button className="thread-shared" type="button" disabled={!!busy}
+          onClick={() => { setOtherTools(false); setError(""); }}>Restore flush cap fit…</button>}
         <p className="helper">{cap ? `Cut matching threads on both ends of ${root?.name ?? "the barrel"}. The same cap covers the tip or screws onto the back while you write.`
           : `Add a removable cone to ${root?.name ?? "the barrel"}. Its threaded stem screws into a matching socket.`}</p>
-        {collars && <p className="helper">Raised collars carry the cap threads behind the barrel openings, leaving room for the refill seat or cone socket. Allow stock for the larger collar diameter.</p>}
-        {connected && <button className="thread-shared" type="button" disabled={busy} onClick={onParameters}>Edit shared thread parameters</button>}
+        {cap && <p className="helper">The threads step inward at each end. The cap meets the front shoulder flush by default.</p>}
+        {connected && <button className="thread-shared" type="button" disabled={!!busy} onClick={onParameters}>Edit shared thread parameters</button>}
         {existing.length > 0 && <details><summary>Edit existing threads ({existing.length})</summary>
-          {existing.map(({ feature, finish }) => <button key={finish.id} disabled={busy} type="button"
+          {existing.map(({ feature, finish }) => <button key={finish.id} disabled={!!busy} type="button"
             onClick={() => onEdit(feature.id, finish.id)}>{finish.name} · {feature.name}</button>)}</details>}
         {size && (cap ? <CapSection project={project} stock={stock} rear={rear} settings={previewFit?.settings ?? capSettings}/>
           : <JointSection start={end === "start"} closed={closeBack}/>)}
         {previewFit && previewFit.changes.length > 0 && <p className="helper" role="status">Automatic fit · {previewFit.changes.join(" ")}</p>}
-        <fieldset disabled={busy}>
+        <fieldset disabled={!!busy}>
           <div className="thread-pair-grid">
             <label>{cap ? "Front end" : "Barrel end"}<select aria-label={cap ? "Front end" : "Barrel end"} value={end} onChange={e => { setEnd(e.target.value as PairSettings["end"]); setSize(""); }}>
               <option value="start">Start · min {axis}</option><option value="end">End · max {axis}</option>
@@ -269,7 +312,8 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
             {input("Thread length", length, setLength)}
             {cap ? <>
               {input("Cap length", capLength, setCapLength)}
-              {input("Cap outside diameter", capDiameter, setOutside)}
+              <div>{input("Cap outside diameter", capDiameter, setOutside)}
+                {outside !== undefined && <button className="thread-shared" type="button" onClick={() => setOutside(undefined)}>Match barrel</button>}</div>
               <label>Cap profile<select aria-label="Cap profile" value={crown} onChange={e => setCrown(e.target.value as CapSettings["crown"])}>
                 <option value="flat">Flat</option><option value="domed">Domed</option><option value="tapered">Tapered</option>
               </select></label>
@@ -281,8 +325,12 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
               {input("Tip opening diameter", opening, setOpening)}
             </>}
           </div>
-          {stock && <p className="helper">{cap && rear ? `Front Ø${Number(stock.outside.toFixed(3))} mm · Back Ø${Number(rear.outside.toFixed(3))} mm`
-            : `Barrel Ø${Number(stock.outside.toFixed(3))} mm · ${stock.bore > 0 ? "Bore Ø" + Number(stock.bore.toFixed(3)) + " mm" : "Solid end"}`}</p>}
+          {cap && Number.isFinite(shoulder) && Number.isFinite(backShoulder) && <p className="helper">
+            Front Ø{Number(shoulder!.toFixed(3))} mm · Back Ø{Number(backShoulder!.toFixed(3))} mm at the shoulders</p>}
+          {!cap && stock && <p className="helper">Barrel Ø{Number(stock.outside.toFixed(3))} mm · {stock.bore > 0
+            ? "Bore Ø" + Number(stock.bore.toFixed(3)) + " mm" : "Solid end"}</p>}
+          {cap && shoulder && backShoulder && Math.abs(shoulder - backShoulder) > 0.001
+            ? <p className="helper">The shoulders have different diameters. Match barrel uses the front shoulder.</p> : null}
           {!cap && <label className="thread-close-back"><input type="checkbox" checked={closeBack}
             onChange={e => setCloseBack(e.target.checked)}/> Close back of barrel</label>}
           {!cap && closeBack && input("Back wall thickness", thickness, setThickness)}
@@ -299,8 +347,8 @@ export default function ThreadsDialog({ project, bodyId, surfaces, measurementEr
         {(error || measurementError || stockIssue) && <p role="alert" className="error-text">{error || measurementError || stockIssue}</p>}
         {!surfaces && !error && !measurementError && <p className="helper">Measuring the barrel ends…</p>}
         <div className="dialog-actions"><button type="button" onClick={onClose}>Cancel</button>
-          <button className="primary" type="submit" disabled={busy || !stock || (cap && !rear) || !size || !!measurementError}>
-            {busy && <LoaderCircle size={14} className="spin"/>}{busy ? (cap ? "Checking both cap positions…" : "Checking both parts…") : `Create threaded ${part}`}
+          <button className="primary" type="submit" disabled={!!busy || !stock || (cap && !rear) || !size || !!measurementError}>
+            {busy && <LoaderCircle size={14} className="spin"/>}{busy ? (cap || busy === "restore" ? "Checking both cap positions…" : "Checking both parts…") : `Create threaded ${part}`}
           </button></div>
       </div>
     </form>

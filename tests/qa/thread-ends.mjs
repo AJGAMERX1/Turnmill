@@ -190,6 +190,8 @@ try {
   await button(page, "Threads").click();
   await button(paired, "Screw-on cap").click();
   await field(paired, "Front end").selectOption("end");
+  assert.equal(await field(paired, "Cap outside diameter").inputValue(), "10 mm", "default cap meets the original barrel");
+  await field(paired, "Thread size").selectOption({ label: "M8 × 0.75" });
   const capProfile = field(paired, "Cap profile");
   for (const shape of ["flat", "tapered", "domed"]) {
     await capProfile.selectOption(shape);
@@ -253,11 +255,16 @@ try {
   await field(page, "Drive value").press("Enter");
   await page.getByText("Axial travel 0.750 mm", {exact:true}).waitFor();
   await button(page, "Part").click();
-  await openProject({ ...finished.project, id: "cone-under-cap", name: "Postable cap over a cone" });
+  const withNarrowCone = structuredClone(finished.project);
+  const hostProfile = withNarrowCone.sketches.find(s => s.id === barrel.sketch.id);
+  for (const point of hostProfile.points) if (point.y === "5") point.y = "7.5";
+  withNarrowCone.parameters.find(p => p.name === "cone_base").expression = "9 mm";
+  await openProject({ ...withNarrowCone, id: "cone-under-cap", name: "Postable cap over a cone" });
   await page.getByRole("tab", { name: "Pen barrel", exact: true }).click();
   await button(page, "Threads").click();
   await button(paired, "Screw-on cap").click();
-  await paired.getByText(/Raised collars carry the cap threads/).waitFor();
+  await field(paired, "Thread size").selectOption({ label: "M12 × 1" });
+  assert.equal(await field(paired, "Cap outside diameter").inputValue(), "15 mm", "cap meets the original barrel surface over a cone");
   assert.equal(await field(paired, "Front end").inputValue(), "end");
   await field(paired, "Thread geometry").selectOption("cosmetic");
   await field(paired, "Cap length").fill("16 mm");
@@ -265,9 +272,10 @@ try {
   await createCap();
   const cappedCone = await measure(page);
   assert(cappedCone.values.cap_length >= 4.5 + 15 + 2 + 1.5 + 0.249, "one Create must extend the roof past the seated cone");
+  near(cappedCone.values.cap_diameter, 15);
   assert.equal(cappedCone.bodies.length, 3, "one cap covers and posts around the existing cone");
   assert.deepEqual(cappedCone.project.features.find(f => f.id === newPart.id), newPart);
-  assert(cappedCone.project.features.find(f => f.id === "barrel").finishes.some(f => f.preparation === "collar"));
+  assert(cappedCone.project.features.find(f => f.id === "barrel").finishes.filter(f => f.preparation === "flush").length === 2);
   assert.deepEqual(errors, []);
   console.log("PASS threads, cone and barrel pairing, closed back, cap presets, saved dimensions and single-cap posting to front/back screw joints.");
 } finally { await browser.close(); }

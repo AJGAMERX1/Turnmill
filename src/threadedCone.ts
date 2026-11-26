@@ -6,11 +6,12 @@ import { turningReferences } from "./turningReferences";
 import { defaultJoint, type Joint } from "./kinematics";
 import { partFeatures } from "./partTabs";
 import { uid } from "./projects";
-import { refillComponents } from "./refills";
+import { isSleeveDonor, refillComponents } from "./refills";
 import type { Feature, Project, Sketch } from "./types";
 
 type End = "start" | "end";
-export type BarrelEnd = { axis: "X" | "Z"; centerline: [number, number, number]; station: number; outside: number; bore: number };
+export type BarrelEnd = { axis: "X" | "Z"; centerline: [number, number, number]; station: number; outside: number; bore: number;
+  bandSurfaces?: FitSurface[]; end?: End };
 export type PairSettings = {
   end: End; size: string; length: string; coneLength: string; tipDiameter: string;
   opening: string; allowance: string; mode: "modeled" | "cosmetic"; backWall?: string;
@@ -41,7 +42,8 @@ export function barrelEnd(surfaces: FitSurface[], axis: "X" | "Z", end: End): Ba
   const outer = atEnd.filter(s => s.side === "shaft").sort((a, b) => diam(b) - diam(a))[0];
   const concentric = atEnd.filter(s => s.side === "bore" &&
     s.centerline.every((n, i) => Math.abs(n - outer.centerline[i]) < 1e-5));
-  const rim = { axis, centerline: outer.centerline, station, outside: diam(outer), bore: Math.max(0, ...concentric.map(diam)) };
+  const bandSurfaces = aligned.filter(s => s.centerline.every((n, i) => Math.abs(n - outer.centerline[i]) < 1e-5));
+  const rim = { axis, centerline: outer.centerline, station, outside: diam(outer), bore: Math.max(0, ...concentric.map(diam)), bandSurfaces, end };
   return usableRim(rim) ? rim : undefined;
 }
 
@@ -61,8 +63,98 @@ function checkBarrel(project: Project, bodyId: string, ...rims: BarrelEnd[]) {
     throw Error("The thread needs a flat, round end with material around its center. Select a barrel or change the pointed end to a flat shoulder.");
 }
 
+type Clearance = { name: string; diameter: number };
+
+function attachedClearance(project: Project, host: string, values: Record<string, number>): Clearance | undefined {
+  const joints = (project.workspaces?.joints ?? {}) as Record<string, Joint>;
+  const refills = refillComponents(project);
+  let largest: Clearance | undefined;
+  for (const [id, joint] of Object.entries(joints)) {
+    if (joint.parent !== host) continue;
+    const f = project.features.find(f => f.id === id && !f.suppressed);
+    if (!f) continue;
+    let diameter = 0;
+    if (joint.refillSnap) {
+      const refill = refills.find(r => r.bodyId === id && isSleeveDonor(r.kind));
+      if (refill) diameter = values[refill.prefix + "_collar_diameter"];
+    } else if (joint.threadMate && f.kind === "revolve" && !f.advanced && !f.operations?.length) {
+      // The paired nose generator puts the driving base radius at its second vertex.
+      // A subsequently modified solid needs the kernel's exact clearance check.
+      const sketch = project.sketches.find(s => s.id === f.sketchId);
+      const male = f.finishes?.find(t => t.id === joint.threadMate!.moving.finishId && !t.suppressed);
+      if (male?.kind === "thread" && male.preparation === "tenon" && f.finishes?.length === 1 &&
+          partFeatures(project, id).filter(f => !f.suppressed).length === 1 &&
+          sketch?.points.length === 4 && sketch.constraints.length === 0 && /^cone\d*_base \/ 2$/.test(sketch.points[1].y))
+        diameter = 2 * evaluate(sketch.points[1].y, values);
+    }
+    if (diameter > (largest?.diameter ?? 0)) largest = { diameter, name: f.name };
+  }
+  return largest;
+}
+
+function diameterAt(s: FitSurface, x: number) {
+  return s.diameter + (x - s.start) / (s.end - s.start) * ((s.endDiameter ?? s.diameter) - s.diameter);
+}
+
+/** Outside diameter on the barrel side of the seating plane, including shoulders on a step or taper. */
+export function shoulderOutside(rim: BarrelEnd, length: number): number {
+  if (!rim.end || !rim.bandSurfaces?.length || !(length > 0)) return rim.outside;
+  const inward = rim.end === "start" ? 1 : -1, seat = rim.station + inward * length;
+  const probe = seat + inward * tolerance;
+  const lands = rim.bandSurfaces.filter(s => s.side === "shaft" && s.start < probe && probe < s.end);
+  return lands.length ? Math.max(...lands.map(s => diameterAt(s, Math.max(s.start, Math.min(s.end, seat))))) : NaN;
+}
+
+function shoulderDriver(project: Project, bodyId: string, stock: BarrelEnd, end: End, length: number, values: Record<string, number>) {
+  const shoulder = shoulderOutside(stock, length);
+  if (!Number.isFinite(shoulder)) throw Error("Choose a thread length that ends on a measurable round shoulder.");
+  const seat = stock.station + (end === "start" ? length : -length);
+  const probe = seat + (end === "start" ? tolerance : -tolerance);
+  const continuousLand = stock.bandSurfaces?.some(s => s.side === "shaft" &&
+    Math.abs(s.diameter - stock.outside) < tolerance && Math.abs((s.endDiameter ?? s.diameter) - stock.outside) < tolerance &&
+    s.start < probe && s.end > probe && s.start <= stock.station + tolerance && s.end >= stock.station - tolerance);
+  if (continuousLand && Math.abs(shoulder - stock.outside) < tolerance) {
+    const refs = turningReferences(project, bodyId, stock, end, values, probe);
+    if (refs.diameter) return refs.diameter;
+  }
+  return Number(shoulder.toFixed(7)) + " mm";
+}
+
+/** Limit the thread to material actually present along its engagement. Intersected
+ * lands and cones describe the turned envelope; the kernel checks interrupted faces. */
+function bandDimensions(rim: BarrelEnd, length: number) {
+  let outside = rim.outside, bore = rim.bore;
+  if (!rim.bandSurfaces || !rim.end) return { outside, bore };
+  const other = rim.station + (rim.end === "start" ? length : -length);
+  const lo = Math.min(rim.station, other), hi = Math.max(rim.station, other);
+  for (const s of rim.bandSurfaces) {
+    const a = Math.max(lo, s.start), b = Math.min(hi, s.end);
+    if (b <= a + tolerance) continue;
+    if (s.side === "shaft") outside = Math.min(outside, diameterAt(s, a), diameterAt(s, b));
+    else bore = Math.max(bore, diameterAt(s, a), diameterAt(s, b));
+  }
+  return { outside, bore };
+}
+
+function capLimits(project: Project, bodyId: string, stock: BarrelEnd, rear: BarrelEnd | undefined, length: number) {
+  const values = resolveParameters(project.parameters);
+  const rims = [stock, ...(rear ? [rear] : [])];
+  const bands = rims.map(r => bandDimensions(r, length));
+  let bore = Math.max(...bands.map(b => b.bore));
+  // The measured bore at a threaded mouth is its minor diameter. The external
+  // thread root must also leave material over the internal thread's groove.
+  for (const f of partFeatures(project, bodyId)) {
+    for (const t of f.finishes ?? []) {
+      if (f.suppressed || t.suppressed || t.kind !== "thread" || t.side !== "internal" ||
+          (t.preparationAxis && t.preparationAxis !== stock.axis) || (rims.length === 1 && stock.end && t.end !== stock.end)) continue;
+      bore = Math.max(bore, evaluate(t.diameter, values));
+    }
+  }
+  return { outside: Math.min(...bands.map(b => b.outside)), bore, attachment: attachedClearance(project, bodyId, values) };
+}
+
 function sizeProblem(major: number, pitch: number, allowance: number, outside: number, bore: number,
-  kind: "cap" | "cone", collars: boolean): string | undefined {
+  kind: "cap" | "cone", attachment?: Clearance): string | undefined {
   if (!Number.isFinite(allowance) || allowance < 0 || allowance >= major - threadMinorDiameter(major, pitch))
     return "Reduce the diametral allowance so the thread flanks still engage.";
   if (kind === "cone") {
@@ -70,29 +162,33 @@ function sizeProblem(major: number, pitch: number, allowance: number, outside: n
     if (threadMinorDiameter(major, pitch) < bore - tolerance)
       return "The existing bore is larger than this thread’s pilot. Choose a larger thread or a finer pitch.";
   } else {
-    const minor = threadMinorDiameter(major - allowance, pitch);
-    if (collars && minor <= outside + tolerance)
-      return "Use a larger cap thread so its root clears the barrel and leaves the original pen opening intact.";
-    if (!collars && major - allowance > outside - tolerance)
-      return "Choose a smaller thread to leave a shoulder for the cap against the barrel.";
-    if (minor <= bore + tolerance)
-      return "The thread root would cut into the barrel bore. Choose a larger thread, reduce the allowance, or use a finer pitch.";
+    if (major - allowance >= outside - tolerance)
+      return "Choose a smaller thread that can be cut inside both original barrel ends.";
+    if (threadMinorDiameter(major - allowance, pitch) <= bore + 0.02 + tolerance)
+      return "The thread root would cut into the barrel bore or its internal thread. Choose a larger thread or a finer pitch.";
+    if (attachment && threadMinorDiameter(major, pitch) <= attachment.diameter + tolerance)
+      return "The cap opening must pass over " + attachment.name + " (Ø" + Number(attachment.diameter.toFixed(3)) + " mm). Choose a wider opening or narrow that part.";
   }
 }
 
 /** List sizes that fit the measured rims, with the default at the front. Full axial stock and other parts are checked by the kernel. */
 export function compatiblePairSizes(project: Project, bodyId: string, stock: BarrelEnd, kind: "cap" | "cone",
-  rear?: BarrelEnd, allowance = 0.1): string[] {
-  if (!usableRim(stock) || (kind === "cap" && !usableRim(rear)) ||
+  rear?: BarrelEnd, allowance = 0.1, length = 4.5): string[] {
+  if (!usableRim(stock) || (kind === "cap" && !usableRim(rear)) || !Number.isFinite(length) || length <= 0 ||
       refillComponents(project).some(refill => refill.bodyId === bodyId)) return [];
-  const collars = kind === "cap" && capNeedsCollars(project, bodyId);
-  const outside = kind === "cap" && rear ? (collars ? Math.max : Math.min)(stock.outside, rear.outside) : stock.outside;
-  const bore = kind === "cap" && rear ? Math.max(stock.bore, rear.bore) : stock.bore;
-  const score = (p: typeof presets[number]) => collars ? p.major + p.step * 0.01
-    : Math.abs(p.major - 0.8 * outside) + Math.abs(p.step - 0.75) / 4;
-  return presets.filter(p => !sizeProblem(p.major, p.step, allowance, outside, bore, kind, collars))
+  const { outside, bore, attachment } = kind === "cap" ? capLimits(project, bodyId, stock, rear, length) : { ...stock, attachment: undefined };
+  const shoulders = kind === "cap" ? [shoulderOutside(stock, length), shoulderOutside(rear!, length)] : [];
+  const score = (p: typeof presets[number]) => Math.abs(p.major - 0.8 * outside) + Math.abs(p.step - 0.75) / 4;
+  return presets.filter(p => !sizeProblem(p.major, p.step, allowance, outside, bore, kind, attachment) &&
+    (kind === "cone" || shoulders.every(od => p.major - allowance < od - tolerance)))
     .sort((a,b) => Number(b.label.startsWith("M")) - Number(a.label.startsWith("M")) || score(a) - score(b))
     .map(p => p.label);
+}
+
+export function capAttachmentIssue(project: Project, bodyId: string): string | undefined {
+  const obstacle = attachedClearance(project, bodyId, resolveParameters(project.parameters));
+  if (obstacle) return "The cap’s threaded opening has to pass over " + obstacle.name + " (Ø" +
+    Number(obstacle.diameter.toFixed(3)) + " mm). Narrow that part or choose a barrel with room for a larger thread.";
 }
 
 export function createThreadedCone(project: Project, bodyId: string, stock: BarrelEnd, settings: PairSettings) {
@@ -108,7 +204,7 @@ export function createThreadedCone(project: Project, bodyId: string, stock: Barr
   const value = (s: string) => evaluate(s, values);
   const major = value(preset.diameter), pitch = value(preset.pitch);
   const clearance = value(settings.allowance), opening = value(settings.opening), tip = value(settings.tipDiameter);
-  const problem = sizeProblem(major, pitch, clearance, stock.outside, stock.bore, "cone", false);
+  const problem = sizeProblem(major, pitch, clearance, stock.outside, stock.bore, "cone");
   if (problem) throw Error(problem);
   if (!(value(settings.length) > 0 && value(settings.coneLength) > 0))
     throw Error("Give the cone and its threads a positive length.");
@@ -182,12 +278,13 @@ function addThreadedAttachment(project: Project, bodyId: string, targetId: strin
 export type CapSettings = Pick<PairSettings, "end" | "size" | "length" | "allowance" | "mode"> & {
   capLength: string;
   capDiameter: string;
+  matchBarrel?: boolean;
   crown: "flat" | "domed" | "tapered";
   crownLength: string;
   wall: string;
 };
 
-export function capNeedsCollars(project: Project, bodyId: string): boolean {
+export function hasCapAttachments(project: Project, bodyId: string): boolean {
   const joints = project.workspaces?.joints ?? {};
   const hasSeatedRefill = project.features.some(f => f.operation === "new" && !f.suppressed &&
     joints[f.id]?.refillSnap === true && joints[f.id]?.parent === bodyId);
@@ -223,7 +320,6 @@ export function createThreadedCap(project: Project, bodyId: string, stock: Barre
   if (history.some(f => f.finishes?.some(op => op.kind === "thread" && !op.suppressed && op.side === "external" &&
       (otherStock !== undefined || op.end === settings.end))))
     throw Error("A barrel end already has an external thread. Edit the existing cap or choose a barrel with free outside lands.");
-  const collars = capNeedsCollars(project, bodyId);
   const opposite: End = settings.end === "end" ? "start" : "end";
   if (otherStock && (otherStock.axis !== stock.axis ||
       (stock.station - otherStock.station) * (settings.end === "end" ? 1 : -1) <= 1e-6))
@@ -233,18 +329,21 @@ export function createThreadedCap(project: Project, bodyId: string, stock: Barre
   const values = resolveParameters(project.parameters);
   const value = (s: string) => evaluate(s, values);
   const major = value(preset.diameter), pitch = value(preset.pitch), allowance = value(settings.allowance);
-  const outside = (collars ? Math.max : Math.min)(stock.outside, otherStock?.outside ?? stock.outside);
-  const problem = sizeProblem(major, pitch, allowance, outside, Math.max(stock.bore, otherStock?.bore ?? stock.bore), "cap", collars);
+  const engagement = value(settings.length);
+  if (!(engagement > 0)) throw Error("Give the cap threads a positive length.");
+  const limits = capLimits(project, bodyId, stock, otherStock, engagement);
+  const problem = sizeProblem(major, pitch, allowance, limits.outside, limits.bore, "cap", limits.attachment);
   if (problem) throw Error(problem);
-  if (collars && otherStock && 2 * (value(settings.length) + pitch) >= Math.abs(stock.station - otherStock.station))
-    throw Error("The two cap collars would meet. Shorten the cap thread or lengthen the barrel.");
+  if (otherStock && 2 * engagement >= Math.abs(stock.station - otherStock.station) - tolerance)
+    throw Error("The front and back threads need separate shoulders. Shorten their engagement or lengthen the barrel.");
 
+  const capDiameter = settings.matchBarrel ? shoulderDriver(project, bodyId, stock, settings.end, engagement, values) : settings.capDiameter;
   const { name, prefix } = attachmentName(project, "cap");
   const ref = (field: string) => prefix + "_" + field;
   const inputs = [
     ["major", "Thread major diameter", preset.diameter], ["pitch", "Thread pitch", preset.pitch],
     ["thread_length", "Thread length", settings.length], ["allowance", "Diametral allowance", settings.allowance],
-    ["length", "Cap length", settings.capLength], ["diameter", "Cap outside diameter", settings.capDiameter],
+    ["length", "Cap length", settings.capLength], ["diameter", "Cap outside diameter", capDiameter],
     ["wall", "End wall thickness", settings.wall],
   ];
   if (settings.crown !== "flat") inputs.push(["crown", "Crown length", settings.crownLength]);
@@ -254,7 +353,7 @@ export function createThreadedCap(project: Project, bodyId: string, stock: Barre
   const body = uid();
   const refs = turningReferences(project, bodyId, stock, settings.end, values);
   const endPlane = refs.station ?? stock.station + " mm";
-  const base = collars ? "(" + endPlane + ")" + (settings.end === "end" ? " - " : " + ") + ref("thread_length") : endPlane;
+  const base = "(" + endPlane + ")" + (settings.end === "end" ? " - " : " + ") + ref("thread_length");
   const axial = (distance: string) => "(" + base + ")" + (settings.end === "end" ? " + " : " - ") + "(" + distance + ")";
   const r = "(" + ref("diameter") + " / 2)";
   const crown = settings.crown === "flat" ? "0 mm" : ref("crown");
@@ -279,17 +378,14 @@ export function createThreadedCap(project: Project, bodyId: string, stock: Barre
   sketch.points.push({ x: tip, y: "0 mm" }, { x: cavityEnd, y: "0 mm" }, { x: cavityEnd, y: pilotRadius });
   const shared = { kind: "thread", preset: preset.label, hand: "right", length: ref("thread_length"),
     pitch: ref("pitch"), mode: settings.mode } as const;
-  const male: Finish = { ...shared, id: uid(), name: "Threads · barrel " + settings.end + (collars ? " collar" : " tenon"), end: settings.end,
-    ...(collars ? { collarStockDiameter: refs.diameter ?? stock.outside + " mm" } : {}),
-    preparation: collars ? "collar" : "tenon", preparationAxis: stock.axis, preparationCenter: stock.centerline,
+  const male: Finish = { ...shared, id: uid(), name: "Threads · barrel " + settings.end, end: settings.end,
+    preparation: "flush", preparationAxis: stock.axis, preparationCenter: stock.centerline,
     side: "external", diameter: ref("major") + " - " + ref("allowance") };
   const socket: Finish = { ...shared, id: uid(), name: "Threads · cap socket", end: settings.end === "end" ? "start" : "end",
     preparation: "socket", preparationAxis: "X", side: "internal", diameter: ref("major") };
   const next = addThreadedAttachment(project, bodyId, target.id, sketch, parameters, name, settings.end, ref, male, socket);
   if (otherStock) {
-    const otherRefs = turningReferences(project, bodyId, otherStock, opposite, values);
-    const second: Finish = { ...male, id: uid(), end: opposite, name: "Threads · barrel " + opposite + (collars ? " collar" : " tenon"),
-      ...(collars ? { collarStockDiameter: otherRefs.diameter ?? otherStock.outside + " mm" } : {}),
+    const second: Finish = { ...male, id: uid(), end: opposite, name: "Threads · barrel " + opposite,
       preparationCenter: otherStock.centerline };
     next.features = next.features.map(f => f.id === target.id ? { ...f, finishes: [...(f.finishes ?? []), second] } : f);
     const initial = next.workspaces!.joints[body] as Joint;
@@ -305,4 +401,118 @@ export function createThreadedCap(project: Project, bodyId: string, stock: Barre
     next.workspaces!.capMounts = { ...next.workspaces!.capMounts, [body]: mount };
   }
   return { project: next, capId: body };
+}
+
+type ThreadRef = NonNullable<Joint["threadMate"]>["moving"];
+type ThreadFinish = Extract<Finish, { kind: "thread" }>;
+
+function referencedThread(project: Project, ref: ThreadRef | undefined) {
+  if (!ref) return;
+  return project.features.find(f => f.id === ref.featureId && !f.suppressed)?.finishes
+    ?.find((t): t is ThreadFinish => t.kind === "thread" && !t.suppressed && t.id === ref.finishId);
+}
+
+function legacyPair(project: Project, capId: string) {
+  const mount: CapMount | undefined = project.workspaces?.capMounts?.[capId];
+  if (!mount || (mount.front !== "start" && mount.front !== "end") || typeof mount.barrelId !== "string" ||
+      mount.barrelId === capId) return;
+  const start = mount.ends?.start, end = mount.ends?.end;
+  if (!start?.threadMate?.mating || !end?.threadMate?.mating || !start.threadMate.moving || !end.threadMate.moving ||
+      start.parent !== mount.barrelId || end.parent !== mount.barrelId) return;
+  const cap = project.features.find(f => f.id === capId && f.operation === "new" && f.kind === "revolve" && !f.suppressed);
+  const profile = cap && project.sketches.find(s => s.id === cap.sketchId)?.capProfile;
+  if (!profile?.prefix) return;
+  const socketRef = start.threadMate.moving, otherSocket = end.threadMate.moving;
+  if (socketRef.featureId !== capId || otherSocket.featureId !== capId || socketRef.finishId !== otherSocket.finishId) return;
+  const socket = referencedThread(project, socketRef);
+  if (socket?.preparation !== "socket" || socket.side !== "internal" || socket.diameter !== profile.prefix + "_major") return;
+  const males = [start.threadMate.mating, end.threadMate.mating];
+  const host = partFeatures(project, mount.barrelId);
+  if (!host.some(f => f.id === mount.barrelId && !f.suppressed)) return;
+  if (!males.every((ref, i) => {
+    const thread = referencedThread(project, ref);
+    return host.some(f => f.id === ref.featureId) && thread?.preparation === "collar" && thread.side === "external" &&
+      thread.end === (i === 0 ? "start" : "end");
+  })) return;
+  return { mount, profile, males, socketRef, socket };
+}
+
+/** Recognize saved generated collars through their mate references, including after a rename or posting. */
+export function legacyCapForBarrel(project: Project, id: string): string | undefined {
+  const mounts: Record<string, CapMount> = project.workspaces?.capMounts ?? {};
+  return Object.keys(mounts).find(capId => (id === capId || id === mounts[capId]?.barrelId) && legacyPair(project, capId));
+}
+
+/** Model for measuring original stock with all other barrel features applied. */
+export function legacyCapBarrelStock(project: Project, capId: string): Project {
+  const pair = legacyPair(project, capId);
+  if (!pair) throw Error("Select a cap with a pair of raised barrel collars.");
+  return { ...project, features: partFeatures(project, pair.mount.barrelId).map(f => ({
+    ...f, finishes: f.finishes?.filter(t => !pair.males.some(ref => ref.featureId === f.id && ref.finishId === t.id)),
+  })) };
+}
+
+/** Convert the existing pair as one edit, retaining cap, threads, sketch, mates and active pose. */
+export function repairCapDiameter(project: Project, capId: string, surfaces: FitSurface[], size?: string, matchOutside = true) {
+  const pair = legacyPair(project, capId);
+  if (!pair) throw Error("Select a cap with a pair of raised barrel collars.");
+  const { mount, profile, males, socket, socketRef } = pair;
+  const barrelId = mount.barrelId;
+  const measured = surfaces.filter(s => s.bodyId === barrelId);
+  const axis = barrelAxis(project.features.find(f => f.id === barrelId), measured);
+  const front = barrelEnd(measured, axis, mount.front);
+  const rear = barrelEnd(measured, axis, mount.front === "start" ? "end" : "start");
+  if (!front || !rear) throw Error("Both original barrel ends need a measurable round face for a flush cap.");
+  const values = resolveParameters(project.parameters);
+  const key = (field: string) => profile.prefix + "_" + field;
+  const length = values[key("thread_length")], allowance = values[key("allowance")];
+  const oldMajor = values[key("major")], oldPitch = values[key("pitch")], oldSize = socket.preset;
+  const outside = shoulderOutside(front, length);
+  if (!Number.isFinite(outside) || !Number.isFinite(shoulderOutside(rear, length)))
+    throw Error("Choose a thread length that ends on a measurable round shoulder at each end.");
+  const capOutside = matchOutside ? outside : values[key("diameter")];
+  const sizes = compatiblePairSizes(project, barrelId, front, "cap", rear, allowance, length);
+  const sameFamily = (label: string) => label.startsWith("M") === oldSize.startsWith("M");
+  const choices = presets.filter(p => sizes.includes(p.label) && p.major <= oldMajor + tolerance && p.major < capOutside - 1e-5)
+    .sort((a,b) => Number(Math.abs(b.step-oldPitch) < tolerance) - Number(Math.abs(a.step-oldPitch) < tolerance) ||
+      Number(sameFamily(b.label)) - Number(sameFamily(a.label)) || b.major-a.major || Math.abs(a.step-oldPitch)-Math.abs(b.step-oldPitch))
+    .map(p => p.label);
+  const chosen = presets.find(p => p.label === (size ?? choices[0]) && choices.includes(p.label));
+  if (!chosen) throw Error(capAttachmentIssue(project, barrelId) ??
+    "No standard thread fits inside both original barrel ends. Try a shorter engagement or a thicker barrel wall.");
+  if (2 * length >= Math.abs(front.station - rear.station) - tolerance)
+    throw Error("Shorten the cap thread so the front and back retain separate seating shoulders.");
+  // The major and pitch select the thread standard. Leave equivalent expressions (especially a driven pitch)
+  // intact. Other dimensions and the front/back joint definitions continue to reference the same parameters.
+  function adjustedDriver(expression: string, before: number, after: number, nominal: string) {
+    // A user can link either dimension to another named parameter. Preserve that link when refitting.
+    const dependsOnParameter = expression.match(/[a-zA-Z_]\w*/g)?.some(name => Object.hasOwn(values, name));
+    if (!dependsOnParameter) return nominal;
+    const sign = after < before ? " - " : " + ";
+    return "(" + expression + ")" + sign + Number(Math.abs(after - before).toFixed(12)) + " mm";
+  }
+  const parameters = project.parameters.map(p => {
+    if (p.name === key("major") && Math.abs(oldMajor - chosen.major) > tolerance)
+      return { ...p, expression: adjustedDriver(p.expression, oldMajor, chosen.major, chosen.diameter) };
+    if (p.name === key("pitch") && Math.abs(oldPitch - chosen.step) > tolerance)
+      return { ...p, expression: adjustedDriver(p.expression, oldPitch, chosen.step, chosen.pitch) };
+    if (matchOutside && p.name === key("diameter")) return { ...p, expression: shoulderDriver(project, barrelId, front, mount.front, length, values) };
+    return p;
+  });
+  validateCapProfile(profile, resolveParameters(parameters));
+  const features = project.features.map(f => {
+    const host = males.filter(ref => ref.featureId === f.id);
+    if (!host.length && socketRef.featureId !== f.id) return f;
+    return { ...f, finishes: f.finishes?.map(t => {
+      if (t.kind !== "thread") return t;
+      if (host.some(ref => ref.finishId === t.id)) {
+        const { collarStockDiameter: _stock, ...thread } = t;
+        return { ...thread, preset: chosen.label, preparation: "flush" as const,
+          name: t.name === "Threads · barrel " + t.end + " collar" ? "Threads · barrel " + t.end : t.name };
+      }
+      if (f.id === socketRef.featureId && t.id === socketRef.finishId) return { ...t, preset: chosen.label };
+      return t;
+    }) };
+  });
+  return { project: { ...project, features, parameters }, capId, size: chosen.label, oldSize, outside, choices };
 }

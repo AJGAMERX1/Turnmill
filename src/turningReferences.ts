@@ -8,7 +8,7 @@ const near = (a: number, b: number) => Math.abs(a - b) <= 1e-6;
 
 /** Retain a proven driver from the source turning when the measured end still matches its planar rim. */
 export function turningReferences(project: Project, bodyId: string, stock: MeasuredRim,
-  end: "start" | "end", values: Record<string, number>): References {
+  end: "start" | "end", values: Record<string, number>, atSeat?: number): References {
   if (stock.axis !== "X") return {};
   const history = partFeatures(project, bodyId).filter(f => !f.suppressed);
   const root = history[0];
@@ -50,7 +50,18 @@ export function turningReferences(project: Project, bodyId: string, stock: Measu
       catch { return "(" + first + ")"; }
     }
     const station = sharedDriver(rim.map(p => p.source.x));
-    const radius = sharedDriver(outside.map(p => p.source.y));
+    let radius = sharedDriver(outside.map(p => p.source.y));
+    if (radius && atSeat !== undefined) {
+      // A taper with independently driven endpoints can happen to be cylindrical today.
+      // Only propagate a driver that also controls both radii along the actual seating edge.
+      const sharedAlongSeat = vertices.some((p, i) => {
+        const j = (i + 1) % vertices.length, q = vertices[j];
+        return !near(p.x, q.x) && Math.min(p.x,q.x) <= atSeat && Math.max(p.x,q.x) >= atSeat &&
+          near(p.y,q.y) && near(2 * Math.abs(p.y), stock.outside) &&
+          sharedDriver([sources[i].y, sources[j].y]) === radius;
+      });
+      if (!sharedAlongSeat) radius = undefined;
+    }
     return {
       ...(station && { station }),
       ...(radius && { diameter: radius + (outside[0].y < 0 ? " * -2" : " * 2") }),

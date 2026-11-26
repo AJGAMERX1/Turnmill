@@ -117,6 +117,12 @@ function availableMates(project: Project, ownerId: string, frames: ThreadFrame[]
 }
 
 function PlacementDiagram({thread}: {thread: Thread}) {
+  if (thread.preparation === "flush") return <svg viewBox="0 0 188 53" role="img" aria-label="Section of a thread turned into the original barrel end">
+    <g transform={thread.end === "end" ? "translate(188 0) scale(-1 1)" : undefined}>
+      <path d="M18 15H68V8H170V22H18ZM18 38H68V45H170V31H18Z" fill="#46514f" stroke="#adb9b5"/>
+      {[22,30,38,46,54,62].map(x => <path key={x} d={`M${x} 15l3 3 3-3 M${x} 38l3-3 3 3`} stroke="#edba76" fill="none"/>)}
+    </g>
+  </svg>;
   if (thread.preparation === "collar") return <svg viewBox="0 0 188 53" role="img" aria-label="Section of an external cap collar around the barrel bore">
     <g transform={thread.end === "end" ? "translate(188 0) scale(-1 1)" : undefined}>
       <path d="M18 17H170V36H18ZM18 22H170V31H18Z" fill="#46514f" fillRule="evenodd" stroke="#adb9b5"/>
@@ -152,12 +158,13 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     copied.diameter === thread.diameter && copied.pitch === thread.pitch && copied.hand === thread.hand && copied.length === thread.length;
   const automaticName = ["Thread", "Threaded socket", "Threaded tenon"].includes(thread.name);
   function place(preparation: Thread["preparation"]) {
-    const side = preparation === "tenon" || preparation === "collar" ? "external" : preparation === "socket" ? "internal" : thread.side;
+    const side = preparation ? (preparation === "socket" ? "internal" : "external") : thread.side;
     const name = preparation === "tenon" ? "Threaded tenon" : preparation === "socket" ? "Threaded socket" : "Thread";
     const end = side === thread.side ? thread.end : preferredEnd(ctx, side);
     update({ preparation, end, side,
       ...(preparation ? threadPosition(ctx, end) : { preparationAxis: undefined, preparationCenter: undefined }),
       ...(preparation !== "socket" ? { backWall: undefined } : {}),
+      ...(preparation !== "collar" ? { collarStockDiameter: undefined } : {}),
       ...(automaticName ? { name } : {}) });
   }
   function copy(key: string) {
@@ -165,13 +172,15 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     const source = choices.find(c => c.key === key)?.finish;
     if (!source) return;
     const side = source.side === "internal" ? "external" : "internal";
-    const preparation = thread.preparation && (side === "internal" ? "socket" : thread.preparation === "collar" ? "collar" : "tenon");
+    let preparation = thread.preparation;
+    if (preparation && side !== thread.side) preparation = side === "internal" ? "socket" : "tenon";
     update({ preset: source.preset, diameter: source.diameter, pitch: source.pitch, hand: source.hand, length: source.length,
       side, preparation, ...(side !== thread.side ? {
         end: preferredEnd(ctx, side), ...(preparation ? threadPosition(ctx, preferredEnd(ctx, side)) : {}),
       } : {}),
-      ...(preparation === "tenon" ? { backWall: undefined } : {}),
-      ...(preparation && automaticName ? { name: preparation === "socket" ? "Threaded socket" : "Threaded tenon" } : {}) });
+      ...(preparation !== "socket" ? { backWall: undefined } : {}),
+      ...(preparation !== "collar" ? { collarStockDiameter: undefined } : {}),
+      ...(preparation && automaticName ? { name: preparation === "socket" ? "Threaded socket" : preparation === "tenon" ? "Threaded tenon" : "Thread" } : {}) });
 
   }
   const placement = thread.preparation;
@@ -198,6 +207,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
         onChange={e => place(e.target.value === "existing" ? undefined : e.target.value as Thread["preparation"])}>
         <option value="tenon">Add external tenon</option>
         <option value="socket">Cut internal socket</option>
+        <option value="flush">Turn external thread within barrel</option>
         {placement === "collar" && <option value="collar">External cap collar</option>}
         <option value="existing">Use existing stock</option>
       </select></label>
@@ -212,6 +222,7 @@ export function ThreadSettings({ thread, feature, ctx, project, frames, values, 
     {placement && <div className="thread-placement-note">
       <PlacementDiagram thread={thread}/>
       <p>{placement === "tenon" ? "Extends the chosen end with a straight threaded shaft. A center bore continues through the shaft."
+        : placement === "flush" ? "Turns the selected end down to the thread diameter. The original barrel forms the cap stop."
         : placement === "collar" ? "Adds the outside cap thread around the barrel behind the end face. The bore and cone socket pass through the collar."
         : "Cuts a straight threaded socket into the chosen end. The cap opening sits at the selected face."}</p>
     </div>}

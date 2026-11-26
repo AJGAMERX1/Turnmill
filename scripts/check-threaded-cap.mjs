@@ -4,7 +4,7 @@ import { geometry, near, project, runtime } from "../tests/systems/runtime.mjs";
 
 const api = await runtime();
 try {
-  const { createThreadedCap, createThreadedCone, capNeedsCollars, setCapMount, barrelEnd, compatiblePairSizes } = await api.load("threadedCone");
+  const { createThreadedCap, createThreadedCone, setCapMount, barrelEnd, compatiblePairSizes } = await api.load("threadedCone");
   const { evaluateModel } = await api.load("buildModel");
   const { buildBodies, releaseBodies } = await api.load("geometry");
   const { threadMinorDiameter } = await api.load("finishingTypes");
@@ -19,6 +19,18 @@ try {
   const endStock = end => ({axis:"X",centerline:[0,0,0],station:end === "end" ? 50 : 0,outside:10,bore:7});
   const settings = {end:"end",size:"M8 × 0.75",length:"2.25 mm",allowance:"0.1 mm",mode:"cosmetic",
     capLength:"16 mm",capDiameter:"12 mm",crown:"flat",crownLength:"3 mm",wall:"1.5 mm"};
+  const parametric = structuredClone(barrel);
+  parametric.parameters = [{ name:"barrel_od", expression:"10 mm" }];
+  for (const point of parametric.sketches[0].points) if (point.y === "5") point.y = "barrel_od / 2";
+  const { collectFitSurfaces } = await api.load("fitSurfaces");
+  const measuredBlank = buildBodies((await evaluateModel(parametric)).features);
+  try {
+    const faces = collectFitSurfaces(measuredBlank[0].shape, "barrel", true);
+    const linked = createThreadedCap(parametric, "barrel", barrelEnd(faces, "X", "end"),
+      { ...settings, matchBarrel:true }, barrelEnd(faces, "X", "start")).project;
+    const larger = linked.parameters.map(p => p.name === "barrel_od" ? { ...p, expression:"11 mm" } : p);
+    near(resolveParameters(larger).cap_diameter, 11, 1e-7, "a flush cap follows the original driven barrel diameter");
+  } finally { releaseBodies(measuredBlank); }
   const fitValues = resolveParameters([{ name: "desired", expression: "2 mm" }]);
   const fitInput = { ...settings, crown: "domed", crownLength: "8 mm", capLength: "desired",
     wall: "1.5 mm", length: "4 mm", capDiameter: "desired + 2 mm" };
@@ -76,29 +88,36 @@ try {
       }
     } finally { releaseBodies(solids); }
   }
-  // With a screw-on nose the same pair is built around the barrel on external collars.
-  const nose = createThreadedCone(barrel,"barrel",endStock("end"),{...settings,
-    coneLength:"12 mm",tipDiameter:"4 mm",opening:"2 mm",mode:"modeled"}).project;
-  assert(capNeedsCollars(nose,"barrel"));
-  assert.equal(compatiblePairSizes(nose,"barrel",endStock("end"),"cap",endStock("start"))[0],"M12 × 1");
+  const wide = structuredClone(barrel);
+  for (const point of wide.sketches[0].points) if (point.y === "5") point.y = "7.5";
+  const wideStock = end => ({...endStock(end), outside:15});
+  const nose = createThreadedCone(wide, "barrel", wideStock("end"), {...coneSettings, mode:"modeled"}).project;
+  assert.deepEqual(compatiblePairSizes(nose, "barrel", wideStock("end"), "cap", wideStock("start")), [],
+    "a flush cap cannot pass over a full-width nose");
+  nose.parameters = nose.parameters.map(p => p.name === "cone_base" ? {...p, expression:"9 mm"} : p);
+  assert(compatiblePairSizes(nose, "barrel", wideStock("end"), "cap", wideStock("start")).includes("M12 × 1"));
   const outer = makeCylinder(5,50,[13,-7,0],[0,0,1]), bore = makeCylinder(3.5,50,[13,-7,0],[0,0,1]);
   const ring = outer.cut(bore);
   const zBarrel = project([], [{id:"barrel",name:"Offset Z sleeve",kind:"import",sketchId:"",suppressed:false,
     operation:"new",amount:"0",sourceId:"import",sourceIndex:0}], {importedFiles:[{id:"import",name:"sleeve.step",
     format:"step",bodies:[{name:"Offset Z sleeve",brep:ring.serialize()}]}]});
   [ring,outer,bore].forEach(s=>s.delete());
-  for (const [base,front,collars] of [[barrel,"start",false],[nose,"end",true],[zBarrel,"end",false]]) {
+  for (const [base,front,hasNose] of [[barrel,"start",false],[nose,"end",true],[zBarrel,"end",false]]) {
     const rear=front==="start"?"end":"start";
-    const dims = {...settings,end:front,length:"4.5 mm",mode:"modeled",crown:"domed",
-      ...(collars ? {size:"M12 × 1",length:"2.4 mm",capLength:"24 mm",capDiameter:"14 mm"} : {})};
-    const stock = end => base === zBarrel ? {...endStock(end),axis:"Z",centerline:[13,-7,0]} : endStock(end);
+    const dims = {...settings,end:front,length:"4.5 mm",mode:"modeled",crown:"domed",matchBarrel:true,
+      ...(hasNose ? {size:"M12 × 1",length:"2.4 mm",capLength:"24 mm"} : {})};
+    const stock = end => base === zBarrel ? {...endStock(end),axis:"Z",centerline:[13,-7,0]} : hasNose ? wideStock(end) : endStock(end);
     const {project: pen,capId} = createThreadedCap(base,"barrel",stock(front),dims,stock(rear));
     const model = await evaluateModel(pen);
     const solids = buildBodies(model.features);
     try {
       const ids=model.features.filter(f=>f.operation==="new").map(f=>f.id);
       const frames=solids.flatMap(b=>b.threadFrames ?? []);
-      assert.equal(ids.length,collars?3:2,"only one cap component");
+      assert.equal(ids.length,hasNose?3:2,"only one cap component");
+      const bbox = geometry(solids[0].shape).bbox;
+      for (const axis of (base === zBarrel ? [0,1] : [1,2])) {
+        near(bbox[1][axis]-bbox[0][axis],stock(front).outside,1e-5,"flush threads respect stock diameter");
+      }
       assert.equal(pen.workspaces.capMounts[capId].front,front);
       assert.equal(pen.workspaces.capMounts[capId].active,front);
       for (const end of [front,rear]) {
@@ -112,9 +131,15 @@ try {
           const m=poses[ids.indexOf(capId)];
           const axial = m[base === zBarrel ? 14 : 12];
           if (turns===0) home=axial;
-          near(axial-home,(end==="start"?-1:1)*turns*(collars?1:.75),1e-6,"posting orientation and screw lead");
+          near(axial-home,(end==="start"?-1:1)*turns*model.values.cap_pitch,1e-6,"posting orientation and screw lead");
           const placed=positioned(solids[ids.indexOf(capId)].shape,m);
           try {
+            if (turns===0) {
+              const bounds = geometry(placed).bbox, axis = base === zBarrel ? 2 : 0;
+              const rim = stock(end).station + (end === "start" ? 1 : -1) * model.values.cap_thread_length;
+              near(bounds[end === "start" ? 1 : 0][axis], rim, 1e-5, "cap mouth reaches the original seating shoulder");
+              near(bounds[1][1] - bounds[0][1], stock(end).outside, 1e-5, "closed and posted cap match the original outside diameter");
+            }
             for (let i=0;i<ids.length;i++) {
               if (ids[i]===capId) continue;
               const other=positioned(solids[i].shape,poses[i]);
@@ -141,9 +166,8 @@ try {
   const seated = seatRefill(donorPen,"donor",{bodyId:"barrel",axis:[1,0,0],centerline:[0,0,0],diameter:4.1,
     station:0,end:"start",key:"mouth"});
   donorPen.workspaces.joints = {donor:makeRefillSnapJoint({},"donor","barrel",seated)};
-  assert(capNeedsCollars(donorPen,"barrel"));
   const {project: capped,capId} = createThreadedCap(donorPen,"barrel",{...endStock("start"),bore:4.1},
-    {...settings,end:"start",size:"M12 × 1",capDiameter:"14 mm",capLength:"25 mm"},
+    {...settings,end:"start",capDiameter:"10 mm",capLength:"25 mm"},
     {...endStock("end"),station:135,bore:4.1});
   const combined = await evaluateModel(capped);
   const parts = buildBodies(combined.features);

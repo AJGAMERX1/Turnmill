@@ -1,0 +1,359 @@
+{
+  "version": 1,
+  "id": "qa-model",
+  "name": "15 mm pen with legacy raised cap mounts",
+  "parameters": [
+    {
+      "name": "cap_major",
+      "label": "Thread major diameter",
+      "expression": "18 mm"
+    },
+    {
+      "name": "cap_pitch",
+      "label": "Thread pitch",
+      "expression": "1.5 mm"
+    },
+    {
+      "name": "cap_thread_length",
+      "label": "Thread length",
+      "expression": "5 mm"
+    },
+    {
+      "name": "cap_allowance",
+      "label": "Diametral allowance",
+      "expression": "0.1 mm"
+    },
+    {
+      "name": "cap_length",
+      "label": "Cap length",
+      "expression": "40 mm"
+    },
+    {
+      "name": "cap_diameter",
+      "label": "Cap outside diameter",
+      "expression": "20 mm"
+    },
+    {
+      "name": "cap_wall",
+      "label": "End wall thickness",
+      "expression": "1.5 mm"
+    }
+  ],
+  "sketches": [
+    {
+      "id": "profile",
+      "name": "Grip and taper",
+      "constraints": [],
+      "points": [
+        {
+          "x": "0",
+          "y": "3.5"
+        },
+        {
+          "x": "0",
+          "y": "7.5"
+        },
+        {
+          "x": "5",
+          "y": "6.6"
+        },
+        {
+          "x": "10",
+          "y": "7.5"
+        },
+        {
+          "x": "56",
+          "y": "7.5"
+        },
+        {
+          "x": "56",
+          "y": "6.4"
+        },
+        {
+          "x": "58",
+          "y": "6.4"
+        },
+        {
+          "x": "58",
+          "y": "7.5"
+        },
+        {
+          "x": "119",
+          "y": "7.5"
+        },
+        {
+          "x": "119",
+          "y": "6.9"
+        },
+        {
+          "x": "121",
+          "y": "6.9"
+        },
+        {
+          "x": "121",
+          "y": "7.5"
+        },
+        {
+          "x": "125",
+          "y": "7.5"
+        },
+        {
+          "x": "125",
+          "y": "3.5"
+        }
+      ]
+    },
+    {
+      "id": "e2915505-95ba-42b5-9c0c-c75b9eb579bf",
+      "partId": "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb",
+      "name": "Screw-on cap profile",
+      "constraints": [],
+      "capProfile": {
+        "prefix": "cap",
+        "crown": "flat"
+      },
+      "points": [
+        {
+          "x": "(125 mm) - cap_thread_length",
+          "y": "(cap_major - 1.0825317547305482 * cap_pitch) / 2"
+        },
+        {
+          "x": "(125 mm) - cap_thread_length",
+          "y": "(cap_diameter / 2)"
+        },
+        {
+          "x": "((125 mm) - cap_thread_length) + (cap_length)",
+          "y": "(cap_diameter / 2)"
+        },
+        {
+          "x": "((125 mm) - cap_thread_length) + (cap_length)",
+          "y": "0 mm"
+        },
+        {
+          "x": "((125 mm) - cap_thread_length) + (cap_length - 0 mm - cap_wall)",
+          "y": "0 mm"
+        },
+        {
+          "x": "((125 mm) - cap_thread_length) + (cap_length - 0 mm - cap_wall)",
+          "y": "(cap_major - 1.0825317547305482 * cap_pitch) / 2"
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "barrel",
+      "name": "Machined barrel",
+      "sketchId": "profile",
+      "kind": "revolve",
+      "operation": "new",
+      "amount": "360 deg",
+      "suppressed": false,
+      "finishes": [
+        {
+          "id": "nose-socket",
+          "name": "Existing nose socket",
+          "kind": "thread",
+          "preset": "M8 × 0.75",
+          "diameter": "8 mm",
+          "pitch": "0.75 mm",
+          "length": "4 mm",
+          "end": "end",
+          "side": "internal",
+          "hand": "right",
+          "preparation": "socket",
+          "preparationAxis": "X",
+          "mode": "cosmetic"
+        },
+        {
+          "kind": "thread",
+          "preset": "M18 × 1.5",
+          "hand": "right",
+          "length": "cap_thread_length",
+          "pitch": "cap_pitch",
+          "mode": "modeled",
+          "id": "0c93e228-e43e-4609-9571-418577bf2f0e",
+          "name": "Threads · barrel end collar",
+          "end": "end",
+          "collarStockDiameter": "15 mm",
+          "preparation": "collar",
+          "preparationAxis": "X",
+          "preparationCenter": [
+            0,
+            0,
+            0
+          ],
+          "side": "external",
+          "diameter": "cap_major - cap_allowance"
+        },
+        {
+          "kind": "thread",
+          "preset": "M18 × 1.5",
+          "hand": "right",
+          "length": "cap_thread_length",
+          "pitch": "cap_pitch",
+          "mode": "modeled",
+          "id": "7ccccf3d-8e4c-47d4-95ca-634c703165ab",
+          "name": "Threads · barrel start collar",
+          "end": "start",
+          "collarStockDiameter": "15 mm",
+          "preparation": "collar",
+          "preparationAxis": "X",
+          "preparationCenter": [
+            0,
+            0,
+            0
+          ],
+          "side": "external",
+          "diameter": "cap_major - cap_allowance"
+        }
+      ]
+    },
+    {
+      "id": "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb",
+      "name": "Screw-on cap",
+      "kind": "revolve",
+      "operation": "new",
+      "amount": "360 deg",
+      "suppressed": false,
+      "sketchId": "e2915505-95ba-42b5-9c0c-c75b9eb579bf",
+      "finishes": [
+        {
+          "kind": "thread",
+          "preset": "M18 × 1.5",
+          "hand": "right",
+          "length": "cap_thread_length",
+          "pitch": "cap_pitch",
+          "mode": "modeled",
+          "id": "34592ee1-2bc0-4dfe-a876-d4c98bc509e2",
+          "name": "Threads · cap socket",
+          "end": "start",
+          "preparation": "socket",
+          "preparationAxis": "X",
+          "side": "internal",
+          "diameter": "cap_major"
+        }
+      ]
+    }
+  ],
+  "workspaces": {
+    "joints": {
+      "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb": {
+        "kind": "screw",
+        "parent": "barrel",
+        "axis": "X",
+        "origin": [
+          "0",
+          "0",
+          "0"
+        ],
+        "offset": [
+          "0",
+          "0",
+          "0"
+        ],
+        "min": "0 deg",
+        "max": "(cap_thread_length / cap_pitch) * 360 deg",
+        "pitch": "0.75 mm",
+        "starts": "1",
+        "hand": 1,
+        "threadMate": {
+          "moving": {
+            "featureId": "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb",
+            "finishId": "34592ee1-2bc0-4dfe-a876-d4c98bc509e2"
+          },
+          "mating": {
+            "featureId": "barrel",
+            "finishId": "7ccccf3d-8e4c-47d4-95ca-634c703165ab"
+          },
+          "placement": "entrances",
+          "engagement": "cap_thread_length",
+          "phase": "-(cap_thread_length / cap_pitch) * 360 deg"
+        }
+      }
+    },
+    "bodyMaterials": {
+      "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb": "Brass"
+    },
+    "capMounts": {
+      "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb": {
+        "barrelId": "barrel",
+        "front": "end",
+        "active": "start",
+        "ends": {
+          "start": {
+            "kind": "screw",
+            "parent": "barrel",
+            "axis": "X",
+            "origin": [
+              "0",
+              "0",
+              "0"
+            ],
+            "offset": [
+              "0",
+              "0",
+              "0"
+            ],
+            "min": "0 deg",
+            "max": "(cap_thread_length / cap_pitch) * 360 deg",
+            "pitch": "0.75 mm",
+            "starts": "1",
+            "hand": 1,
+            "threadMate": {
+              "moving": {
+                "featureId": "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb",
+                "finishId": "34592ee1-2bc0-4dfe-a876-d4c98bc509e2"
+              },
+              "mating": {
+                "featureId": "barrel",
+                "finishId": "7ccccf3d-8e4c-47d4-95ca-634c703165ab"
+              },
+              "placement": "entrances",
+              "engagement": "cap_thread_length",
+              "phase": "-(cap_thread_length / cap_pitch) * 360 deg"
+            }
+          },
+          "end": {
+            "kind": "screw",
+            "parent": "barrel",
+            "axis": "X",
+            "origin": [
+              "0",
+              "0",
+              "0"
+            ],
+            "offset": [
+              "0",
+              "0",
+              "0"
+            ],
+            "min": "0 deg",
+            "max": "(cap_thread_length / cap_pitch) * 360 deg",
+            "pitch": "0.75 mm",
+            "starts": "1",
+            "hand": 1,
+            "threadMate": {
+              "moving": {
+                "featureId": "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb",
+                "finishId": "34592ee1-2bc0-4dfe-a876-d4c98bc509e2"
+              },
+              "mating": {
+                "featureId": "barrel",
+                "finishId": "0c93e228-e43e-4609-9571-418577bf2f0e"
+              },
+              "placement": "entrances",
+              "engagement": "cap_thread_length",
+              "phase": "180 deg"
+            }
+          }
+        }
+      }
+    },
+    "jointPose": {
+      "8c0d4f77-f7e4-42f5-a106-b3a7b420e3cb": [
+        0
+      ]
+    }
+  }
+}

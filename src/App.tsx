@@ -1,6 +1,7 @@
 import InputValue from "./InputValue";
 import SelectionDimensions from "./SelectionDimensions";
 import BarrelThreads from "./BarrelThreads";
+import { legacyCapForBarrel } from "./threadedCone";
 import { allPartsMatrices, applyAllPartsPose } from "./allPartsPose";
 import { remainingCapMounts } from "./capProfile";
 import { observeModel } from "../tests/hook/observe";
@@ -1958,6 +1959,8 @@ export default function App() {
                   key={selectedSketch?.id || currentF?.id || selectedS?.id}
                   project={project} sketch={selectedS} sketchSelected={!!selectedSketch} turnedProfile={turnedProfile}
                   feature={currentF} onChange={commit} />}
+                {legacyCapForBarrel(project, project.workspaces?.capMounts?.[selectedBodyId]?.barrelId ?? selectedBodyId) &&
+                  <button className="outline-btn" onClick={() => openThreads(selectedBodyId)}><Nut size={15}/> Fit cap flush to barrel…</button>}
                 {otherTurns.map(f => <button key={f.sketchId} className="outline-btn" onClick={() => setSelected(f.sketchId)}>
                   <SquarePen size={15}/> Inspect {f.name} profile
                 </button>)}
@@ -2436,7 +2439,13 @@ export default function App() {
             selectThreadFeature(hostId, featureId);
             setEntryId(finishId); setPresetFinish(undefined); setDialog("finish");
           }}
-          onSave={(next, id, showAssembly, hostId, adjustments) => {
+          onSave={(next, id, showAssembly, hostId, adjustments, restoredBarrelId) => {
+            if (restoredBarrelId) {
+              commit(next); close();
+              if (mode === "Part") selectThreadFeature(restoredBarrelId);
+              setNotice(adjustments?.join(" ") || "Cap fitted flush to the barrel.");
+              return;
+            }
             const posedBarrel = arranged?.[solidFeatures.findIndex(f => f.id === hostId)]
               ?.some((v, i) => Math.abs(v - (i % 5 === 0 ? 1 : 0)) > 1e-8);
             commit(next); switchMode(showAssembly || mode === "Assembly" || posedBarrel ? "Assembly" : "Part"); setPartSelection(undefined); setSelected(id); setFit(n => n + 1);

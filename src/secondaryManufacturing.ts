@@ -229,6 +229,8 @@ function finishNotes(features: EvaluatedFeature[]) {
         );
         if (op.preparation === "tenon")
           notes.push(`Tenon extends ${formatDrawingLength(op.length)} mm from the original shoulder`);
+        if (op.preparation === "flush")
+          notes.push(`Turn the end within the original barrel OD · Ø${formatDrawingLength(op.diameter)} mm × ${formatDrawingLength(op.length)} mm to the shoulder`);
         if (op.preparation === "collar") {
           notes.push(`External cap collar behind the end face · stop flange Ø${formatDrawingLength(op.diameter + op.pitch)} mm × ${formatDrawingLength(op.pitch)} mm wide`);
         }

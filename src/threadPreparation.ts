@@ -225,6 +225,36 @@ function dressCollar(shape: Shape3D, blank: Shape3D, frame: ThreadAxisFrame, sta
 export function prepareThreadStock(shape: Shape3D, f: Thread, frame: ThreadAxisFrame, onAutoFit?: (message: string) => void): Shape3D {
   const radius = f.diameter / 2;
   const minor = threadMinorDiameter(f.diameter, f.pitch) / 2;
+  if (f.preparation === "flush") {
+    // Both the turned seat and the helix are cuts. The end plane remains the
+    // original datum for the screw mate, including on imported offset stock.
+    const stopWidth = Math.min(f.pitch / 20, 0.05);
+    if (f.length + stopWidth > frame.span)
+      throw Error("Shorten the cap thread to leave a shoulder on the barrel.");
+    const start = frame.endCoord - (f.end === "end" ? f.length : 0);
+    const rootWall = Math.min(minor / 10, 0.01);
+    const section = boreOrRing(frame, start, f.length, radius, minor - rootWall);
+    try {
+      const missing = section.cut(shape);
+      try {
+        if (measureVolume(missing) > Math.max(1e-8, measureVolume(section) * 1e-8))
+          throw Error("This thread crosses a groove, bore, or socket in the barrel wall. Choose a size and length that fit the original stock.");
+      } finally { missing.delete(); }
+    } finally { section.delete(); }
+
+    const shoulderStart = f.end === "end" ? start - stopWidth : start + f.length;
+    const shoulder = boreOrRing(frame, shoulderStart, stopWidth, radius + rootWall, radius);
+    try {
+      const missing = shoulder.cut(shape);
+      try {
+        if (measureVolume(missing) > 1e-8)
+          throw Error("The barrel needs a shoulder behind this thread for the cap to seat. Choose a smaller thread or adjust its length.");
+      } finally { missing.delete(); }
+    } finally { shoulder.delete(); }
+
+    const trim = boreOrRing(frame, start, f.length, 2 * frame.radialBound + 1, radius);
+    try { return shape.cut(trim); } finally { trim.delete(); }
+  }
   if (f.preparation === "collar") {
     // External stock behind the original end keeps the socket and its fitted
     // cone in place. The unthreaded flange provides a positive stop for the cap.

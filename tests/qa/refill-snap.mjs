@@ -163,7 +163,7 @@ try {
   const threads = page.getByRole("dialog", { name: "Threads" });
   await button(threads, "Screw-on cap").click();
   assert.equal(await field(threads, "Front end").inputValue(), "start", "The cap covers the selected writing end of the reversed donor");
-  await threads.getByText(/Raised collars carry the cap threads/).waitFor();
+  await field(threads, "Thread size").selectOption({ label: "M8 × 0.75" });
   await field(threads, "Thread geometry").selectOption("cosmetic");
   await button(threads, "Create threaded cap").click();
   await page.waitForFunction(() => {
@@ -174,6 +174,8 @@ try {
   await ready(page);
   const capped = await measure(page);
   assert.equal(capped.bodies.length, 3);
+  const mounts = capped.project.features.find(f => f.id === "sleeve").finishes.filter(f => f.preparation === "flush");
+  assert.deepEqual(mounts.map(f => f.end).sort(), ["end", "start"]);
   assert.equal(capped.project.workspaces.joints[id].refillSnap, true);
   assert.equal(capped.project.workspaces.joints[id].parent, "sleeve");
   sameMatrix(new Matrix4().fromArray(capped.project.workspaces.joints[id].mount), relative);
