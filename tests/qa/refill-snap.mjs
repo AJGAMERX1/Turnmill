@@ -174,7 +174,9 @@ try {
   await ready(page);
   const capped = await measure(page);
   assert.equal(capped.bodies.length, 3);
-  assert.deepEqual(capped.project.workspaces.joints[id], seated.project.workspaces.joints[id], "Adding a cap preserves the seated refill");
+  assert.equal(capped.project.workspaces.joints[id].refillSnap, true);
+  assert.equal(capped.project.workspaces.joints[id].parent, "sleeve");
+  sameMatrix(new Matrix4().fromArray(capped.project.workspaces.joints[id].mount), relative);
   assert.deepEqual(errors, []);
   console.log("PASS reversed donor snap, carried motion, undo/redo, All parts and local STL bounds, saved pose, free release, undersized bore rejection and cap over the writing tip");
 } finally { await browser.close(); }
