@@ -165,6 +165,18 @@ try {
   const short = await cappedPen(api, 65);
   await blocked(short.document, /lengthen the barrel/i);
 
+  const closed = await cappedPen(api, 117);
+  const socket = closed.document.features.find(f => f.id === barrelId).finishes.find(f => f.preparation === "socket");
+  socket.backWall = "30 mm";
+  await blocked(closed.document, /overlaps the rear stop by 7.5 mm.*deepen the barrel bore by 7.5 mm for 0 mm rear endplay/i);
+  socket.backWall = "22.5 mm";
+  closed.document.id = "verified-back-wall";
+  closed.document.name = "Closed barrel with matching rear stop";
+  await open(closed.document);
+  await check.click();
+  await apply.waitFor({ timeout: 180000 });
+  assert.match(await fitPanel.innerText(), /reuse the existing rear stop/i);
+
   const thin = structuredClone(fixture.document);
   thin.id = "thin-cone-wall";
   thin.name = "Thin cone with no guide allowance";

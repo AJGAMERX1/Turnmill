@@ -123,7 +123,8 @@ try {
     const supported = await build(addRefillBacking(blind, againstFloor));
     try { assert.equal(geometry(supported[0].shape).solids, 1); } finally { releaseBodies(supported); }
     assert.throws(() => planRefillBacking(blind, fit(114.8,.2), lands, .4), /closer/);
-    assert.throws(() => planRefillBacking(blind, { ...open(116,1), rearStatus:"interference", rearGap:-1 }, lands), /crosses/);
+    assert.throws(() => planRefillBacking(blind, { ...open(116,1), rearStatus:"interference", rearGap:-1 }, lands, .25),
+      /overlaps the rear stop by 1 mm.*deepen the barrel bore by 1\.25 mm for 0\.25 mm rear endplay/i);
   } finally { releaseBodies(blindSolids); }
 
   const rearPilot = project([profile("profile", [[0,4],[0,6],[120,6],[120,2.15],[115,2.15],[115,4]])], [turning]);

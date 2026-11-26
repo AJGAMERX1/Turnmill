@@ -5,6 +5,7 @@ import { uid } from "./projects";
 import type { ThreadFrame } from "./threadMates";
 import type { Feature, Project, Sketch } from "./types";
 import type { WritingFit } from "./writingFit";
+import { lengthText } from "./writingConeSeat";
 
 type XYZ = [number, number, number];
 type BackingFit = Pick<WritingFit, "barrelId" | "barrelAxis" | "tailPoint" | "inward" | "tailDiameter" |
@@ -32,8 +33,13 @@ export function planRefillBacking(project: Project, fit: BackingFit, surfaces: F
   activeBarrel(project, fit.barrelId);
   if (!Number.isFinite(gap) || gap < 0)
     throw Error("Enter an endplay of zero or more for the refill backing.");
-  if (fit.rearStatus === "interference")
-    throw Error("The refill tail crosses the existing rear stop. Increase barrel depth or choose a shorter refill.");
+  if (fit.rearStatus === "interference") {
+    if (fit.rearGap === undefined || !Number.isFinite(fit.rearGap))
+      throw Error("Rebuild the barrel to measure how far the refill crosses the rear stop.");
+    const overlap = -fit.rearGap;
+    throw Error("At this tip projection, the refill overlaps the rear stop by " + lengthText(overlap) +
+      ". Deepen the barrel bore by " + lengthText(overlap + gap) + " for " + lengthText(gap) + " rear endplay.");
+  }
   if (fit.rearStatus === "unknown")
     throw Error("Provide a measurable round bore or flat rear stop behind the refill.");
   if (fit.rearStatus === "gap" || fit.rearStatus === "contact") {
