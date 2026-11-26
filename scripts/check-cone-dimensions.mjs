@@ -58,7 +58,10 @@ try {
     { id: "land", type: "horizontal", indices: [3] }, { id: "radius", type: "y", indices: [4], value: "4" },
   ]);
   const land = diam(stepped, "end", "tip", values);
-  assert.deepEqual((await solveSketch(land, { ...values, tip: 9 })).vertices.map(p => p.y), [2, 6, 6, 4.5, 4.5, 2]);
+  const solvedLand = await solveSketch(land, { ...values, tip: 9 });
+  assert.deepEqual(solvedLand.vertices.map(p => p.y), [2, 6, 6, 4.5, 4.5, 2]);
+  assert.deepEqual(solvedLand.redundant, []);
+  assert.equal(only(land, { ...values, tip: 9 }).endDiameterMm, 9);
   const doubleTaper = sketch([[0, 2], [0, 6], [5, 4], [15, 5], [15, 2]]);
   assert.deepEqual(coneSegments(doubleTaper, {}).map(s => [s.startX, s.endX, s.tipEnd]), [[0, 5, "end"], [5, 15, "start"]]);
   const steppedBore = sketch([[0, 1], [0, 8], [20, 5], [20, 2], [12, 2], [12, 5.8], [8, 5.8], [8, 1]]);
@@ -71,6 +74,14 @@ try {
   const opened = diam(sized, "end", "8 mm", values);
   assert.equal(profileRange(opened, "x", true, values).size, "length");
   assert.equal(only(opened, { ...values, length: 70 }).endX, 70);
+  const rim = { ...sleeve, constraints: [{ id: "rim", type: "vertical", indices: [2] }] };
+  const drivenRim = changeProfileRange(rim, profileRange(rim, "x", true, values), "size", "length", values);
+  const longer = { ...values, length: 72 };
+  assert.equal(only(drivenRim, longer).endX, 72);
+  const widerTip = diam(drivenRim, "end", "tip", longer);
+  const solvedRim = await solveSketch(widerTip, longer);
+  for (const i of [2, 3]) assert.ok(Math.abs(solvedRim.vertices[i].x - longer.length) < 1e-8);
+  assert.deepEqual(solvedRim.redundant, []);
   console.log("PASS cone ends, sharp tips, signed profiles, expressions, constraints, exterior lands, inverted tapers and wall protection");
 } finally {
   await api.close();

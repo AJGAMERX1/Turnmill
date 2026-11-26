@@ -1,4 +1,5 @@
 import { evaluate, isExpression } from "./expressions";
+import { axisSources, linkedCoordinateGroups } from "./profileSizing";
 import type { Sketch } from "./types";
 
 type Values = Record<string, number>;
@@ -28,6 +29,15 @@ function profile(sketch: Sketch, values: Values) {
     if (!["horizontal", "vertical", "x", "y"].includes(c.type)) return;
     if (c.indices.length !== 1 || !sources[c.indices[0]]) return;
     if ((c.type === "x" || c.type === "y") && c.value) sources[c.indices[0]][c.type] = c.value;
+  }
+  for (const axis of ["x", "y"] as const) {
+    const fixed = new Set(sketch.constraints.filter(c => c.type === axis).map(c => c.indices[0]));
+    for (const members of linkedCoordinateGroups(sketch, axis)) {
+      const driver = members.find(i => fixed.has(i) || isExpression(sources[i][axis]));
+      if (driver === undefined) continue;
+      for (const i of members)
+        if (!fixed.has(i) && !isExpression(sources[i][axis])) sources[i][axis] = sources[driver][axis];
+    }
   }
   const ys = sources.map(p => evaluate(p.y, values));
   if (Math.min(...ys) < -tolerance && Math.max(...ys) > tolerance) return;
@@ -164,7 +174,7 @@ export function setConeDiameter(sketch: Sketch, segment: ConeSegment, end: End, 
       constraints.push({ id: crypto.randomUUID(), type: "vertical", indices: [rimEdge] });
     }
     const cached = sizing.x;
-    if (cached?.coordinates.length === n && vertices.every((v, i) => v.xSource === cached.coordinates[i])) {
+    if (cached?.coordinates.length === n && axisSources(sketch, "x").every((x, i) => x === cached.coordinates[i])) {
       const coordinates = cached.coordinates.slice();
       coordinates.splice(slot, 0, corner.xSource);
       sizing.x = { ...cached, coordinates };
@@ -176,7 +186,14 @@ export function setConeDiameter(sketch: Sketch, segment: ConeSegment, end: End, 
       throw Error(`Keep this outside diameter ${corner.r > neighbor.r ? "above" : "below"} the adjoining diameter (${mm(2 * neighbor.r)}).`);
     changedEdges = [...group].flatMap(i => [i, next(i, -1)]);
     const fixedY = new Set(constraints.filter(c => c.type === "y").map(c => c.indices[0]));
-    points = points.map((point, i) => group.has(i) ? { ...point, y: fixedY.has(i) ? rawY : ySource } : point);
+    const pointDrivers = new Set<number>();
+    for (const members of linkedCoordinateGroups(sketch, "y")) {
+      if (!members.some(i => group.has(i))) continue;
+      if (!members.every(i => group.has(i))) throw Error("This horizontal constraint also drives another surface. Edit the sketch to change it.");
+      const drivers = members.filter(i => fixedY.has(i) || isExpression(sketch.points[i].y));
+      for (const i of drivers.length ? drivers : [members[0]]) if (!fixedY.has(i)) pointDrivers.add(i);
+    }
+    points = points.map((point, i) => group.has(i) ? { ...point, y: pointDrivers.has(i) ? ySource : rawY } : point);
     constraints = constraints.map(c => c.type === "y" && group.has(c.indices[0]) ? { ...c, value: ySource } : c);
   }
 

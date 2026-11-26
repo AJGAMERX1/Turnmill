@@ -18,7 +18,7 @@ function constant(expression: string) {
   try { return evaluate(expression, {}); } catch { return undefined; }
 }
 
-function axisSources(sketch: Sketch, axis: Axis) {
+export function axisSources(sketch: Sketch, axis: Axis) {
   const sources = sketch.points.map((p) => p[axis]);
   for (const rule of sketch.constraints) {
     if (rule.type === axis && rule.value) sources[rule.indices[0]] = rule.value;
@@ -45,7 +45,8 @@ export function validateProfileSizing(sketch: Sketch, values: Record<string, num
   }
 }
 
-export function profileRange(sketch: Sketch, axis: Axis, turned: boolean, values: Record<string, number>): ProfileRange | undefined {
+export function profileRange(sketch: Sketch, axis: Axis, turned: boolean, values: Record<string, number>,
+  vertices?: ReadonlyArray<{ x: number; y: number }>): ProfileRange | undefined {
   if (sketch.points.length < 3) return;
   // Positive scaling preserves horizontal and vertical lines. Other relations
   // can prescribe angles, distances, radii or symmetry about a different datum.
@@ -56,22 +57,52 @@ export function profileRange(sketch: Sketch, axis: Axis, turned: boolean, values
   const saved = cached?.radial === radial ? cached : undefined;
   if (!saved && (source.some((s) => constant(s) === undefined)
     || sketch.points.some((p) => constant(p[axis]) === undefined))) return;
-  const coords = source.map((s) => evaluate(s, values));
+  // Dragging one corner can leave its neighbors' free coordinate seeds behind.
+  // The solved vertex order matches the sketch, even when those seeds differ.
+  const coords = vertices ? vertices.map(p => p[axis]) : source.map(s => evaluate(s, values));
   const n = coords.length;
-  if (sketch.constraints.some((c) => c.type === (axis === "x" ? "vertical" : "horizontal")
+  if (!vertices && sketch.constraints.some((c) => c.type === (axis === "x" ? "vertical" : "horizontal")
       && Math.abs(coords[c.indices[0]] - coords[(c.indices[0] + 1) % n]) > 1e-8)) return;
   const min = Math.min(...coords), max = Math.max(...coords);
   if (radial && min < -1e-7 && max > 1e-7) return;
   const sign = radial && max <= 0 ? -1 : 1;
   const low = sign === 1 ? min : -max, high = sign === 1 ? max : -min;
   if (high - low < 1e-7) return;
-  const fractions = coords.map((v) => (sign * v - low) / (high - low));
+  const fractions = coords.map(v => {
+    const position = sign * v;
+    if (Math.abs(position - low) < 1e-8) return 0;
+    if (Math.abs(position - high) < 1e-8) return 1;
+    return (position - low) / (high - low);
+  });
   const hasBore = radial && fractions.some((f, i) => f === 0 && fractions[(i + 1) % n] === 0);
   return {
     axis, radial, sign, fractions, hasBore,
     lower: saved?.lower ?? mm(radial ? low * 2 : low),
     size: saved?.size ?? mm(radial ? high * 2 : high - low),
   };
+}
+
+// Each connected horizontal or vertical chain has one independent coordinate.
+export function linkedCoordinateGroups(sketch: Sketch, axis: Axis): number[][] {
+  const n = sketch.points.length;
+  const relation = axis === "x" ? "vertical" : "horizontal";
+  const edges = new Set(sketch.constraints.filter(c => c.type === relation).map(c => c.indices[0]));
+  const seen = new Set<number>(), groups: number[][] = [];
+  for (let start = 0; start < n; start++) {
+    if (seen.has(start)) continue;
+    const members = [start];
+    seen.add(start);
+    for (const i of members) {
+      const prev = (i + n - 1) % n, next = (i + 1) % n;
+      for (const [edge, neighbor] of [[prev, prev], [i, next]]) {
+        if (!edges.has(edge) || seen.has(neighbor)) continue;
+        members.push(neighbor);
+        seen.add(neighbor);
+      }
+    }
+    groups.push(members);
+  }
+  return groups;
 }
 
 export function changeProfileRange(sketch: Sketch, range: ProfileRange, field: "size" | "lower",
@@ -92,13 +123,21 @@ export function changeProfileRange(sketch: Sketch, range: ProfileRange, field: "
     const number = String(Number(value.toPrecision(15)));
     return isExpression(sketch.points[i][range.axis]) ? number + " mm" : number;
   });
-  const saved: SavedRange = { radial: range.radial, lower, size, coordinates };
-  const fixed = new Set(sketch.constraints.filter((c) => c.type === range.axis).map((c) => c.indices[0]));
-  return {
-    ...sketch,
-    points: sketch.points.map((p, i) => ({ ...p, [range.axis]: fixed.has(i)
-      ? String(evaluate(coordinates[i], values)) : coordinates[i] })),
-    constraints: sketch.constraints.map((c) => c.type === range.axis ? { ...c, value: coordinates[c.indices[0]] } : c),
-    sizing: { ...sketch.sizing, [range.axis]: saved },
-  };
+  const axis = range.axis;
+  const locked = new Set(sketch.constraints.filter(c => c.type === axis).map(c => c.indices[0]));
+  const points = sketch.points.map(p => ({ ...p }));
+  for (const members of linkedCoordinateGroups(sketch, axis)) {
+    // Prefer an explicit constraint or an existing expression. Duplicate formula
+    // locks on both ends of a horizontal/vertical line overconstrain PlaneGCS.
+    const driver = members.find(i => locked.has(i))
+      ?? members.find(i => isExpression(sketch.points[i][axis])) ?? members[0];
+    for (const i of members) {
+      points[i][axis] = i === driver && !locked.has(i)
+        ? coordinates[i] : String(evaluate(coordinates[i], values));
+    }
+  }
+  const constraints = sketch.constraints.map(c => c.type === axis ? { ...c, value: coordinates[c.indices[0]] } : c);
+  const next = { ...sketch, points, constraints };
+  const saved: SavedRange = { radial: range.radial, lower, size, coordinates: axisSources(next, axis) };
+  return { ...next, sizing: { ...sketch.sizing, [axis]: saved } };
 }

@@ -224,12 +224,14 @@ export default function SketchEditor({
   const labels = { x: turned ? "Axial X" : "X", y: turned ? "Radius R" : "Y" };
 
   const radialProfile = turned || draft.sizing?.y?.radial === true;
+  const active = solved?.draft === draft && solved?.params === parameters ? solved : undefined;
+  const solvedVertices = active?.value?.vertices;
   const ranges = useMemo(() => {
     try {
-      return (["x", "y"] as const).map(axis => profileRange(draft, axis, radialProfile, parameters))
+      return (["x", "y"] as const).map(axis => profileRange(draft, axis, radialProfile, parameters, solvedVertices))
         .filter((r): r is ProfileRange => !!r);
     } catch { return []; }
-  }, [draft, parameters, radialProfile]);
+  }, [draft, parameters, radialProfile, solvedVertices]);
   function resize(range: ProfileRange, field: "size" | "lower", expr: string) {
     try { change(changeProfileRange(draft, range, field, expr, parameters)); }
     catch (error) { setStatus(readError(error)); }
@@ -270,10 +272,6 @@ export default function SketchEditor({
       if (focused?.isConnected) focused.focus();
     };
   }, []);
-  const active =
-    solved?.draft === draft && solved?.params === parameters
-      ? solved
-      : undefined;
   let base: XY[];
   try {
     base = coordinateSeeds(draft.points, parameters);

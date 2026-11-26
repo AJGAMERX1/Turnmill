@@ -71,6 +71,46 @@ try {
   assert.equal(await field(p, "Bore diameter").inputValue(),"8 mm");
   assert.equal(await field(p, "Axial length").inputValue(),"1 in + 14.6 mm");
 
+  // A corner drag saves new coordinates for one vertex. Horizontal and vertical
+  // constraints bring its neighbors into alignment only when the sketch solves.
+  const dragged = structuredClone(base);
+  dragged.id = "dragged-barrel";
+  const rectangle = dragged.sketches[0];
+  rectangle.points = [[0.0644,4.9192],[50,5.32],[50,0.55],[0,0.55]]
+    .map(([x,y]) => ({x:String(x), y:String(y)}));
+  rectangle.constraints = ["horizontal","vertical","horizontal","vertical"]
+    .map((type,i) => ({id:String(i), type, indices:[i]}));
+  await open(dragged);
+  await p.locator(".tree-item").filter({has:p.getByText("Revolve 1", {exact:true})}).click();
+  const tubeVolume = (length, od, bore) => Math.PI * length * (od ** 2 - bore ** 2) / 4;
+  const initialTube = await verify(tubeVolume(50, 9.8384, 1.1));
+  await field(p, "Axial length").waitFor({timeout:5000});
+  near(parseFloat(await field(p, "Axial length").inputValue()), 50);
+  near(parseFloat(await field(p, "Outside diameter").inputValue()), 9.8384);
+  near(parseFloat(await field(p, "Bore diameter").inputValue()), 1.1);
+  assert.equal(await field(p, "Profile point").count(), 0, "point coordinates start collapsed");
+  await button(p, "Edit sketch").click();
+  const sketchEditor = p.getByRole("dialog", {name:"Sketch editor"});
+  near(parseFloat(await field(sketchEditor, "Sketch axial length").inputValue()), 50);
+  near(parseFloat(await field(sketchEditor, "Sketch outside diameter").inputValue()), 9.8384);
+  await field(sketchEditor, "Sketch minimum diameter").fill("2 mm");
+  await field(sketchEditor, "Sketch minimum diameter").press("Enter");
+  await button(sketchEditor, "Finish sketch").click();
+  await verify(tubeVolume(50, 9.8384, 2));
+  await button(p, "Undo").click();
+  const original = await verify(tubeVolume(50, 9.8384, 1.1));
+  assert.deepEqual(original.project.sketches[0].points, rectangle.points);
+  await edit("Axial length", "2 in");
+  const longer = await verify(tubeVolume(50.8, 9.8384, 1.1));
+  near(longer.bbox[0][0], initialTube.bbox[0][0]);
+  await edit("Outside diameter", "12 mm");
+  await verify(tubeVolume(50.8, 12, 1.1));
+  await edit("Bore diameter", "3 mm");
+  const widerBore = await verify(tubeVolume(50.8, 12, 3));
+  assert.deepEqual(widerBore.project.sketches[0].constraints, rectangle.constraints);
+  await button(p, "Undo").click();
+  await verify(tubeVolume(50.8, 12, 1.1));
+
   const block = structuredClone(base);
   block.id = "inspector-block";
   block.parameters = [{name:"stock", label:"Stock length", expression:"10 mm"}];
@@ -84,6 +124,9 @@ try {
   const flat = await verify(24 * 4 * 5);
   near(flat.bbox[0][0],3);
   near(flat.bbox[1][0],27);
+  const rightEdge = flat.project.sketches[0].points.slice(1,3);
+  assert.equal(rightEdge.filter(point => /\bstock\b/.test(point.x)).length, 1,
+    "the vertical edge needs only one driving X expression");
   assert.equal(await field(p,"Profile width").inputValue(),"stock * 2");
   await edit("Extrusion depth", "1/2 in");
   await verify(24 * 4 * 12.7);
@@ -265,5 +308,5 @@ try {
   const kept = combined.project.sketches.find(sketch => sketch.id === "neighbor-profile");
   assert.deepEqual(kept.points, together.sketches[1].points, "editing the absorbed cone keeps barrel coordinates");
   assert.deepEqual(pageErrors, []);
-  console.log("PASS custom hollow turning dimensions, exact chamfered volumes, rejected edit, undo and reload; constrained rectangular profile, named width updates, extrusion and edge dimensions; scoped part, refill and empty-tab inspection; independent hollow-cone diameters on milled stock.");
+  console.log("PASS turned dimensions after dragging a rectangle corner, inspector and sketch edits, exact solid volumes, undo and reload, driven extrusions, scoped part and refill inspection, and independent milled-cone diameters.");
 } finally { await browser.close(); }

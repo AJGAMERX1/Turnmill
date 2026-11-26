@@ -75,7 +75,7 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
   const [saving, setSaving] = useState(false);
   const [point, setPoint] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const [solved, setSolved] = useState<{ sketch: Sketch; vertices: XY[] }>();
+  const [solved, setSolved] = useState<{ sketch: Sketch; values: Record<string, number>; vertices: XY[] }>();
   const [coneEdge, setConeEdge] = useState<number>();
   const pending = useRef<AbortController | null>(null);
   const latest = useRef<Project | null>(project);
@@ -97,26 +97,28 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
     cones.reduce<ConeSegment | undefined>((longest, c) =>
       !longest || c.endX - c.startX > longest.endX - longest.startX ? c : longest, undefined);
   const tipFirst = cone?.tipEnd === "start";
+  const vertices = solved && solved.sketch === sketch && solved.values === values ? solved.vertices : undefined;
   const ranges = useMemo(() => {
     if (!sketch || !values) return [];
     try {
-      return (["x", "y"] as const).map((axis) => profileRange(sketch, axis, turned, values))
+      return (["x", "y"] as const).map((axis) => profileRange(sketch, axis, turned, values, vertices))
         .filter((r): r is ProfileRange => !!r);
     } catch { return []; }
-  }, [sketch, values, turned]);
+  }, [sketch, values, turned, vertices]);
   const drivers = sketch?.constraints.filter((c) => driverLabel(c)) || [];
   const hasNamedDrivers = !!sketch && project.parameters.some((param) =>
     sketch.points.some((p) => [p.x, p.y].some((s) => s.match(/[A-Za-z_]\w*/g)?.includes(param.name))));
   const coordinateOnly = !cones.length && !ranges.length && !drivers.length && !hasNamedDrivers;
   const showCoordinates = (expanded || coordinateOnly) && !!sketch?.points.length;
+  const needVertices = showCoordinates || sketch?.constraints.some(c => c.type === "horizontal" || c.type === "vertical");
   useEffect(() => {
-    if (!showCoordinates || !sketch || !values) return;
+    if (!needVertices || !sketch || !values) return;
     let active = true;
     solveSketch(sketch, values).then(({ vertices }) => {
-      if (active) setSolved({ sketch, vertices });
+      if (active) setSolved({ sketch, values, vertices });
     }, () => {});
     return () => { active = false; };
-  }, [showCoordinates, sketch, values]);
+  }, [needVertices, sketch, values]);
   async function saveSketch(next: Sketch, checkSolid = false) {
     if (!values || !sketch) return;
     setError("");
@@ -221,7 +223,7 @@ export default function SelectionDimensions({ project, sketch, feature, sketchSe
         {(["x", "y"] as const).map((axis) => {
           const rule = sketch.constraints.find((c) => c.type === axis && c.indices[0] === index);
           const source = sketch.points[index][axis];
-          const actual = solved?.sketch === sketch ? solved.vertices[index]?.[axis] : undefined;
+          const actual = vertices?.[index]?.[axis];
           const value = rule?.value ?? (isExpression(source) || actual === undefined ? source : String(Number(actual.toPrecision(15))));
           return <Row key={axis} label={`P${index + 1} ${axis === "y" && turned ? "radius (Y)" : axis.toUpperCase()}`}
             value={value} edit={(text) => {
