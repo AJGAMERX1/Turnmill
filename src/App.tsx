@@ -30,7 +30,8 @@ import { isSleeveDonor, refillComponents, refillMassGrams } from "./refills";
 import { boltPenProject } from "./boltPen";
 import "./penBench.css";
 import PartTabBar from "./PartTabBar";
-import { bindHistoryTargets, bodyOwners, organizePartInsertion, partFeatures, partSketches, projectPartTabs, savePartFeature } from "./partTabs";
+import MergePartsDialog, { type MergeSession } from "./MergePartsDialog";
+import { bindHistoryTargets, bodyOwners, featureUsesSketch, organizePartInsertion, partFeatures, partSketches, projectPartTabs, savePartFeature } from "./partTabs";
 import type { LiveAssembly } from "./Mechanisms";
 import HardwareDialog from "./HardwareDialog";
 import { finishLabels, type FinishKind } from "./finishingTypes";
@@ -40,6 +41,7 @@ import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
 import {
   Layers3,
   Grip,
+  Combine,
   Box,
   Boxes,
   BookOpen,
@@ -125,6 +127,7 @@ type DialogName =
   | "advanced"
   | "refill"
   | "hardware"
+  | "merge"
   | "part-name"
   | null;
 const modes = [
@@ -204,6 +207,13 @@ export default function App() {
   const [dialog, setDialog] = useState<DialogName>(null),
     [menu, setMenu] = useState<"file" | "export" | "views" | null>(null),
     [notice, setNotice] = useState("");
+  const [mergeSession, setMergeSession] = useState<MergeSession>();
+  useEffect(() => {
+    if (dialog === "merge" && mergeSession && mergeSession.project !== project) {
+      setMergeSession(undefined);
+      setDialog(null);
+    }
+  }, [dialog, mergeSession, project]);
   const [gripRequest, setGripRequest] = useState<GripRequest>();
   const [presetFinish, setPresetFinish] = useState<FinishKind>(),
     [presetAdvanced, setPresetAdvanced] = useState<Advanced["kind"]>();
@@ -355,7 +365,7 @@ export default function App() {
     pendingSketch || project.sketches.find((s) => s.id === editingSketch);
   const selectedS =
     selectedSketch ||
-    sketches.find((s) => s.id === currentF?.sketchId) || sketches.at(-1);
+    sketches.find((s) => s.id === currentF?.sketchId) || (currentF?.kind === "merge" ? undefined : sketches.at(-1));
   const resultFor = model.features.find((f) => f.id === currentF?.id);
   const modelSignature = useMemo(
     () => JSON.stringify(model.features),
@@ -457,6 +467,7 @@ export default function App() {
   };
   const close = () => {
     setDialog(null);
+    setMergeSession(undefined);
     finishing.clear();
     setPresetFinish(undefined);
     setPresetAdvanced(undefined);
@@ -525,6 +536,10 @@ export default function App() {
       setNotice("This is a saved v1 engraving. Its solid can be measured and exported.");
       return;
     }
+    if (kind === "merge") {
+      setDialog("parameters");
+      return;
+    }
     if (kind === "import") {
       setNotice(
         "Imported body · use Finish to machine this solid. Rename it in the history.",
@@ -555,10 +570,7 @@ export default function App() {
     setDialog("rename");
   };
   const removeSketch = (sketch: Sketch) => {
-    const inUse = project.features.some((f) => f.sketchId === sketch.id ||
-      operationsOf(f).some(({ operation: op }) =>
-        (op.kind === "loft" && [op.lowerId, op.upperId].includes(sketch.id)) ||
-        (op.kind === "sweep" && [op.pathId, op.sectionId].includes(sketch.id))));
+    const inUse = project.features.some(f => featureUsesSketch(f, sketch.id));
     if (inUse) {
       setNotice("This sketch is used by a feature. Remove that feature first.");
       return;
@@ -640,6 +652,44 @@ export default function App() {
       { label: "Delete", icon: Trash2, danger: true, run: () => removeSketch(sketch) },
     ]);
   }
+  const canMerge = valid && solidFeatures.length >= 2;
+  function openMerge(preferred?: string) {
+    if (!canMerge) {
+      setNotice(busy ? "Wait for the solids to finish rebuilding." : "Create or restore two solid parts before merging.");
+      return;
+    }
+    const ids = solidFeatures.map(f => f.id);
+    const live = mode === "Assembly" ? liveAssembly.current : null;
+    const keep = preferred || live?.selected || selectedBodyId;
+    const session: MergeSession = {
+      project, parts: solidFeatures.map(({id, name}) => ({id, name})),
+      keepId: ids.includes(keep) ? keep : ids[0],
+      assembly: mode === "Assembly" || showcasing,
+    };
+    try {
+      if (live) {
+        if (live.problem) throw Error(live.problem);
+        if (live.project !== project || !ids.every(id => live.matrices[id]?.length === 16))
+          throw Error("Wait for the assembly positions to finish rebuilding.");
+        live.pause();
+        session.poses = live.matrices;
+        session.drivers = live.drivers;
+      } else {
+        const joints = resolveThreadMates(project.workspaces?.joints ?? {}, kernel.threadFrames ?? [], model.values, ids);
+        const matrices = buildPoses(ids, joints, project.workspaces?.jointPose ?? {}, model.values);
+        session.poses = Object.fromEntries(ids.map((id, i) => [id, matrices[i]]));
+      }
+    } catch (cause) {
+      session.poseError = cause instanceof Error ? cause.message : "Check the assembly joints and try again.";
+      if (session.assembly) { setNotice(session.poseError); return; }
+    }
+    setMergeSession(session);
+    setMenu(null);
+    setDialog("merge");
+  }
+  function mergeItem(bodyId: string): MenuItem {
+    return { label: "Merge parts…", icon: Combine, shortcut: "U", disabled: !canMerge, run: () => openMerge(bodyId) };
+  }
   function millGrip(bodyId: string) {
     const feature = partFeatures(project, bodyId).filter((f) => !f.suppressed).at(-1);
     if (!feature || isScaleFeature(project, feature.id)) {
@@ -660,14 +710,14 @@ export default function App() {
     const scale = isScaleFeature(project, f.id);
     const gripBody = bodyFor(f);
     openContext(anchor, f.name, [
-      ...(f.kind === "import" || scale ? [] : [{ label: "Edit feature",
+      ...(f.kind === "import" || f.kind === "merge" || scale ? [] : [{ label: "Edit feature",
         icon: Pencil, run: () => createFeature(f.kind, f) }]),
       ...(sketch && !scale ? [
         { label: "Edit sketch", icon: SquarePen, shortcut: "E", run: () => editSketchItem(sketch) },
         ...makeSolidActions(sketch),
       ] : []),
       ...(!scale ? [
-        ...(!f.suppressed && gripBody ? [gripMenuItem(gripBody)] : []),
+        ...(!f.suppressed && gripBody ? [gripMenuItem(gripBody), ...(solidFeatures.length > 1 ? [mergeItem(gripBody)] : [])] : []),
         { label: "Finish…", icon: Wrench, shortcut: "G", run: () => {
           setEntryId(undefined); setPresetFinish(undefined); setDialog("finish");
         } },
@@ -711,7 +761,7 @@ export default function App() {
     if (showcasing) {
       const part = parts.find((p) => p.id === bodyId);
       openContext(anchor, part?.name || "Pen Studio", [
-        ...(part ? [gripMenuItem(part.id), { label: "Open part tab", icon: FolderOpen, run: () => openPart(part) }] : []),
+        ...(part ? [gripMenuItem(part.id), ...(solidFeatures.length > 1 ? [mergeItem(part.id)] : []), { label: "Open part tab", icon: FolderOpen, run: () => openPart(part) }] : []),
         { label: "Fit model to view", icon: Scan, run: () => setFit((v) => v + 1) },
       ]);
       return;
@@ -843,6 +893,8 @@ export default function App() {
     }
   }
   const knownCommands: Command[] = [
+    { title: "Merge parts", group: "Components", shortcut: "U", keywords: "union boolean fuse combine join weld solids bodies",
+      disabled: !canMerge || mode === "Drawing", reason: "Open two solid parts in Part or Assembly.", run: () => openMerge() },
     { title: "Insert refill", group: "Components", shortcut: "Alt J", keywords: "Parker G2 EnerGel Pentel BIC Cristal Round Stic Flytanium Ti Stic Xtra sleeve press-in ink cartridge donor", run: () => setDialog("refill") },
     { title: "New part", group: "Project", shortcut: "Alt B", run: () => namePart() },
     {
@@ -1364,6 +1416,9 @@ export default function App() {
           ))}
         </nav>
         <div className="workspace-right">
+          {(mode === "Assembly" || mode === "Part") && solidFeatures.length > 1 &&
+            <button className="refill-entry" disabled={!canMerge} title="Merge parts (U)" aria-label="Merge parts"
+              onClick={() => openMerge()}><Combine size={15}/> Merge parts</button>}
           {(mode === "Assembly" || mode === "Part") && <button className="refill-entry" onClick={() => setDialog("refill")}><PenTool size={15}/> Refills</button>}
           {mode === "Assembly" && (
             <button
@@ -1461,7 +1516,7 @@ export default function App() {
                       onClick={() => setSelected(f.id)}
                       onDoubleClick={() => createFeature(f.kind, f)}
                     >
-                      {f.kind === "revolve" ? (
+                      {f.kind === "merge" ? <Combine size={16}/> : f.kind === "revolve" ? (
                         <RotateCw size={16} />
                       ) : (
                         <Box size={16} />
@@ -1769,7 +1824,7 @@ export default function App() {
                 <span>
                   {selectedSketch ? (
                     <SquarePen size={19} />
-                  ) : (
+                  ) : currentF?.kind === "merge" ? <Combine size={19}/> : (
                     <RotateCw size={19} />
                   )}
                 </span>
@@ -1785,14 +1840,14 @@ export default function App() {
                       : currentF
                         ? currentF.kind === "revolve"
                           ? "Revolved feature"
-                          : currentF.kind === "import"
+                          : currentF.kind === "merge" ? "Boolean union" : currentF.kind === "import"
                             ? "Imported solid"
                             : "Extruded feature"
                         : "Create a sketch to begin"}
                   </small>
                 </div>
                 {currentF &&
-                  iconButton("Edit selection", Pencil, () =>
+                  iconButton(currentF.kind === "merge" ? "Edit named parameters" : "Edit selection", Pencil, () =>
                     selectedSketch
                       ? editSketch()
                       : createFeature(currentF.kind, currentF),
@@ -2000,7 +2055,7 @@ export default function App() {
             <Assembly
               {...props}
               liveAssembly={liveAssembly}
-              onMillGrip={millGrip}
+              onMillGrip={millGrip} onMergeParts={openMerge}
               onOpenPart={(id) => {
                 const part = parts.find((p) => p.id === id);
                 if (part) openPart(part);
@@ -2025,6 +2080,7 @@ export default function App() {
       </main>
       {ready && (mode === "Part" || mode === "Assembly") && (
         <PartTabBar parts={parts} active={activePart?.id} assembly={mode === "Assembly"}
+          mergeableIds={canMerge ? solidFeatures.map(f => f.id) : []} onMerge={part => openMerge(part.id)}
           onNew={() => namePart()} onPart={openPart} onRename={namePart}
           onAssembly={() => switchMode("Assembly")}
           onDelete={(part) => {
@@ -2278,6 +2334,15 @@ export default function App() {
           }}
         />
       )}
+      {dialog === "merge" && mergeSession?.project === project && <MergePartsDialog session={mergeSession}
+        onClose={close} onPosition={() => { close(); switchMode("Assembly"); }}
+        onSave={(next, keepId) => {
+          commit(next);
+          if (activePart) setPartSelection({projectId: next.id, id: keepId});
+          setSelected(keepId);
+          close();
+          setNotice("Parts merged into " + (next.features.find(f => f.id === keepId)?.name ?? "one solid") + ".");
+        }}/>}
       {dialog === "finish" && currentF && (
         <FinishDialog
           initialKind={presetFinish}

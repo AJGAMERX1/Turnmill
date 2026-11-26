@@ -1,6 +1,6 @@
 import { observeJoints } from "../tests/hook/observe";
 import { Matrix4, Vector3 } from "three";
-import { Grip } from "lucide-react";
+import { Grip, Combine } from "lucide-react";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
@@ -87,11 +87,14 @@ function ExprField({
   );
 }
 export type LiveAssembly = {
+  project: Project;
+  matrices: Record<string, number[]>;
+  pause: () => void;
   selected: string;
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void };
+type PartNavigation = { onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -223,7 +226,7 @@ function JointStudio({
   guideAssist,
   liveAssembly,
   onOpenPart,
-  onMillGrip,
+  onMillGrip, onMergeParts,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
@@ -344,9 +347,13 @@ function JointStudio({
     problem = (e as Error).message;
   }
   useLayoutEffect(() => {
-    liveAssembly.current = { selected, drivers: poses, problem };
+    liveAssembly.current = {
+      project, selected, drivers: poses, problem,
+      matrices: Object.fromEntries(ids.map((id, i) => [id, matrices[i]])),
+      pause: () => { play(false); stopGuideTwist(); },
+    };
     return () => { liveAssembly.current = null; };
-  }, [liveAssembly, selected, poses, problem]);
+  });
   useEffect(()=>{
     if(import.meta.env.VITE_CAD_QA==="1") {
       observeJoints(()=>({ids,selected,poses,matrices,config,min,max,current,lead,readings,problem}));
@@ -755,6 +762,8 @@ function JointStudio({
   const targetBody = bodies.find((body) => body.id === targetId);
   if (targetId && targetBody) {
     const free = isFloating(raw[targetId]);
+    if (onMergeParts && bodies.length > 1)
+      menuItems.push({ label: "Merge parts…", icon: Combine, shortcut: "U", run: () => onMergeParts(targetId) });
     if (onMillGrip)
       menuItems.push({ label: "Mill grip…", icon: Grip, shortcut: "M", run: () => onMillGrip(targetId) });
     if (onOpenPart)

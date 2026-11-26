@@ -85,7 +85,7 @@ export default function SelectionDimensions({ project, sketch, feature, onChange
       onChange({ ...project, features: project.features.map((f) => f.id === feature.id ? { ...f, amount } : f) });
     } catch (e) { setError((e as Error).message); }
   }
-  if (!sketch && (!feature || feature.kind === "import")) return null;
+  if (!sketch && (!feature || feature.kind === "import" || feature.kind === "merge")) return null;
   const index = Math.min(point, (sketch?.points.length || 1) - 1);
   return <fieldset className="selection-dimensions" disabled={saving || !values} aria-label="Selected geometry dimensions">
     {ranges.map((r) => r.radial ? <div key={r.axis}>
@@ -93,7 +93,7 @@ export default function SelectionDimensions({ project, sketch, feature, onChange
       <Row label={r.hasBore ? "Bore diameter" : "Minimum inside diameter"} value={r.lower} edit={(s) => resize(r, "lower", s)} />
     </div> : <Row key={r.axis} label={r.axis === "y" ? "Profile height" : turned ? "Axial length" : "Profile width"}
       value={r.size} edit={(s) => resize(r, "size", s)} />)}
-    {feature && feature.kind !== "import" &&
+    {feature && feature.kind !== "import" && feature.kind !== "merge" &&
       <Row label={turned ? "Revolve angle" : "Extrusion depth"} value={feature.amount} edit={setAmount} />}
     {!!ranges.length && <p className="dimension-note">
       {turned ? "Length scales the profile from its left end. Diameters scale the wall between its inner and outer radii."

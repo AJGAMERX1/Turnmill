@@ -63,6 +63,8 @@ export type Joint = {
   cam?: CamLink;
   spring?: CompressionSpring;
   threadMate?: import("./threadMates").ThreadMate;
+  /** Extra parent frame when a former parent was absorbed by a solid union. */
+  parentFrame?: number[];
   mount?: number[];
   floating?: boolean;
   placement?: Placement;
@@ -70,7 +72,9 @@ export type Joint = {
 export const isFloating = (j?: Joint) => !j || (j.kind === "fixed" && !j.parent && j.floating === true);
 export function jointMount(j: Joint, values: Record<string, number>) {
   const matrix = j.placement ? placementMatrix(j.placement, values) : new Matrix4();
-  return j.mount ? matrix.multiply(new Matrix4().fromArray(j.mount)) : matrix;
+  if (j.mount) matrix.multiply(new Matrix4().fromArray(j.mount));
+  if (j.parentFrame) matrix.premultiply(new Matrix4().fromArray(j.parentFrame));
+  return matrix;
 }
 export type Driver = { active: number; coords: number[] };
 export type JointConfig = Record<string, Joint>;
@@ -421,7 +425,7 @@ export function buildPoses(
       .multiply(
         new Matrix4().makeTranslation(-origin[0], -origin[1], -origin[2]),
       );
-    if (j.mount || j.placement) mat.premultiply(jointMount(j, values));
+    if (j.parentFrame || j.mount || j.placement) mat.premultiply(jointMount(j, values));
     if (j.parent) {
       if (!ids.includes(j.parent))
         throw Error(

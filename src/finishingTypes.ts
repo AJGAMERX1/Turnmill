@@ -1,5 +1,12 @@
 import { textArtwork, type Artwork } from "./markArtwork";
 import { evaluate } from "./expressions";
+import type { EvaluatedFeature } from "./types";
+
+/** A consumed source retains its machining history inside the merge. */
+export function hasModeledThread(feature: EvaluatedFeature): boolean {
+  return !!feature.finishes?.some(f => f.kind === "thread" && f.mode === "modeled" && !f.suppressed)
+    || !!feature.merge?.features.some(hasModeledThread);
+}
 
 export type FinishKind =
   | "fillet"

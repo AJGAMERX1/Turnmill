@@ -10,6 +10,7 @@ import { projectAssemblyDrawing } from "./assemblyDrawingProjection";
 import { positioned } from "./motionGeometry";
 import type { EvaluatedFeature, Parameter } from "./types";
 import { resolveParameters } from "./expressions";
+import { hasModeledThread } from "./finishingTypes";
 import { bodyIds, buildPoses, type JointConfig } from "./kinematics";
 import { resolveThreadMates } from "./threadMates";
 
@@ -32,6 +33,14 @@ export type PreparedDrawing = {
   dispose: () => void;
 };
 
+function cosmeticThreads(f: EvaluatedFeature): EvaluatedFeature {
+  return {
+    ...f,
+    finishes: f.finishes?.map(g => g.kind === "thread" ? { ...g, mode: "cosmetic" } : g),
+    merge: f.merge && { ...f.merge, features: f.merge.features.map(cosmeticThreads) },
+  };
+}
+
 /** Exact solids live in the drawing worker only as long as this source stays open. */
 export function prepareDrawing({
   features,
@@ -41,28 +50,13 @@ export function prepareDrawing({
   modeled,
 }: DrawingSource): PreparedDrawing {
   const values = parameters ? resolveParameters(parameters) : numericValues;
-  const simplified =
-    !modeled &&
-    features.some((f) =>
-      f.finishes?.some(
-        (g) => g.kind === "thread" && g.mode === "modeled" && !g.suppressed,
-      ),
-    );
+  const simplified = !modeled && features.some(hasModeledThread);
   const bodies = buildBodies(features);
   const exact: Shape3D[] = [],
     display: Shape3D[] = [];
   const dispose = () => exact.splice(0).forEach((s) => s.delete());
   try {
-    const screen = simplified
-      ? buildBodies(
-          features.map((f) => ({
-            ...f,
-            finishes: f.finishes?.map((g) =>
-              g.kind === "thread" ? { ...g, mode: "cosmetic" } : g,
-            ),
-          })),
-        )
-      : undefined;
+    const screen = simplified ? buildBodies(features.map(cosmeticThreads)) : undefined;
     try {
       if (!joints) {
         if (bodies.length !== 1)

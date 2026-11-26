@@ -27,7 +27,8 @@ Open [Turnmill on this computer](http://127.0.0.1:4179/). Using the same browser
 3. In **Pen Studio**, set grip diameter, retracted recess and writing exposure. **Reveal internals** shows the carrier inside the housing. Set a grip station to compare against the calculated balance. Enter the filled refill mass when known.
 4. Orbit the model and choose **Save PNG** for a studio render of the saved assembly pose. For machining, choose **Export → STEP solid** or **Drawing → Download PDF**.
 5. To machine a grip, right-click the barrel in **Part**, **Pen Studio** or **Assembly** and choose **Mill grip…**. Choose **Rings**, **Flutes** or **Cross-cut**. The highlighted band shows the grip on the barrel. Straight cylinders and straight-sided tapers support all three patterns. If the band crosses a shoulder, use **Fit to surface** or choose a barrel surface, then preview and apply. The cuts appear in the solid and STEP export. Click the grip in feature history to edit it.
-6. To start from a sketch, open **Sketch** and choose a turned blank, rectangle or measured line. Lengths accept units and parameter expressions.
+6. To combine two solids, right-click the part to keep and choose **Merge parts…** (U). Choose the other part and click **Merge parts**. Position them in **Assembly** so they overlap or touch across a face. The result keeps the first part’s name and material. Undo restores both parts.
+7. To start from a sketch, open **Sketch** and choose a turned blank, rectangle or measured line. Lengths accept units and parameter expressions.
 
 [Research behind the design controls](PEN-DESIGN.md)
 

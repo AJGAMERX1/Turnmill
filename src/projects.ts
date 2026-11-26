@@ -1,3 +1,4 @@
+import { isRigidTransform } from "./rigidTransform";
 import { validateImportedFiles, getImportedBrep } from "./exchangeTypes";
 import { camDefaults } from "./camLaw";
 import type { CamLink, Joint } from "./kinematics";
@@ -115,30 +116,41 @@ export function validateProject(raw: unknown): Project {
       throw Error("A sketch is damaged or has an invalid constraint.");
     ids.add(s.id);
   }
-  for (const f of p.features) {
-    if (
-      !f ||
-      !["new", "add", "cut"].includes(f.operation) ||
-      !["extrude", "revolve", "import"].includes(f.kind) ||
-      (f.kind === "import" ? f.operation !== "new" : !ids.has(f.sketchId)) ||
-      typeof f.id !== "string" ||
-      typeof f.name !== "string" ||
-      typeof f.amount !== "string" ||
-      typeof f.suppressed !== "boolean" ||
-      ids.has(f.id)
-    )
-      throw Error("An operation has invalid settings or a missing profile.");
-    if (f.kind === "import") getImportedBrep(f, p.importedFiles);
-    if (
-      f.finishes &&
-      (!Array.isArray(f.finishes) ||
-        f.finishes.some(
-          (x) => !x || typeof x.name !== "string" || typeof x.kind !== "string",
-        ))
-    )
-      throw Error("A saved finishing operation is damaged.");
-    ids.add(f.id);
+  const sketchIds = new Set(ids);
+  function validateFeatures(history: Feature[]) {
+    for (const f of history) {
+      if (
+        !f || !["new", "add", "cut"].includes(f.operation) ||
+        !["extrude", "revolve", "import", "merge"].includes(f.kind) ||
+        typeof f.id !== "string" || typeof f.name !== "string" ||
+        typeof f.amount !== "string" || typeof f.suppressed !== "boolean" || ids.has(f.id)
+      )
+        throw Error("An operation has invalid settings or a duplicate ID.");
+      ids.add(f.id);
+      if (f.kind === "merge") {
+        const merge = f.merge;
+        if (f.operation !== "add" || typeof f.bodyId !== "string" || !merge ||
+          !isRigidTransform(merge.transform) || !Array.isArray(merge.features) ||
+          merge.features[0]?.operation !== "new" || merge.features.slice(1).some(item => item?.operation === "new"))
+          throw Error("A saved merge needs a part to keep, one source history and a valid placement.");
+        for (const [refill, id] of [[merge.targetRefill, f.bodyId], [merge.toolRefill, merge.features[0].id]] as const) {
+          if (refill !== undefined && (!refill || refill.bodyId !== id ||
+            typeof refill.kind !== "string" || typeof refill.prefix !== "string"))
+            throw Error("A merged refill is missing its source dimensions.");
+        }
+        validateFeatures(merge.features);
+      } else if (f.kind === "import") {
+        if (f.operation !== "new") throw Error("An imported solid must start a new part.");
+        getImportedBrep(f, p.importedFiles);
+      } else if (!sketchIds.has(f.sketchId)) {
+        throw Error("An operation is missing its sketch profile.");
+      }
+      if (f.finishes && (!Array.isArray(f.finishes) ||
+        f.finishes.some(x => !x || typeof x.name !== "string" || typeof x.kind !== "string")))
+        throw Error("A saved finishing operation is damaged.");
+    }
   }
+  validateFeatures(p.features);
   if (p.emptyParts !== undefined) {
     if (!Array.isArray(p.emptyParts)) throw Error("The saved list of part tabs is damaged.");
     for (const part of p.emptyParts) {

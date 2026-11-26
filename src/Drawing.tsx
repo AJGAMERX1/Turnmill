@@ -5,6 +5,7 @@ import { Download, FileText, Printer, Plus, X } from "lucide-react";
 import type { JointConfig } from "./kinematics";
 import { assemblySheets } from "./secondaryAssemblySheet";
 import { evaluate } from "./expressions";
+import { hasModeledThread } from "./finishingTypes";
 import {
   changeWorkspace,
   dxfFile,
@@ -101,11 +102,7 @@ export default function Drawing(
   const exactDrawing =
     scope !== "profile" &&
     (!!editingDimension || savedDims.length > 0) &&
-    source.some((f) =>
-      f.finishes?.some(
-        (op) => !op.suppressed && op.kind === "thread" && op.mode === "modeled",
-      ),
-    );
+    source.some(hasModeledThread);
   const modeled = cfg.modeled === true || exactDrawing;
   const sectionAxis: SectionAxis = hasSection
     ? annotations.sectionAxis || "Y"
@@ -644,12 +641,7 @@ export default function Drawing(
           </label>
         )}
         {scope !== "profile" &&
-          source.some((f) =>
-            f.finishes?.some(
-              (g) =>
-                g.kind === "thread" && g.mode === "modeled" && !g.suppressed,
-            ),
-          ) && (
+          source.some(hasModeledThread) && (
             <label className="tm-check">
               <input
                 type="checkbox"

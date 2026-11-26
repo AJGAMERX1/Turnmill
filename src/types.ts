@@ -30,7 +30,14 @@ export type OperationEntry = {
 export type Feature = {
   id: string;
   name: string;
-  kind: "revolve" | "extrude" | "import";
+  kind: "revolve" | "extrude" | "import" | "merge";
+  /** Consumed part history in its own coordinate frame, with its pose relative to this body. */
+  merge?: {
+    features: Feature[];
+    transform: number[];
+    targetRefill?: import("./refills").RefillComponent;
+    toolRefill?: import("./refills").RefillComponent;
+  };
   sourceId?: string;
   sourceIndex?: number;
   sketchId: string;
@@ -47,10 +54,11 @@ export type EvaluatedFeature = {
   reverseRefillLength?: number;
   id: string;
   name: string;
-  kind: "revolve" | "extrude" | "import";
+  kind: "revolve" | "extrude" | "import" | "merge";
   points: [number, number][];
   operations?: EvaluatedAdvanced[];
   advanced?: EvaluatedAdvanced;
+  merge?: { features: EvaluatedFeature[]; transform: number[] };
   brep?: string;
   ruler?: {
     ticks: [number, number][][];
