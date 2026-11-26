@@ -69,6 +69,45 @@ function checkBarrel(project: Project, bodyId: string, ...rims: BarrelEnd[]) {
 export type CapConeFit = { bodyId: string; parameter: string; from: number; to: number; name: string };
 type Clearance = { name: string; diameter: number; cone?: { bodyId: string; parameter: string; minimum: number } };
 
+/** Internal seat geometry can leave the original cone OD available for a cap.
+ * Verify the measured meridian before permitting a base-diameter adjustment.
+ * A relief cut through the taper still needs its specified 0.3 mm diametral wall. */
+function seatBaseLimit(project: Project, root: Feature, sketch: Sketch,
+  male: Extract<Finish, { kind: "thread" }>, values: Record<string, number>) {
+  const extra = partFeatures(project, root.id).filter(f => !f.suppressed && f !== root);
+  if (!extra.length) return 0;
+  const setup = project.workspaces?.writingSetups?.[root.id];
+  const seat = extra[0];
+  if (extra.length !== 1 || setup?.coneId !== root.id || setup.seatFeatureId !== seat.id ||
+      !seat.writingSeat || seat.bodyId !== root.id || seat.kind !== "revolve" || seat.advanced ||
+      seat.finishes?.length || seat.operations?.length || evaluate(seat.amount, values, "angle") !== 360) return;
+  const profile = project.sketches.find(s => s.id === seat.sketchId);
+  if (profile?.partId !== root.id || profile.constraints.length || profile.points.length !== 4) return;
+  const [a,b,c,d] = profile.points;
+  if (a.x !== b.x || c.x !== d.x || a.y !== d.y || b.y !== c.y) return;
+  const base = evaluate(sketch.points[0].x, values), tip = evaluate(sketch.points[2].x, values);
+  const length = Math.abs(base - tip), inward = Math.sign(base - tip);
+  const rear = length + evaluate(male.length, values);
+  const depth = (x: string) => (evaluate(x, values) - tip) * inward;
+  const stop = depth(d.x), inner = 2 * evaluate(a.y, values), outer = 2 * evaluate(b.y, values);
+  const minor = threadMinorDiameter(evaluate(male.diameter, values), evaluate(male.pitch, values));
+  if (Math.abs(depth(a.x) - rear) > tolerance || inner < 0 || outer <= inner || outer >= minor) return;
+  if (seat.operation === "add" && stop > rear && inner > 0) return 0;
+  if (seat.operation !== "cut" || inner !== 0 || stop <= tolerance || stop >= rear) return;
+  if (stop >= length) return 0;
+  const tipDiameter = 2 * evaluate(sketch.points[2].y, values);
+  return tipDiameter + (outer + 0.3 - tipDiameter) * length / stop;
+}
+
+/** Keep screw mates on the barrel stock when only an integral refill stop follows.
+ * Other machining keeps its existing position in history. */
+function barrelThreadTarget(history: Feature[]) {
+  const last = history.at(-1), prior = history.at(-2);
+  if (last?.refillBacking && !last.finishes?.length && !last.advanced && !last.operations?.length &&
+      prior && !prior.advanced && !prior.operations?.length) return prior;
+  return last;
+}
+
 function attachedClearance(project: Project, host: string, values: Record<string, number>): Clearance | undefined {
   const joints = (project.workspaces?.joints ?? {}) as Record<string, Joint>;
   const refills = refillComponents(project);
@@ -88,8 +127,9 @@ function attachedClearance(project: Project, host: string, values: Record<string
       const sketch = project.sketches.find(s => s.id === f.sketchId);
       const male = f.finishes?.find(t => t.id === joint.threadMate!.moving.finishId && !t.suppressed);
       if (male?.kind === "thread" && male.preparation === "tenon" && f.finishes?.length === 1 &&
-          partFeatures(project, id).filter(f => !f.suppressed).length === 1 &&
           sketch?.points.length === 4 && sketch.constraints.length === 0 && /^cone\d*_base \/ 2$/.test(sketch.points[1].y)) {
+        const wallLimit = seatBaseLimit(project, f, sketch, male, values);
+        if (wallLimit === undefined) continue;
         diameter = 2 * evaluate(sketch.points[1].y, values);
         const parameter = sketch.points[1].y.split(" ")[0], prefix = parameter.slice(0, -5);
         const [a, b, c, d] = sketch.points;
@@ -101,8 +141,8 @@ function attachedClearance(project: Project, host: string, values: Record<string
             sketch.partId === id && !sketch.capProfile && !sketch.coneEdge && evaluate(f.amount, values, "angle") === 360 &&
             a.y === prefix + "_opening / 2" && d.y === a.y && c.y === prefix + "_tip / 2" &&
             a.x === b.x && c.x === d.x && c.x === a.x + (socket.end === "end" ? " + " : " - ") + prefix + "_length") {
-          const minimum = Math.max(evaluate(male.diameter, values), evaluate(socket.diameter, values),
-            values[prefix + "_tip"]) + 0.3;
+          const minimum = Math.max(wallLimit, Math.max(evaluate(male.diameter, values), evaluate(socket.diameter, values),
+            values[prefix + "_tip"]) + 0.3);
           cone = { bodyId: id, parameter, minimum };
         }
       }
@@ -370,7 +410,7 @@ export function capAttachmentIssue(project: Project, bodyId: string): string | u
 
 export function createThreadedCone(project: Project, bodyId: string, stock: BarrelEnd, settings: PairSettings) {
   checkBarrel(project, bodyId, stock);
-  const target = partFeatures(project, bodyId).filter(f => !f.suppressed).at(-1);
+  const target = barrelThreadTarget(partFeatures(project, bodyId).filter(f => !f.suppressed));
   if (!target) throw Error("Restore the barrel before adding threads.");
   if (partFeatures(project, bodyId).some(f => !f.suppressed && f.finishes?.some(
     op => op.kind === "thread" && !op.suppressed && op.end === settings.end && op.preparation === "socket"
@@ -492,7 +532,7 @@ export function setCapMount(project: Project, capId: string, end: End, pose: Rec
 export function createThreadedCap(project: Project, bodyId: string, stock: BarrelEnd, settings: CapSettings, otherStock?: BarrelEnd) {
   checkBarrel(project, bodyId, stock, ...(otherStock ? [otherStock] : []));
   const history = partFeatures(project, bodyId).filter(f => !f.suppressed);
-  const target = history.at(-1);
+  const target = barrelThreadTarget(history);
   if (!target) throw Error("Restore the barrel before adding a cap.");
   if (history.some(f => f.finishes?.some(op => op.kind === "thread" && !op.suppressed && op.side === "external" &&
       (otherStock !== undefined || op.end === settings.end))))

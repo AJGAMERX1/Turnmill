@@ -7,7 +7,7 @@ const tolerance = 1e-6;
 
 // Require a complete centered disk or annulus so adding a tenon cannot cover an
 // off-center ink passage, a slot or part of the original bore.
-function endRadii(face: Face, frame: ThreadAxisFrame) {
+export function endRadii(face: Face, frame: Pick<ThreadAxisFrame, "axis" | "center" | "endCoord">) {
   const edges = face.edges;
   const rings: { radius: number; length: number }[] = [];
   try {

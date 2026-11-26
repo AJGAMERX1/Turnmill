@@ -32,8 +32,10 @@ export type KernelStatus = {
 export type ExportRequest = {
   assembly?: import("./assemblyExport").AssemblyExport;
   bodyIndex?: number;
+  bodyId?: string;
+  shop?: import("./shopExport").ShopPackage;
   id: number;
-  format: "step" | "stl" | "3mf";
+  format: "step" | "stl" | "3mf" | "zip";
   name: string;
 };
 type Props = {
@@ -54,6 +56,7 @@ type Props = {
   gripPriorFinishes?: EvaluatedFinish[];
   placements?: Record<string, number[]>;
   ghostIds?: string[];
+  writingCheck?: RefObject<import("./writingFitJob").WritingRequest | null>;
   savePhoto?: RefObject<(() => Promise<Blob>) | null>;
   onBodyContextMenu?: (anchor: MenuAnchor, bodyId: string | null) => void;
   onBodyPick?: (bodyId: string) => void;
@@ -76,7 +79,7 @@ export type KernelReply = { revision: number } & (
   | {
       type: "exported";
       blob: Blob;
-      format: "step" | "stl" | "3mf";
+      format: "step" | "stl" | "3mf" | "zip";
       id: number;
       name: string;
     }
@@ -103,7 +106,7 @@ export function Viewport({
   onStatus,
   takeFinishBody,
   appearances = [], donorFinishes,
-  visibleBodyId, photoMode = false, placements, ghostIds = [], savePhoto, measureRefillFit = false, measureCapSeats = false,
+  visibleBodyId, photoMode = false, placements, ghostIds = [], savePhoto, writingCheck, measureRefillFit = false, measureCapSeats = false,
   gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
   onBodyPick,
@@ -217,6 +220,23 @@ export function Viewport({
       name: "turnmill-solid-modeler",
     });
     engine.current = worker;
+    const pendingFits = new Set<(message: string) => void>();
+    if (writingCheck) writingCheck.current = job => new Promise((resolve, reject) => {
+      if (status.current.busy || status.current.error || revision.current !== builtRevision.current) {
+        reject(Error("Wait for the pen to finish rebuilding."));
+        return;
+      }
+      const channel = new MessageChannel(), started = revision.current;
+      const finish = () => { channel.port1.close(); pendingFits.delete(fail); };
+      const fail = (message: string) => { finish(); reject(Error(message)); };
+      pendingFits.add(fail);
+      channel.port1.onmessage = ({data}) => {
+        if (started !== revision.current) { fail("The pen changed. Check the writing fit again."); return; }
+        if (data.error) { fail(data.error); return; }
+        finish(); resolve(data.result);
+      };
+      worker.postMessage({ type: "writing-fit", revision: started, job, port: channel.port2 }, [channel.port2]);
+    });
     if(import.meta.env.VITE_CAD_QA==="1") observeGeometry(worker,()=>revision.current);
     worker.onmessage = ({ data }: MessageEvent<KernelReply | { type: "grip-stock"; revision: number; stock: GripMeasurement }>) => {
       if (data.type === "grip-stock") {
@@ -271,7 +291,7 @@ export function Viewport({
         const filename =
           data.name
             .replace(/[/\\:*?"<>|]/g, "-")
-            .replace(/\.(step|stl|3mf)$/i, "") || "Part";
+            .replace(/\.(step|stl|3mf|zip)$/i, "") || "Part";
         download(data.blob, filename + "." + data.format);
         publish({ busy: false, error: "" });
       } else {
@@ -290,6 +310,7 @@ export function Viewport({
       }
     };
     worker.onerror = () => {
+      for (const fail of pendingFits) fail("The solid modeler stopped during the fit check.");
       retained.current.clear();
       activeBuild.current = false;
       pendingBuild.current = null;
@@ -308,6 +329,8 @@ export function Viewport({
     };
     return () => {
       if(import.meta.env.VITE_CAD_QA==="1") observeGeometry();
+      for (const fail of pendingFits) fail("The writing-fit view was closed.");
+      if (writingCheck) writingCheck.current = null;
       worker.terminate();
       engine.current = undefined;
       retained.current.clear();

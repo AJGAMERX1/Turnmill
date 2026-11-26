@@ -1,5 +1,7 @@
 import { resolveParameters, evaluate } from "./expressions";
 import { uid } from "./projects";
+import { screwConeProfile } from "./screwConeProfile";
+import type { WritingSetup } from "./writingConeSeat";
 import type { Parameter, Point, Project, Sketch } from "./types";
 
 export type RefillKind = "parker-g2" | "energel-lr7" | "bic-cristal" | "bic-cristal-original" | "bic-round-stic";
@@ -426,6 +428,30 @@ type RefillOptions = {
   reversed?: boolean;
   mass?: string;
 };
+/** A different cartridge is compared against the pen that was machined for the old one.
+ * Capture only references used by that fitted seat. Other model parameters stay live. */
+function preserveMachinedSeats(project: Project, refill: RefillComponent): Project {
+  const setups = (project.workspaces?.writingSetups ?? {}) as Record<string, WritingSetup>;
+  const fitted = Object.values(setups).filter(s => s.refillId === refill.bodyId);
+  if (!fitted.length) return project;
+  const previous = resolveParameters(project.parameters);
+  const freeze = (expr: string) => expr.replace(/\b[a-zA-Z_]\w*\b/g, name =>
+    name.startsWith(refill.prefix + "_") && Number.isFinite(previous[name]) ? "(" + previous[name] + " mm)" : name);
+  const openings = new Set<string>(), seats = new Set<string>();
+  const updated = { ...setups };
+  for (const setup of fitted) {
+    const root = project.features.find(f => f.id === setup.coneId);
+    const cone = root && screwConeProfile(project, project.sketches.find(s => s.id === root.sketchId), root);
+    if (cone) openings.add(cone.opening);
+    const seat = project.features.find(f => f.id === setup.seatFeatureId && f.bodyId === setup.coneId && f.writingSeat);
+    if (seat) seats.add(seat.sketchId);
+    updated[setup.coneId] = { ...setup, needsRefit: true };
+  }
+  return { ...project, workspaces: { ...project.workspaces, writingSetups: updated },
+    parameters: project.parameters.map(p => openings.has(p.name) ? { ...p, expression: freeze(p.expression) } : p),
+    sketches: project.sketches.map(s => seats.has(s.id) ? { ...s, points: s.points.map(p => ({ x: freeze(p.x), y: freeze(p.y) })) } : s) };
+}
+
 export function insertRefill(
   project: Project,
   kind: RefillKind,
@@ -437,6 +463,7 @@ export function insertRefill(
   );
   if (options.replaceBodyId && !existing)
     throw Error("Select a refill from this project to replace.");
+  if (existing && existing.kind !== kind) project = preserveMachinedSeats(project, existing);
   const bodyId = existing?.bodyId ?? options.bodyId ?? uid();
   const prefix = existing?.prefix ?? options.prefix ?? availablePrefix(project);
   if (!existing && project.features.some((f) => f.id === bodyId))

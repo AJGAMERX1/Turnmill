@@ -76,6 +76,12 @@ STEP and watertight STL import as solids. STL retains its facets. Planar DXF and
 - **Mating fits** applies H7/g6, H7/h6, H7/k6 or H7/p6 to a matching smooth bore and shaft over basic diameters of 1–50 mm. It reports both diameter limits and the signed diametral clearance. Positive values give clearance and negative values give interference. These limits describe the manufacturing tolerance envelope. Motion checks use the nominal solids. [ISO 286-2](https://www.iso.org/standard/54915.html) · [Schaeffler tolerance tables](https://www.schaeffler.it/remotemedien/media/_shared_media/08_media_library/01_publications/schaeffler_2/catalogue_1/downloads_6/hg_1_de_en.pdf)
 - **Hardware** inserts screws, nuts, washers, pins, O-rings and compression springs. **Bill of materials** lists each active body and exports component, quantity, joint, parent, material and source to CSV. Spring forces are configured at the joint.
 
+## Checking a capped pen for machining
+
+Use **Pen Studio → Writing fit** after adding a cartridge and a screw-on cone. Enter the distance the writing point should extend beyond the cone. **Fit allowances** controls diametral guide clearance and axial endplay. **Check writing fit** previews the cone seat and backing against the finished solids. **Apply writing fit** saves the machined features and refill placement together. Use **Post cap for writing** to see the exposed point. Recheck after changing the pen or replacing the refill. Measure your actual refill before setting production tolerances.
+
+Choose a part by name under **Export → Export geometry**, then **STEP solid** for CAM or **Open part drawing** for its dimensioned PDF. **CNC shop package** creates one local-coordinate STEP per checked item and a manifest with units, materials and thread callouts. Purchased components can be included as references.
+
 ## Manufacturing drawings
 
 - **Drawing → Add dimension** measures two visible edge endpoints or curve centers in a front, top, right or section view. Choose horizontal, vertical or aligned, then place the dimension line. Limits accept parameter expressions. A broken reference identifies the dimension to repair before export. Each source keeps its own drawing number, material, shop note and general tolerance.

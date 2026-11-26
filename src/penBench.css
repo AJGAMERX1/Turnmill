@@ -80,3 +80,8 @@
 .diameter-result small {font-size:11px;display:block;color:#c2cac5;margin-top:3px;overflow-wrap:anywhere}
 .pen-bench details>summary {font-size:12px;cursor:pointer;padding:6px 0;color:#d6c8ad}
 .pen-bench .manual-diameter select {min-width:100px}
+.writing-fit .bench-action { margin-top: 8px }
+.writing-fit .fit-warning { color:#f1bd89 }
+.writing-results { border-left:2px solid #7fa397;background:#222e2b;padding:10px;margin:10px 0 0 }
+.writing-results strong { font-size:13px;color:#d4e7de }
+.writing-results dd { font-size:12px }

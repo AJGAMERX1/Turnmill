@@ -30,6 +30,8 @@ export type OperationEntry = {
   operation: Advanced;
 };
 export type Feature = {
+  /** Integral refill stop that can be replaced when refitting a capped pen. */
+  refillBacking?: true;
   id: string;
   name: string;
   kind: "revolve" | "extrude" | "import" | "merge";
@@ -40,6 +42,7 @@ export type Feature = {
     targetRefill?: import("./refills").RefillComponent;
     toolRefill?: import("./refills").RefillComponent;
   };
+  writingSeat?: true;
   sourceId?: string;
   sourceIndex?: number;
   sketchId: string;

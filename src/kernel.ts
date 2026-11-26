@@ -10,6 +10,7 @@ import {
   type PreviewSolid,
   type RenderBody,
 } from "./geometry";
+import { exportShopArchive } from "./shopArchive";
 import { exportAssemblyBodies } from "./assemblyExport";
 import { ModelBodies } from "./modelBodies";
 import { collectFitSurfaces, collectTurnedCapSurfaces, type FitSurface } from "./fitSurfaces";
@@ -76,6 +77,7 @@ function gripStock(request: GripRequest): GripStock {
 }
 
 type Request =
+  | { type: "writing-fit"; revision: number; job: import("./writingFitJob").WritingJob; port: MessagePort }
   | GripRequest
   | {type:"inspect-qa";revision:number;port:MessagePort}
   | {
@@ -92,11 +94,13 @@ type Request =
     }
   | {
       type: "export";
+      shop?: import("./shopExport").ShopPackage;
+      bodyId?: string;
       bodyIndex?: number;
       assembly?: import("./assemblyExport").AssemblyExport;
       revision: number;
       id: number;
-      format: "step" | "stl" | "3mf";
+      format: "step" | "stl" | "3mf" | "zip";
       name: string;
     };
 
@@ -126,6 +130,17 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       return;
     }
     await ready;
+    if (data.type === "writing-fit") {
+      try {
+        const { checkWritingGeometry } = await import("./writingFitWorker");
+        if (currentRevision < 0 || data.revision !== currentRevision || latestBuild?.revision !== currentRevision)
+          throw Error("The pen changed. Wait for the rebuild and check the fit again.");
+        data.port.postMessage({ result: checkWritingGeometry(data.job, model.bodies, latestBuild.features) });
+      } catch (cause) {
+        data.port.postMessage({ error: cause instanceof Error ? cause.message : "The solid modeler could not check this fit." });
+      } finally { data.port.close(); }
+      return;
+    }
     if (data.type === "inspect-qa") {
       if (import.meta.env.VITE_CAD_QA === "1") {
         try {
@@ -226,9 +241,15 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       if (data.assembly.ids.some((id, i) => id !== roots[start + i]?.id))
         throw Error("The assembly changed. Rebuild it before exporting.");
     }
-    const blob = data.assembly
-      ? exportAssemblyBodies(selected, data.format, data.assembly)
-      : exportBodies(selected, data.format);
+    if (data.bodyId !== undefined && latestBuild?.features.filter(f => f.operation === "new")[data.bodyIndex ?? -1]?.id !== data.bodyId)
+      throw Error("The selected part changed. Select it again before exporting.");
+    let blob: Blob;
+    if (data.format === "zip") {
+      if (!data.shop || !latestBuild) throw Error("Reopen CNC shop package and choose the parts to export.");
+      blob = await exportShopArchive(bodies, latestBuild.features, data.shop);
+    } else {
+      blob = data.assembly ? exportAssemblyBodies(selected, data.format, data.assembly) : exportBodies(selected, data.format);
+    }
     if (!blob.size)
       throw new Error(
         "The export produced an empty file. Check the model and try again.",

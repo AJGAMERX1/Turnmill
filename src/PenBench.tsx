@@ -5,6 +5,7 @@ import { validateProjectScrewCones } from "./screwConeProfile";
 import { materials, massProperties, positionedProperties, type BodyProps } from "./materials";
 import type { EvaluatedFeature, Project } from "./types";
 import { refillCatalog, refillComponents, refillDimensions, reverseRefill } from "./refills";
+import WritingFitPanel from "./WritingFitPanel";
 import InputValue from "./InputValue";
 import RefillDiameterChecks from "./RefillDiameterChecks";
 import ReverseRefillButton from "./ReverseRefillButton";
@@ -12,7 +13,8 @@ import type { FitSurface } from "./fitSurfaces";
 
 type Props = {
   project: Project;
-  commit: (p: Project) => void;
+  commit: (p: Project, bodies?: import("./geometry").FinishBodySnapshot[]) => Project;
+  writingCheck: React.RefObject<import("./writingFitJob").WritingRequest | null>;
   solidFeatures: EvaluatedFeature[];
   properties?: BodyProps[];
   matrices?: number[][];
@@ -28,7 +30,7 @@ type Props = {
 };
 const mm = (v: number) => Number(v.toFixed(2)) + " mm";
 
-export default function PenBench({ project, commit, solidFeatures, properties, matrices, surfaces, values, densities,
+export default function PenBench({ project, commit, writingCheck, solidFeatures, properties, matrices, surfaces, values, densities,
   onRefill, onProject, onAssembly, onParameters, showInternals, setShowInternals }: Props) {
   const [warning, setWarning] = useState("");
   const mounted = properties && matrices ? positionedProperties(properties, matrices) : [];
@@ -81,6 +83,7 @@ export default function PenBench({ project, commit, solidFeatures, properties, m
       {fit !== undefined && <dl><div><dt>Design tip clearance</dt><dd>{mm(fit)}</dd></div></dl>}
       {fit !== undefined && <p>{fit < 0 ? "The guide is smaller than the refill tip." : "Calculated from the tip guide and bore dimensions."}</p>}
     </section>
+    {installed.length > 0 && !bolt && <WritingFitPanel project={project} refills={installed} commit={commit} request={writingCheck} ready={!!surfaces && !!matrices}/>}
     {installed.length > 0 && <RefillDiameterChecks project={project} commit={commit} installed={installed}
       bodies={solidFeatures} surfaces={surfaces} matrices={matrices} values={values}/>}
     <section><h3>Body dimensions</h3>
@@ -105,7 +108,7 @@ export default function PenBench({ project, commit, solidFeatures, properties, m
         : installed.length > 0 && <p>Refill balance uses its filled mass at the envelope centroid.</p>}
     </section>
     <section><h3>Mechanism</h3>
-      {bolt && <label className="bench-check"><Eye size={15}/> Reveal internals<input type="checkbox" checked={showInternals} onChange={(e) => setShowInternals(e.target.checked)}/></label>}
+      {(bolt || installed.length > 0) && <label className="bench-check"><Eye size={15}/> Reveal internals<input type="checkbox" checked={showInternals} onChange={(e) => setShowInternals(e.target.checked)}/></label>}
       <button className="bench-action" onClick={onAssembly}><Component size={16}/> Open assembly</button>
       {solidFeatures.length < 2 && <p>Add a refill or start a bolt-action pen to try a moving assembly.</p>}
     </section>
