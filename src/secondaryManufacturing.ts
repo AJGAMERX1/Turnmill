@@ -228,6 +228,15 @@ function finishNotes(features: EvaluatedFeature[]) {
             " · " +
             op.mode,
         );
+      } else if (op.kind === "grip") {
+        const count = op.count;
+        const pattern = op.style === "rings" ? count + " rings" : op.style === "flutes" ? count + " axial flutes"
+          : count + " rings × " + count + " flutes";
+        const fromMin = reversed ? op.end === "end" : op.end === "start";
+        notes.push(
+          "Mill grip · " + pattern + " · width " + formatDrawingLength(op.width) + " mm · radial depth " + formatDrawingLength(op.depth) + " mm",
+          "Grip band · " + formatDrawingLength(op.length) + " mm long · starts " + formatDrawingLength(op.offset) + " mm from " + (fromMin ? "min X" : "max X"),
+        );
       } else if (op.kind === "knurl")
         notes.push(
           (op.style === "diamond" ? "Diamond" : "Straight") +

@@ -1,8 +1,19 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { appUrl, openBrowser, measure } from "./browser.mjs";
 import { button, download, ready, saved } from "../projects/support.mjs";
+
+async function waitForModel(page, matches) {
+  const deadline = Date.now() + 30000;
+  do {
+    const state = await measure(page);
+    if (matches(state)) return state;
+    await delay(80);
+  } while (Date.now() < deadline);
+  throw Error("Timed out waiting for the expected saved project or joint pose");
+}
 
 const dir = process.env.QA_PEN_STUDIO_OUT || "test-evidence/runner/pen-studio";
 await mkdir(dir, { recursive: true });
@@ -18,8 +29,7 @@ try {
   await p.getByRole("dialog").getByRole("button", {name: /Bolt-action pen/}).click();
   await button(p, "Writing").click();
   await p.locator(".bolt-action-card strong").filter({ hasText: /^Writing$/ }).waitFor();
-  await p.waitForFunction(async () => (await window.__cadTest.snapshot()).project.workspaces.jointPose["bolt-carrier"]?.[0] > 0);
-  const writing = await measure(p);
+  const writing = await waitForModel(p, s => s.project.workspaces?.jointPose?.["bolt-carrier"]?.[0] > 0);
   const i = writing.joints.ids.indexOf("bolt-refill");
   assert(Math.abs(writing.joints.matrices[i][12] + 2.3) < 1e-6);
   await button(p, "Pen Studio").click();
@@ -80,8 +90,8 @@ try {
   assert.equal((await measure(p)).project.workspaces.gripStation,"1/2 in");
   await button(p,"Open assembly").click(); await button(p,"Pocket").click();
   await p.locator(".bolt-action-card strong").filter({ hasText:/^Pocket$/ }).waitFor();
-  await p.waitForFunction(async () => (await window.__cadTest.snapshot()).project.workspaces.jointPose["bolt-carrier"]?.[0] === 0);
-  assert(Math.abs((await measure(p)).joints.matrices[i][12] - 0.8) < 1e-6);
+  const pocket = await waitForModel(p, s => s.project.workspaces?.jointPose?.["bolt-carrier"]?.[0] === 0);
+  assert(Math.abs(pocket.joints.matrices[i][12] - 0.8) < 1e-6);
   await p.reload(); await ready(p);
   await button(p,"Pen Studio").click();
   assert.equal(await p.getByLabel("Grip station").inputValue(),"1/2 in");
@@ -114,7 +124,7 @@ try {
   await p.getByLabel("Open Turnmill project file").setInputFiles({
     name: "sleeve.turnmill", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(fixture)),
   });
-  await p.waitForFunction(async id => (await window.__cadTest.snapshot()).project.id === id, fixture.id);
+  await waitForModel(p, s => s.project.id === fixture.id);
   await ready(p); await button(p, "Pen Studio").click();
   await bench.getByText(/1 mm interference/i).first().waitFor();
   const sleeveBore = bench.getByLabel("Sleeve bore");

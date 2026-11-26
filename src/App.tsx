@@ -39,6 +39,7 @@ import OperationStack, { operationsOf } from "./OperationStack";
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
 import {
   Layers3,
+  Grip,
   Box,
   Boxes,
   BookOpen,
@@ -625,10 +626,25 @@ export default function App() {
       { label: "Delete", icon: Trash2, danger: true, run: () => removeSketch(sketch) },
     ]);
   }
+  function millGrip(bodyId: string) {
+    const feature = partFeatures(project, bodyId).filter((f) => !f.suppressed).at(-1);
+    if (!feature || isScaleFeature(project, feature.id)) {
+      setNotice("Select an editable barrel before milling a grip.");
+      return;
+    }
+    setSelected(feature.id);
+    setEntryId(undefined);
+    setPresetFinish("grip");
+    setDialog("finish");
+  }
+  function gripMenuItem(bodyId: string): MenuItem {
+    return { label: "Mill grip…", icon: Grip, shortcut: "M", run: () => millGrip(bodyId) };
+  }
   function featureMenu(anchor: MenuAnchor, f: Feature) {
     setSelected(f.id);
     const sketch = project.sketches.find((s) => s.id === f.sketchId);
     const scale = isScaleFeature(project, f.id);
+    const gripBody = bodyFor(f);
     openContext(anchor, f.name, [
       ...(f.kind === "import" || scale ? [] : [{ label: "Edit feature",
         icon: Pencil, run: () => createFeature(f.kind, f) }]),
@@ -637,6 +653,7 @@ export default function App() {
         ...makeSolidActions(sketch),
       ] : []),
       ...(!scale ? [
+        ...(!f.suppressed && gripBody ? [gripMenuItem(gripBody)] : []),
         { label: "Finish…", icon: Wrench, shortcut: "G", run: () => {
           setEntryId(undefined); setPresetFinish(undefined); setDialog("finish");
         } },
@@ -677,6 +694,14 @@ export default function App() {
     ]);
   }
   function viewportMenu(anchor: MenuAnchor, bodyId: string | null) {
+    if (showcasing) {
+      const part = parts.find((p) => p.id === bodyId);
+      openContext(anchor, part?.name || "Pen Studio", [
+        ...(part ? [gripMenuItem(part.id), { label: "Open part tab", icon: FolderOpen, run: () => openPart(part) }] : []),
+        { label: "Fit model to view", icon: Scan, run: () => setFit((v) => v + 1) },
+      ]);
+      return;
+    }
     if (bodyId !== null) {
       const feature = project.features.find((f) => f.id === bodyId);
       if (feature) featureMenu(anchor, feature);
@@ -936,9 +961,15 @@ export default function App() {
     },
     ...Object.entries(finishLabels).map(([k, label]) => ({
       key: "add-" + k,
-      title: "Add " + label,
+      title: k === "grip" ? "Mill grip" : "Add " + label,
+      ...(k === "grip" ? { shortcut: "M", keywords: "mill barrel grip rings flutes grooves crosscut texture pattern" } : {}),
       group: "Finishing",
       run: () => {
+        if (k === "grip") {
+          const id = (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
+          if (id) millGrip(id);
+          return;
+        }
         setPresetFinish(k as FinishKind);
         setDialog("finish");
       },
@@ -1061,7 +1092,7 @@ export default function App() {
         ...c,
         reason,
         run: () => {
-          if (mode !== "Part" && partTool) {
+          if (mode !== "Part" && partTool && !(c.key === "add-grip" && (showcasing || mode === "Assembly"))) {
             setPartSelection(undefined);
             switchMode("Part");
           }
@@ -1952,6 +1983,7 @@ export default function App() {
             <Assembly
               {...props}
               liveAssembly={liveAssembly}
+              onMillGrip={millGrip}
               onOpenPart={(id) => {
                 const part = parts.find((p) => p.id === id);
                 if (part) openPart(part);
@@ -2234,6 +2266,7 @@ export default function App() {
           initialKind={presetFinish}
           initialFinishId={entryId}
           feature={currentF}
+          gripProfile={model.features.find((f) => f.id === selectedBodyId)}
           project={project}
           onPreview={(rows) =>
             finishing.preview(
@@ -2267,7 +2300,7 @@ export default function App() {
           onClose={close}
         />
       )}
-      {context && context.project === project && mode === "Part" && !activeSketch && !dialog && !search && (
+      {context && context.project === project && (mode === "Part" || showcasing) && !activeSketch && !dialog && !search && (
         <ContextMenu {...context} onClose={() => setContext(null)} />
       )}
       {search && (

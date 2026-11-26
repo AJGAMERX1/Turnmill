@@ -1,5 +1,6 @@
 import { observeJoints } from "../tests/hook/observe";
 import { Matrix4, Vector3 } from "three";
+import { Grip } from "lucide-react";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
@@ -90,7 +91,7 @@ export type LiveAssembly = {
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { onOpenPart?: (bodyId: string) => void };
+type PartNavigation = { onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -222,6 +223,7 @@ function JointStudio({
   guideAssist,
   liveAssembly,
   onOpenPart,
+  onMillGrip,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
@@ -753,6 +755,8 @@ function JointStudio({
   const targetBody = bodies.find((body) => body.id === targetId);
   if (targetId && targetBody) {
     const free = isFloating(raw[targetId]);
+    if (onMillGrip)
+      menuItems.push({ label: "Mill grip…", icon: Grip, shortcut: "M", run: () => onMillGrip(targetId) });
     if (onOpenPart)
       menuItems.push({ label: "Open part tab", icon: FolderOpen, run: () => onOpenPart(targetId) });
     if (free)

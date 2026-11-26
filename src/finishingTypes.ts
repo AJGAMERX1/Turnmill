@@ -6,6 +6,7 @@ export type FinishKind =
   | "chamfer"
   | "hole"
   | "thread"
+  | "grip"
   | "knurl"
   | "mark";
 export type HoleSettings<T> = {
@@ -19,6 +20,16 @@ export type HoleSettings<T> = {
   seatDiameter?: T;
   seatDepth?: T;
   seatAngle?: T;
+};
+
+export type GripSettings<T> = {
+  kind: "grip";
+  style: "rings" | "flutes" | "crosscut";
+  offset: T;
+  length: T;
+  width: T;
+  depth: T;
+  count: T;
 };
 
 type Common = {
@@ -56,6 +67,7 @@ export type Finish = Common &
         size: string;
         rims: "outer" | "inner" | "all";
       }
+    | GripSettings<string>
     | HoleSettings<string>
     | {
         kind: "thread";
@@ -97,6 +109,7 @@ export type EvaluatedFinish = Common &
         size: number;
         rims: "outer" | "inner" | "all";
       }
+    | GripSettings<number>
     | HoleSettings<number>
     | {
         kind: "thread";
@@ -115,6 +128,7 @@ export const finishLabels: Record<FinishKind, string> = {
   hole: "Axial hole",
   thread: "Thread",
   knurl: "Knurl",
+  grip: "Grip milling",
   mark: "Surface mark",
 };
 export const threadPresets = [
@@ -166,6 +180,26 @@ export function evaluateFinish(
       throw Error(finish.name + " needs a " + field + " greater than zero.");
     return n;
   };
+  if (finish.kind === "grip") {
+    if (!["rings", "flutes", "crosscut"].includes(finish.style))
+      throw Error("Choose rings, flutes or crosscut for the grip.");
+    if (finish.end !== "start" && finish.end !== "end")
+      throw Error("Choose which end measures the grip offset.");
+    const offset = evaluate(finish.offset, parameters);
+    if (offset < 0) throw Error("Set the grip offset to zero or more.");
+    const band = length("grip band length", finish.length);
+    const width = length("groove width", finish.width);
+    const depth = length("groove depth", finish.depth);
+    const count = evaluate(finish.count, parameters, "scalar");
+    const max = finish.style === "crosscut" ? 16 : 32;
+    if (!Number.isInteger(count) || count < 1 || count > max)
+      throw Error(`Set the groove count to a whole number from 1 to ${max}.`);
+    if (width > band || (finish.style !== "rings" && width >= band))
+      throw Error("Make the groove narrower than the grip band length.");
+    if (finish.style !== "flutes" && count > 1 && count * width >= band)
+      throw Error("The rings would touch. Reduce their width or count, or lengthen the grip band.");
+    return { ...finish, offset, length: band, width, depth, count };
+  }
   if (finish.kind === "mark" || finish.kind === "knurl") {
     const offset = evaluate(finish.offset, parameters);
     if (offset < 0)

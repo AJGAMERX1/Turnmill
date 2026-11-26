@@ -30,14 +30,14 @@ function extent(shape: Shape3D) {
     box.delete();
   }
 }
-function grouped(shapes: Shape3D[]): Shape3D {
+export function grouped(shapes: Shape3D[]): Shape3D {
   const compound = makeCompound(shapes.splice(0));
   if (isShape3D(compound)) return compound;
   compound.delete();
   throw Error("The finishing tool contains an empty shape.");
 }
 
-function radiusAt(shape: Shape3D, x: number, width: number) {
+export function radiusAt(shape: Shape3D, x: number, width: number, feature = "mark") {
   const candidates = getTurningStations(shape)
     .filter(
       (s) =>
@@ -48,7 +48,7 @@ function radiusAt(shape: Shape3D, x: number, width: number) {
     .map((s) => s.diameter / 2);
   if (!candidates.length)
     throw Error(
-      "Move or shorten the mark so its full width lies on a single cylindrical surface.",
+      `Move or shorten the ${feature} so its full width lies on a single cylindrical surface.`,
     );
   return Math.max(...candidates);
 }

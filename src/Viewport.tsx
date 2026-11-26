@@ -166,7 +166,6 @@ export function Viewport({
         const id = index === null ? undefined : showing.current[index];
         if (id !== undefined) presentation.current.onBodyPick?.(id);
       }, (anchor, index) => {
-        if (presentation.current.photoMode) return;
         const id = index === null ? null : showing.current[index];
         if (id !== undefined) presentation.current.onBodyContextMenu?.(anchor, id);
       });

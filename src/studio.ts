@@ -367,7 +367,7 @@ export function createStudio(
   }
   function openContext(x: number, y: number, face: FaceHit | null) {
     if (!onContextMenu) return;
-    pickFace(face);
+    if (!productView) pickFace(face);
     onContextMenu({ x, y, opener: canvas }, face ? face.body - 1 : null);
   }
   function down(e: PointerEvent) {
