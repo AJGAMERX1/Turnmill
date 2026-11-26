@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Modal } from "./Dialogs";
-import { evaluate, resolveParameters } from "./expressions";
 import {
-  dimensionLabels,
+  isSleeveDonor,
+  refillDimensionLabel,
+  refillProfileData,
   insertRefill,
   refillCatalog,
   refillComponents,
@@ -27,146 +28,78 @@ function storedInputs(project: Project, item: RefillComponent): RefillInputs {
   );
 }
 
-// A scaled axial profile makes the tip datum and shoulder visible while entering measurements.
-function ProfilePreview({
-  kind,
-  inputs,
-  project,
-  reversed,
-  onReverse,
-}: {
-  kind: RefillKind;
-  inputs: RefillInputs;
-  project: Project;
-  reversed: boolean;
-  onReverse: () => void;
+type AxialPoint = [number, number];
+type Nose = { metal: number; seat: number; shankEnd: number };
+
+function ProfileView({ outline, reversed, nose, detail = false }: {
+  outline: AxialPoint[]; reversed: boolean; nose?: Nose; detail?: boolean;
 }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const d = useMemo(() => {
-    try {
-      const params = resolveParameters(project.parameters);
-      const dims = Object.fromEntries(
-        Object.entries(inputs).map(([k, v]) => [k, evaluate(v, params)]),
-      );
-      return Object.values(dims).every((n) => n > 0) ? dims : null;
-    } catch {
-      return null;
-    }
-  }, [inputs, project.parameters]);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    function draw() {
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const width = canvas.clientWidth,
-        height = canvas.clientHeight,
-        ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
-      ctx.scale(ratio, ratio);
-      ctx.clearRect(0, 0, width, height);
-      const left = 23,
-        right = width - 23,
-        mid = height / 2 + 2;
-      ctx.strokeStyle = "#697a7c";
-      ctx.setLineDash([5, 4]);
-      ctx.beginPath();
-      ctx.moveTo(6, mid);
-      ctx.lineTo(width - 6, mid);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      // The empty donor form gets an explicitly captioned proportional schematic.
-      const v = d ?? {
-        length: 100,
-        body_diameter: 4,
-        guide_diameter: 2,
-        shoulder_distance: 8,
-      };
-      const x = (mm: number) => left + (right - left) * (reversed ? 1 - mm / v.length : mm / v.length);
-      const y = (diameter: number) =>
-        (Math.min((right - left) / v.length, 5) * diameter) / 2;
-      const shoulder = v.shoulder_distance,
-        start = v.body_start ?? shoulder;
-      const outline = [
-        [0, 0],
-        [v.cone_length ?? shoulder / 2, v.guide_diameter],
-        [shoulder, v.guide_diameter],
-      ];
-      if (kind !== "bic-cristal")
-        outline.push(
-          [shoulder, v.neck_diameter ?? v.guide_diameter],
-          [start, v.neck_diameter ?? v.guide_diameter],
-        );
-      if (kind === "parker-g2" && v.reservoir_taper)
-        outline.push(
-          [start, v.reservoir_front_diameter],
-          [start + v.reservoir_taper, v.body_diameter],
-        );
-      else outline.push([start, v.body_diameter]);
-      if (kind === "parker-g2" && v.tail_length)
-        outline.push(
-          [v.length - v.tail_length, v.body_diameter],
-          [v.length - v.tail_length, v.tail_diameter],
-        );
-      outline.push([v.length, v.tail_diameter ?? v.body_diameter]);
-      ctx.beginPath();
-      outline.forEach(([ax, dia], i) => {
-        if (!i) ctx.moveTo(x(ax), mid - y(dia));
-        else ctx.lineTo(x(ax), mid - y(dia));
-      });
-      for (const [ax, dia] of [...outline].reverse())
-        ctx.lineTo(x(ax), mid + y(dia));
-      ctx.closePath();
-      const radius = Math.max(
-        1,
-        y(Math.max(v.body_diameter, v.tail_diameter ?? 0)),
-      );
-      const gradient = ctx.createLinearGradient(
-        0,
-        mid - radius,
-        0,
-        mid + radius,
-      );
-      gradient.addColorStop(0, "#657071");
-      gradient.addColorStop(0.28, "#e1e9e6");
-      gradient.addColorStop(0.58, "#92a5a7");
-      gradient.addColorStop(0.9, "#445657");
-      gradient.addColorStop(1, "#a0adad");
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      ctx.strokeStyle = "#c0cbca";
-      ctx.stroke();
-      ctx.strokeStyle = "#d9a860";
-      ctx.beginPath();
-      ctx.moveTo(x(0), mid + 3);
-      ctx.lineTo(x(0), height - 13);
-      ctx.stroke();
-      ctx.fillStyle = "#ebc086";
-      ctx.font = "10px monospace";
-      ctx.textAlign = reversed ? "right" : "left";
-      ctx.fillText("TIP", x(0) + (reversed ? -4 : 4), height - 12);
-    }
-    draw();
-    const observer = new ResizeObserver(draw);
-    observer.observe(canvas);
-    return () => observer.disconnect();
-  }, [kind, d, reversed]);
-  return (
-    <figure className="refill-profile">
-      <canvas
-        ref={ref}
-        role="img"
-        aria-label={`${refillCatalog[kind].name} axial profile. Writing tip faces ${reversed ? "positive" : "negative"} X.`}
-      />
-      <figcaption>
-        {d ? `${Number(d.length.toFixed(3))} mm overall` : "Profile schematic"}{" "}
-        <span>Tip toward {reversed ? "+X" : "−X"}</span>
-        <ReverseRefillButton name="refill" reversed={reversed} onReverse={onReverse}/>
-      </figcaption>
-    </figure>
-  );
+  const id = useId();
+  const length = outline[outline.length - 1][0];
+  const extent = detail && nose ? Math.min(length, nose.shankEnd * 1.25) : length;
+  const width = 448, height = detail ? 88 : 52;
+  const mid = height / 2;
+  const maxDiameter = Math.max(...outline.map(([, d]) => d));
+  const scale = Math.min((width - 40) / extent, (height - (detail ? 40 : 16)) / maxDiameter);
+  const start = (width - extent * scale) / 2;
+  const x = (v: number) => reversed ? width - start - v * scale : start + v * scale;
+  const path = [
+    ...outline.map(([v, d]) => [x(v), mid - d * scale / 2]),
+    ...outline.slice().reverse().map(([v, d]) => [x(v), mid + d * scale / 2]),
+  ].map(pair => pair.join(",")).join(" ");
+  const clipWidth = extent * scale;
+  const clipStart = Math.min(x(0), x(extent));
+  function segment(from: number, to: number, color: string) {
+    return <rect x={Math.min(x(from), x(to))} y="0" width={Math.abs(x(from) - x(to))}
+      height={height} fill={color}/>;
+  }
+  return <svg viewBox={`0 0 ${width} ${height}`} className="refill-silhouette"
+      role="img" aria-label={detail ? "Enlarged tip and press-in shank with sleeve seating face" : "Tip-to-tail refill outline"}>
+    <defs>
+      <clipPath id={id + "outline"}><polygon points={path}/></clipPath>
+      <clipPath id={id + "window"}><rect x={clipStart - 1} width={clipWidth + 2} height={height}/></clipPath>
+      <linearGradient id={id + "light"} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#fff" stopOpacity=".35"/>
+        <stop offset="35%" stopColor="#fff" stopOpacity="0"/>
+        <stop offset="100%" stopColor="#000" stopOpacity=".42"/>
+      </linearGradient>
+    </defs>
+    <path d={`M8 ${mid}H440`} stroke="#566764" strokeDasharray="4 4"/>
+    <g clipPath={`url(#${id}window)`}>
+      <polygon points={path} fill={nose ? "#b5c5bf" : "#a8b8b8"} />
+      {nose && <g clipPath={`url(#${id}outline)`}>
+        {segment(0, nose.metal, "#c99a51")}
+        {segment(nose.metal, nose.shankEnd, "#4b5558")}
+      </g>}
+      <polygon points={path} fill={`url(#${id}light)`} stroke="#adbbb6" strokeWidth=".8"/>
+    </g>
+    {detail && nose && <g fill="#eabe79" fontSize="11">
+      <path d={`M${x(nose.seat)} 15 V${height - 7}`} stroke="#efba6d" strokeDasharray="3 2"/>
+      <text x={x(nose.seat)} y="12" textAnchor="middle">Sleeve mouth</text>
+      <text x={(x(nose.seat) + x(nose.shankEnd)) / 2} y={height - 3} textAnchor="middle">Shank</text>
+    </g>}
+  </svg>;
+}
+
+function ProfilePreview({ kind, inputs, project, reversed, onReverse, replaceBodyId }: {
+  kind: RefillKind; inputs: RefillInputs; project: Project; reversed: boolean; onReverse: () => void; replaceBodyId?: string;
+}) {
+  const profile = useMemo(() => {
+    try { return refillProfileData(kind, inputs, project, replaceBodyId); }
+    catch { return undefined; }
+  }, [inputs, kind, project, replaceBodyId]);
+  return <figure className="refill-profile" aria-label={refillCatalog[kind].name + " axial profile"}>
+    {profile ? <>
+      <ProfileView outline={profile.outline} reversed={reversed} nose={profile.nose}/>
+      {profile.nose && <div className="donor-detail"><ProfileView outline={profile.outline}
+        nose={profile.nose} reversed={reversed} detail/></div>}
+    </> : <p className="refill-profile-message">Enter valid donor dimensions to see the profile.</p>}
+    <figcaption>
+      {profile && <span>{Number(profile.outline[profile.outline.length - 1][0].toFixed(3))} mm overall</span>}
+      <span>Tip toward {reversed ? "+X" : "−X"}</span>
+      <ReverseRefillButton name="refill" reversed={reversed} onReverse={onReverse}/>
+    </figcaption>
+  </figure>;
 }
 
 type Props = {
@@ -190,6 +123,10 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
   const [details, setDetails] = useState(false);
   const entry = refillCatalog[kind];
   const keys = Object.keys(entry.fields) as RefillDimension[];
+  const fullDonor = isSleeveDonor(kind);
+  const primaryFields = fullDonor || kind === "bic-cristal" ? 4 : 3;
+  const boltRefill = project.workspaces?.boltPen?.refillId;
+  const fixedInCarrier = fullDonor && target && target === boltRefill;
   function chooseKind(next: RefillKind, selected = target) {
     const same = installed.find(
       (r) => r.bodyId === selected && r.kind === next,
@@ -202,16 +139,17 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
   }
   function field(key: RefillDimension) {
     const [seed, origin] = entry.fields[key]!;
+    const label = refillDimensionLabel(kind, key);
     const provenance =
       inputs[key] && (seed === null || inputs[key] !== `${seed} mm`)
         ? "Custom"
         : origin;
     return (
       <label key={key} className="refill-field">
-        <span>{dimensionLabels[key]}</span>
+        <span>{label}</span>
         <input
           value={inputs[key] ?? ""}
-          aria-label={dimensionLabels[key]}
+          aria-label={label}
           placeholder="Measure in mm"
           required
           onChange={(e) => {
@@ -281,9 +219,13 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
           </select>
         </label>
         <p className="refill-variant">{entry.description}</p>
-        <ProfilePreview kind={kind} inputs={inputs} project={project} reversed={reversed} onReverse={() => setReversed((v) => !v)} />
-        <div className="refill-field-grid">
-          {keys.slice(0, kind === "bic-cristal" ? 4 : 3).map(field)}
+        {fixedInCarrier && <div className="refill-mount-choice">
+          <p>This donor seats in a fixed sleeve. The bolt carrier holds a moving refill.</p>
+          <button type="button" onClick={() => { setTarget(""); setReversed(false); setError(""); }}>Add as a separate part</button>
+        </div>}
+        <ProfilePreview kind={kind} inputs={inputs} project={project} replaceBodyId={target || undefined} reversed={reversed} onReverse={() => setReversed((v) => !v)} />
+        <div className={"refill-field-grid" + (fullDonor ? " donor-fit-fields" : "")}>
+          {keys.slice(0, primaryFields).map(field)}
         </div>
         <details
           className="refill-more"
@@ -291,12 +233,12 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
           onToggle={(e) => setDetails(e.currentTarget.open)}
         >
           <summary>
-            {kind === "bic-cristal"
+            {fullDonor ? "Nose, ink tube and mass" : kind === "bic-cristal"
               ? "Filled refill mass"
               : "Shoulders, taper and mass"}
           </summary>
           <div className="refill-field-grid">
-            {keys.slice(kind === "bic-cristal" ? 4 : 3).map(field)}
+            {keys.slice(primaryFields).map(field)}
             <label className="refill-field">
               <span>Filled mass (g)</span>
               <input
@@ -331,7 +273,7 @@ export default function RefillDialog({ project, onSave, onClose }: Props) {
           <button type="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="primary">
+          <button className="primary" disabled={!!fixedInCarrier}>
             {target ? "Replace refill" : "Insert refill"}
           </button>
         </div>

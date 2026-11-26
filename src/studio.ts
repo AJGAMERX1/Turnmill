@@ -5,6 +5,13 @@ import type { MenuAnchor } from "./ContextMenu";
 import type { RenderBody } from "./geometry";
 
 export type View = "iso" | "front" | "top" | "side" | "left" | "bottom";
+export type DonorFinish = {
+  tipX: number;
+  reversed: boolean;
+  metalLength: number;
+  reservoirStart: number;
+};
+
 type FaceHit = { geometry: THREE.BufferGeometry; body: number; face: number };
 
 /** The face table stays exact for picking. Only highlighted ranges need their own draw calls. */
@@ -28,6 +35,28 @@ export function setFaceHighlights(
   }
   const end = geometry.index!.count;
   if (end > start) geometry.addGroup(start, end - start, 0);
+}
+
+/** The donor profile has a B-rep face boundary at each change of material.
+ * Read mesh-local X so the finishes follow mounting, motion and reversal. */
+function setDonorGroups(geometry: THREE.BufferGeometry, body: RenderBody, finish: DonorFinish) {
+  geometry.clearGroups();
+  const direction = finish.reversed ? -1 : 1;
+  for (const face of body.faces) {
+    if (face.count === 0) continue;
+    let min = Infinity, max = -Infinity;
+    for (let i = face.start; i < face.start + face.count; i++) {
+      const x = body.vertices[3 * body.triangles[i]];
+      min = Math.min(min, x);
+      max = Math.max(max, x);
+    }
+    const station = direction * ((min + max) / 2 - finish.tipX);
+    // At the reservoir shoulder the exposed annulus belongs to the larger plastic shank.
+    const material = station < finish.metalLength - 1e-5 ? 0 : station <= finish.reservoirStart + 1e-5 ? 1 : 2;
+    const last = geometry.groups.at(-1);
+    if (last && last.materialIndex === material && last.start + last.count === face.start) last.count += face.count;
+    else geometry.addGroup(face.start, face.count, material);
+  }
 }
 
 export function createStudio(
@@ -115,6 +144,11 @@ export function createStudio(
   const translucent = new THREE.MeshStandardMaterial({
     color: 0xaac3c4, roughness: 0.31, metalness: 0.18, transparent: true, opacity: 0.17, depthWrite: false,
   });
+  const donorMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0xc6a052, metalness: .78, roughness: .3 }),
+    new THREE.MeshStandardMaterial({ color: 0x252b2d, metalness: .02, roughness: .43 }),
+    new THREE.MeshStandardMaterial({ color: 0xc6c9be, metalness: .02, roughness: .54 }),
+  ];
   const colors = new Map<number, THREE.MeshStandardMaterial>();
   const meshes: THREE.Mesh[] = [];
   type Instance = { body: RenderBody; root: THREE.Group; mesh: THREE.Mesh };
@@ -183,6 +217,7 @@ export function createStudio(
     if (!controls.update()) render();
   }
   function markFaces(previous: FaceHit | null) {
+    if (productView) return;
     const bodies = new Set([previous?.body, hover?.body, selected?.body]);
     for (const index of bodies) {
       if (index === undefined) continue;
@@ -434,11 +469,21 @@ export function createStudio(
   orient(view);
   return {
     updateMeshes,
-    setProductView(enabled: boolean, ghosts: boolean[]) {
+    setProductView(enabled: boolean, ghosts: boolean[], donors: (DonorFinish | undefined)[] = []) {
       productView = enabled;
       if (grid) grid.visible = !enabled;
       for (const [i, { root, mesh, body }] of instances.entries()) {
         for (const object of root.children) if (object instanceof THREE.LineSegments) object.visible = !enabled;
+        const donor = enabled && !ghosts[i] && donors[i];
+        if (donor && donor.metalLength > 0 && donor.reservoirStart > donor.metalLength && Number.isFinite(donor.tipX)) {
+          const key = [donor.tipX, donor.reversed, donor.metalLength, donor.reservoirStart].join("/");
+          if (mesh.material !== donorMaterials || mesh.userData.donorKey !== key) {
+            setDonorGroups(mesh.geometry, body, donor);
+            mesh.userData.donorKey = key;
+            mesh.material = donorMaterials;
+          }
+          continue;
+        }
         const finish = mesh.userData.finish ?? bodyMaterial;
         mesh.material = [enabled && ghosts[i] ? translucent : finish, hoverMaterial, chosenMaterial];
         setFaceHighlights(mesh.geometry, body.faces, !enabled && hover?.body === i + 1 ? hover.face : -1,
@@ -533,6 +578,7 @@ export function createStudio(
         hoverMaterial,
         chosenMaterial,
         translucent,
+        ...donorMaterials,
         edgeMaterial,
         guideMaterial,
       ])

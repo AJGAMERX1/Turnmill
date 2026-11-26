@@ -3,7 +3,7 @@ import { CircleAlert } from "lucide-react";
 import { evaluate } from "./expressions";
 import type { FitSurface } from "./fitSurfaces";
 import { diametralFit, refillBoreChecks } from "./refillClearance";
-import type { RefillComponent } from "./refills";
+import { isSleeveDonor, type RefillComponent } from "./refills";
 import type { EvaluatedFeature, Project } from "./types";
 
 const format = (n: number) => n > 0 && n < 0.001 ? "<0.001" : String(Number(n.toFixed(3)));
@@ -23,14 +23,17 @@ type Props = {
   values: Record<string, number>;
 };
 
-const sections = {body_diameter: "Tube", guide_diameter: "Tip guide", tail_diameter: "Tail"} as const;
-type Section = keyof typeof sections;
+const cartridgeSections = {body_diameter: "Tube", guide_diameter: "Tip guide", tail_diameter: "Tail"};
+const sleeveSections = {shank_diameter: "Press-in shank", body_diameter: "Tube", collar_diameter: "Seating collar", guide_diameter: "Metal tip"};
+type Section = keyof typeof cartridgeSections | keyof typeof sleeveSections;
 type ManualCheck = {hole: string; section: Section};
 
 function ManualDiameter({ project, commit, refill, values }: Pick<Props, "project" | "commit" | "values"> & {refill: RefillComponent}) {
   const saved = project.workspaces?.refillDiameterChecks?.[refill.bodyId];
   const hole = typeof saved?.hole === "string" ? saved.hole : "";
-  const section: Section = Object.hasOwn(sections, saved?.section ?? "") ? saved.section : "body_diameter";
+  const sleeve = isSleeveDonor(refill.kind);
+  const sections: Partial<Record<Section, string>> = sleeve ? sleeveSections : cartridgeSections;
+  const section: Section = Object.hasOwn(sections, saved?.section ?? "") ? saved.section : sleeve ? "shank_diameter" : "body_diameter";
   const [edit, setEdit] = useState<string | null>(null);
   const draft = edit ?? hole;
   const refillDiameter = values[refill.prefix + "_" + section];
@@ -66,8 +69,8 @@ function ManualDiameter({ project, commit, refill, values }: Pick<Props, "projec
     {inputError && <p role="alert">{inputError}</p>}
     {comparison && diameter !== undefined && <div className={"diameter-result" + (tight ? " tight" : "")} role={tight ? "alert" : "status"}>
       <strong>{tight && <CircleAlert size={14}/>} {gapLabel(comparison)}</strong>
-      {tight && <small>{comparison.clearance < 0 ? "The hole is too small for the refill." : "The diameters match with no room to slide."}</small>}
-      <small>Entered hole Ø{format(diameter)} mm · {sections[section].toLowerCase()} Ø{format(refillDiameter)} mm</small>
+      {tight && <small>{section === "shank_diameter" ? "Check the intended press fit against your measured donor." : comparison.clearance < 0 ? "The hole is too small for the refill." : "The diameters match with no room to slide."}</small>}
+      <small>Entered hole Ø{format(diameter)} mm · {sections[section]?.toLowerCase()} Ø{format(refillDiameter)} mm</small>
     </div>}
   </>;
 }

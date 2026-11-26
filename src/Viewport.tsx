@@ -1,7 +1,7 @@
 import type { MenuAnchor } from "./ContextMenu";
 import { observeGeometry } from "../tests/hook/observe";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
-import { createStudio, type View } from "./studio";
+import { createStudio, type DonorFinish, type View } from "./studio";
 import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
@@ -44,6 +44,7 @@ type Props = {
   appearances?: number[];
   visibleBodyId?: string;
   photoMode?: boolean;
+  donorFinishes?: Record<string, DonorFinish>;
   measureRefillFit?: boolean;
   gripBodyId?: string;
   gripFeatureId?: string;
@@ -98,7 +99,7 @@ export function Viewport({
   exportRequest,
   onStatus,
   takeFinishBody,
-  appearances = [],
+  appearances = [], donorFinishes,
   visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto, measureRefillFit = false,
   gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
@@ -119,8 +120,8 @@ export function Viewport({
   cb.current = onStatus;
   const revision = useRef(0),
     lastExport = useRef<number | undefined>(undefined);
-  const presentation = useRef({ appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, onBodyContextMenu, onBodyPick });
-  presentation.current = { appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, onBodyContextMenu, onBodyPick };
+  const presentation = useRef({ appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick });
+  presentation.current = { appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick };
   const gripFeature = gripFeatureId ?? gripBodyId;
   const gripPriorKey = JSON.stringify(gripPriorFinishes);
   const gripTarget = useRef({ gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey });
@@ -139,9 +140,9 @@ export function Viewport({
   const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
   const photographed = useRef(false);
   function stylePhoto(reframe: boolean) {
-    const { photoMode: on, photoMatrices: pose, ghostIds: ghost } = presentation.current;
+    const { photoMode: on, photoMatrices: pose, ghostIds: ghost, donorFinishes: donors } = presentation.current;
     if (!on && !photographed.current) return;
-    studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)));
+    studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)), showing.current.map(id => donors?.[id]));
     const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
     const matrices = showing.current.map((id) => (on && pose?.[installed.current.ids.indexOf(id)]) || identity);
     studio.current?.setTransforms(matrices, reframe || on !== photographed.current);
@@ -327,7 +328,7 @@ export function Viewport({
   useEffect(() => {
     displayInstalled(false);
   }, [visibleBodyId, appearances.join(",")]);
-  useEffect(() => { stylePhoto(false); }, [photoMode, JSON.stringify(photoMatrices), ghostIds.join(",")]);
+  useEffect(() => { stylePhoto(false); }, [photoMode, JSON.stringify(photoMatrices), ghostIds.join(","), JSON.stringify(donorFinishes)]);
   useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {
     studio.current?.setView(view);

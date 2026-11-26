@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 import initOC from "replicad-opencascadejs";
 import { setOC } from "replicad";
+import { Matrix4 } from "three";
 
 const solver = fileURLToPath(
   import.meta.resolve("@salusoft89/planegcs/dist/planegcs_dist/planegcs.wasm"),
@@ -161,6 +162,23 @@ try {
       }
     } finally { releaseBodies(bodies); }
   }
+  // Pre-sleeve project files contain only the original eleven cartridge dimensions.
+  const originalKeys = ["length", "body_diameter", "guide_diameter", "shoulder_distance",
+    "body_start", "neck_diameter", "cone_length", "reservoir_front_diameter",
+    "reservoir_taper", "tail_diameter", "tail_length"];
+  const legacy = JSON.parse(JSON.stringify(bic.project));
+  legacy.parameters = legacy.parameters.filter(p => p.name === "chamber_length" ||
+    originalKeys.some(key => p.name === "refill_" + key));
+  const restoredBare = validateProject(legacy);
+  const legacyBody = buildBodies((await evaluateModel(restoredBare)).features);
+  try {
+    checkEnds(legacyBody[0].shape, 127, 127, 3.25);
+    const box = legacyBody[0].shape.boundingBox;
+    try { near(box.bounds[1][1] - box.bounds[0][1], 3.25); }
+    finally { box.delete(); }
+    assert.equal(restoredBare.workspaces.refills[bic.bodyId].kind, "bic-cristal");
+  } finally { releaseBodies(legacyBody); }
+
   const initiallyReversed = insertRefill(start, "bic-cristal", donor, { reversed: true });
   const insertedSolids = buildBodies((await evaluateModel(initiallyReversed.project)).features);
   try { checkEnds(insertedSolids[0].shape, 127, 0, 3.25); }
@@ -221,6 +239,71 @@ try {
   near(refillDimensions(revised, bic.bodyId).cone_length, 1.8);
   const { boltPenProject } = await server.ssrLoadModule("/src/boltPen.ts");
   const bolt = boltPenProject();
+  // A synthetic caliper sample with an integral plastic tip holder. All dimensions
+  // are deliberately distinct so a swapped tube, collar or shank fails the fit test.
+  const sleeveDonor = {
+    length: "130 mm", body_diameter: "3 mm", guide_diameter: "2 mm",
+    shoulder_distance: "4 mm", nose_front_diameter: "3 mm",
+    seat_distance: "12 mm", collar_diameter: "7.5 mm", lip_length: "0.8 mm",
+    shank_diameter: "0.68 cm", shank_length: "8 mm",
+  };
+  const { collectFitSurfaces } = await server.ssrLoadModule("/src/fitSurfaces.ts");
+  const { refillBoreChecks } = await server.ssrLoadModule("/src/refillClearance.ts");
+  const identity = new Matrix4().toArray();
+  for (const kind of ["bic-round-stic", "bic-cristal-original"]) {
+    const preset = insertRefill(start, kind);
+    const presetDimensions = refillDimensions(preset.project, preset.bodyId);
+    const presetBodies = buildBodies((await evaluateModel(preset.project)).features);
+    try {
+      checkEnds(presetBodies[0].shape, presetDimensions.length, presetDimensions.length, presetDimensions.body_diameter);
+      assert(presetDimensions.collar_diameter > presetDimensions.shank_diameter);
+      assert(presetDimensions.shank_diameter > presetDimensions.body_diameter);
+    } finally { releaseBodies(presetBodies); }
+    assert.throws(() => insertRefill(bolt, kind, sleeveDonor, {replaceBodyId:"bolt-refill"}),
+      /bolt|fixed/i, "do not install the press-in nose as a retractable refill");
+    const separate = insertRefill(bolt, kind, sleeveDonor);
+    assert.notEqual(separate.bodyId, "bolt-refill");
+    assert.equal(refillComponents(separate.project).length, 2);
+    const {project: mounted, bodyId} = insertRefill(start, kind, sleeveDonor);
+    for (const reversed of [false, true]) {
+      const saved = validateProject(JSON.parse(JSON.stringify(reversed ? reverseRefill(mounted, bodyId) : mounted)));
+      const {features} = await evaluateModel(saved);
+      // Each ring acts as a gauge at a known physical station on the axial profile.
+      const gauge = (id, from, to, bore) => {
+        const a = reversed ? 130 - to : from, b = reversed ? 130 - from : to;
+        return { id, name:id, kind:"revolve", operation:"new", amount:360,
+          points:[[a,bore/2],[a,5],[b,5],[b,bore/2]] };
+      };
+      const gauges = [
+        gauge("nib", 2.5, 3.5, 2.2), gauge("seat", 11.4, 11.9, 7.6),
+        gauge("socket", 12, 20, 6.5), gauge("chamber", 20, 38, 4),
+      ];
+      const solids = buildBodies([...features, ...gauges]);
+      const ids = [bodyId, ...gauges.map(g => g.id)];
+      try {
+        checkEnds(solids[0].shape, 130, reversed ? 0 : 130, 3);
+        const fit = shape => {
+          const lands = solids.map((s,i) => collectFitSurfaces(i === 0 ? shape : s.shape, ids[i], true));
+          const checks = refillBoreChecks(bodyId, ids, lands, ids.map(() => identity));
+          const clearance = id => checks.find(c => c.bodyId === id)?.clearance;
+          near(clearance("nib"), 2.2 - 2 * 3.5 / 4); // Metal point tapers up to its plastic nose.
+          near(clearance("seat"), 0.1);
+          near(clearance("socket"), -0.3);
+          near(clearance("chamber"), 1);
+        };
+        fit(solids[0].shape);
+        if (kind === "bic-round-stic" && reversed) {
+          const imported = await importSolidFile("step", exportBodies([solids[0]], "step"), "Stic donor");
+          try { fit(imported[0].shape); }
+          finally { releaseBodies(imported); }
+        }
+      } finally { releaseBodies(solids); }
+    }
+    assert.throws(() => insertRefill(start, kind, { ...sleeveDonor, shank_length:"125 mm" }),
+      Error, "the measured seat and shank must leave length for the tube");
+    assert.throws(() => insertRefill(start, kind, { ...sleeveDonor, seat_distance:"2 mm" }),
+      Error, "the writing point and exposed nib must precede the seat");
+  }
   for (const [kind, overrides] of [
     ["energel-lr7", {}],
     ["bic-cristal", donor],
@@ -258,7 +341,7 @@ try {
     releaseBodies(rebuilt);
   }
   console.log(
-    "Passed three native refill profiles, source dimensions, donor validation, per-instance end-for-end reversal, parametric swaps, posed joints, STEP and STL.",
+    "Passed cartridge profiles, preserved bare Cristal, both complete BIC donor seats and socket fits, reversal, parametric swaps, posed joints, STEP and STL.",
   );
 } finally {
   await server.close();

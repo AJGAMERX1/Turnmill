@@ -26,7 +26,7 @@ import { buildPoses, type JointConfig } from "./kinematics";
 import { resolveThreadMates } from "./threadMates";
 import PenBench from "./PenBench";
 import RefillDialog from "./RefillDialog";
-import { refillComponents, refillMassGrams } from "./refills";
+import { isSleeveDonor, refillComponents, refillMassGrams } from "./refills";
 import { boltPenProject } from "./boltPen";
 import "./penBench.css";
 import PartTabBar from "./PartTabBar";
@@ -395,6 +395,17 @@ export default function App() {
     project.workspaces?.bodyDensities?.[id] ??
     materials[materialOf(id)].density;
   const cartridges = refillComponents(project);
+  const donorFinishes = useMemo(() => {
+    const donors = refillComponents(project).filter(r => isSleeveDonor(r.kind));
+    return Object.fromEntries(donors.flatMap(({ bodyId, prefix, reversed }) => {
+      const dims = model.values;
+      const metalLength = dims[prefix + "_shoulder_distance"];
+      const reservoirStart = dims[prefix + "_seat_distance"] + dims[prefix + "_shank_length"];
+      const tipX = reversed ? dims[prefix + "_length"] : 0;
+      if (![tipX, metalLength, reservoirStart].every(Number.isFinite)) return [];
+      return [[bodyId, { tipX, reversed: !!reversed, metalLength, reservoirStart }]];
+    }));
+  }, [project, model.values]);
   const effectiveDensities = solidFeatures.map((f, i) => {
     if (!cartridges.some((r) => r.bodyId === f.id)) return densityOf(f.id);
     const volume = kernel.bodyProperties?.[i]?.volume;
@@ -832,7 +843,7 @@ export default function App() {
     }
   }
   const knownCommands: Command[] = [
-    { title: "Insert refill", group: "Components", shortcut: "Alt J", keywords: "Parker G2 EnerGel Pentel BIC Cristal ink cartridge donor", run: () => setDialog("refill") },
+    { title: "Insert refill", group: "Components", shortcut: "Alt J", keywords: "Parker G2 EnerGel Pentel BIC Cristal Round Stic Flytanium Ti Stic Xtra sleeve press-in ink cartridge donor", run: () => setDialog("refill") },
     { title: "New part", group: "Project", shortcut: "Alt B", run: () => namePart() },
     {
       title: "Insert hardware · screw, nut, washer, pin, spring, O-ring",
@@ -1596,6 +1607,7 @@ export default function App() {
               gripBodyId={gripBodyId} gripFeatureId={gripTarget?.featureId}
               gripBeforeFinishId={gripTarget?.beforeFinishId} gripPriorFinishes={gripTarget?.priorFinishes}
               photoMode={showcasing} photoMatrices={studioPose.matrices} ghostIds={ghostIds} savePhoto={savePhoto}
+              donorFinishes={donorFinishes}
               fitToken={fit}
               exportRequest={exportRequest}
               onStatus={setKernel}
