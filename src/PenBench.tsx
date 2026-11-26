@@ -5,6 +5,7 @@ import { validateProjectScrewCones } from "./screwConeProfile";
 import { materials, massProperties, positionedProperties, type BodyProps } from "./materials";
 import type { EvaluatedFeature, Project } from "./types";
 import { refillCatalog, refillComponents, refillDimensions, reverseRefill } from "./refills";
+import SlimBoltPanel from "./SlimBoltPanel";
 import WritingFitPanel from "./WritingFitPanel";
 import InputValue from "./InputValue";
 import RefillDiameterChecks from "./RefillDiameterChecks";
@@ -83,6 +84,7 @@ export default function PenBench({ project, commit, writingCheck, solidFeatures,
       {fit !== undefined && <dl><div><dt>Design tip clearance</dt><dd>{mm(fit)}</dd></div></dl>}
       {fit !== undefined && <p>{fit < 0 ? "The guide is smaller than the refill tip." : "Calculated from the tip guide and bore dimensions."}</p>}
     </section>
+    {bolt && <SlimBoltPanel project={project} commit={commit}/>}
     {installed.length > 0 && !bolt && <WritingFitPanel project={project} refills={installed} commit={commit} request={writingCheck} ready={!!surfaces && !!matrices}/>}
     {installed.length > 0 && <RefillDiameterChecks project={project} commit={commit} installed={installed}
       bodies={solidFeatures} surfaces={surfaces} matrices={matrices} values={values}/>}

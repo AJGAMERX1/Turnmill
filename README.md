@@ -80,6 +80,10 @@ STEP and watertight STL import as solids. STL retains its facets. Planar DXF and
 
 Use **Pen Studio → Writing fit** after adding a cartridge and a screw-on cone. Enter the distance the writing point should extend beyond the cone. **Fit allowances** controls diametral guide clearance and axial endplay. **Check writing fit** previews the cone seat and backing against the finished solids. **Apply writing fit** saves the machined features and refill placement together. Use **Post cap for writing** to see the exposed point. Recheck after changing the pen or replacing the refill. Measure your actual refill before setting production tolerances.
 
+Use **Pen Studio → Slim pen** to resize the turned barrel, screw-on cone and paired flush cap around the installed cartridge. **Diameter allowance** adds to the widest refill diameter. **Minimum wall** sets radial wall thickness on each side of the bore. **Preview slimming** shows the requested and achievable outside diameters, the bore and any limiting thread pair. The preview checks the writing seat, backing and cap before **Apply slimmer pen** changes the model in one undoable step. These are nominal dimensions. Pick wall thickness and tolerances for the material and machining process.
+
+On the built-in **Bolt-action pen**, the same tool checks the J-slot, carrier, refill travel and spring space. The preview reports the turned body diameter separately from the space swept by the thumb stud and clip.
+
 Choose a part by name under **Export → Export geometry**, then **STEP solid** for CAM or **Open part drawing** for its dimensioned PDF. **CNC shop package** creates one local-coordinate STEP per checked item and a manifest with units, materials and thread callouts. Purchased components can be included as references.
 
 ## Manufacturing drawings

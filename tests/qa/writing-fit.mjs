@@ -2,32 +2,10 @@ import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { makeBox, measureVolume } from "replicad";
 import { Matrix4, Vector3 } from "three";
-import { boxSketch, feature, near, project, runtime } from "../systems/runtime.mjs";
+import { near, runtime } from "../systems/runtime.mjs";
 import { button, field, ready, saved } from "../projects/support.mjs";
 import { appUrl, openBrowser } from "./browser.mjs";
-
-const barrelId = "qa-barrel", refillId = "qa-lr7";
-async function cappedPen(api, length = 127) {
-  const { createThreadedCone, createThreadedCap } = await api.load("threadedCone");
-  const { insertRefill } = await api.load("refills");
-  const sleeve = project([boxSketch("section", 0, 5, length, 10)], [
-    { ...feature(barrelId, "section", "360 deg", "revolve"), name: "Turned barrel" },
-  ], { id: "capped-writing-fit-" + length, name: length === 127 ? "Capped EnerGel writing pen" : "Short capped pen " + length });
-  const rim = (end, station) => ({ end, axis: "X", centerline: [0, 0, 0], outside: 20, bore: 10, station });
-  const front = rim("end", length), rear = rim("start", 0);
-  const pair = createThreadedCone(sleeve, barrelId, front, {
-    end: "end", size: "M16 × 1", length: "3 mm", coneLength: "15 mm", tipDiameter: "4 mm",
-    opening: "2.27 mm", allowance: "0.1 mm", mode: "cosmetic",
-  });
-  // Allow the M18 cap's minor diameter to pass over the cone.
-  pair.project.parameters.find(p => p.name === "cone_base").expression = "16.7 mm";
-  const cap = createThreadedCap(pair.project, barrelId, front, {
-    end: "end", size: "M18 × 1", length: "2 mm", capLength: "30 mm", capDiameter: "20 mm",
-    crown: "flat", crownLength: "0 mm", wall: "2 mm", allowance: "0.1 mm", mode: "cosmetic",
-  }, rear);
-  return { document: insertRefill(cap.project, "energel-lr7", {}, { bodyId: refillId }).project,
-    capId: cap.capId, coneId: pair.coneId };
-}
+import { barrelId, cappedPen, refillId } from "./fixtures/capped-pen.mjs";
 
 async function measureWritingFit(api, document, fixture, projection, endplay = 0) {
   const { evaluateModel } = await api.load("buildModel");

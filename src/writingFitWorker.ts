@@ -1,6 +1,8 @@
 import { measureVolume } from "replicad";
 import { Matrix4, Vector3 } from "three";
+import { verifySlimFlush } from "./slimFlushGeometry";
 import { verifyCapMount } from "./capClearanceGeometry";
+import { solidBounds } from "./secondaryProjection";
 import { evaluate, resolveParameters } from "./expressions";
 import { collectFitSurfaces } from "./fitSurfaces";
 import { buildBodies, releaseBodies, type Body, type FinishBodySnapshot } from "./geometry";
@@ -49,8 +51,15 @@ export function checkWritingGeometry(job: WritingJob, live: Body[], current: Eva
     throw Error("The parts changed. Check the writing fit again.");
   const created: Body[] = [], snapshots: FinishBodySnapshot[] = [];
   try {
+    const edited = new Set([job.setup.coneId, job.setup.barrelId]);
+    if (job.slim) {
+      for (const [id, mount] of Object.entries((job.project.workspaces?.capMounts ?? {}) as Record<string, CapMount>))
+        if (mount.barrelId === job.setup.barrelId) edited.add(id);
+    }
     const bodies = candidate.map((h,i) => {
       if (h === old[i] || JSON.stringify(h) === JSON.stringify(old[i])) return live[i];
+      if (!edited.has(h[0].id))
+        throw Error(h[0].name + " also changes through a shared parameter. Give that part its own dimension before resizing this pen.");
       const reuse = h.length > old[i].length && JSON.stringify(h.slice(0, old[i].length)) === JSON.stringify(old[i]);
       const body = reuse ? buildBodies(h.slice(old[i].length), { id: h[0].id, body: live[i] })[0] : buildBodies(h)[0];
       created.push(body);
@@ -70,8 +79,8 @@ export function checkWritingGeometry(job: WritingJob, live: Body[], current: Eva
     const matrices = poses(project);
     const parts = new Set([c,b,r]);
     const surfaces = bodies.map((body,i) => parts.has(i) ? collectFitSurfaces(body.shape, ids[i], true) : []);
-    const fit = analyzeWritingFit(project, { refillId, coneId, exposure, bodyIds: ids, matrices, surfaces,
-      bodyGeometry: bodies.map((body,i) => parts.has(i) ? measureWritingBodyGeometry(body.shape) : undefined) });
+    const bodyGeometry = bodies.map((body,i) => parts.has(i) ? measureWritingBodyGeometry(body.shape) : undefined);
+    const fit = analyzeWritingFit(project, { refillId, coneId, exposure, bodyIds: ids, matrices, surfaces, bodyGeometry });
     if (fit.barrelId !== barrelId) throw Error("Choose the barrel that carries this cone.");
     if (job.action === "measure") {
       const guide = refillDimensions(project, refillId)?.guide_diameter;
@@ -113,6 +122,12 @@ export function checkWritingGeometry(job: WritingJob, live: Body[], current: Eva
       throw Error("The requested endplay pushes the refill into a shoulder. Reduce endplay or deepen the relief.");
     if (!overlap(bodies[r], bodies[b], displaced(fit.local, fit.inward, play + 0.05)))
       throw Error("The backing does not catch the cartridge tail under writing pressure.");
+    function diameter(i: number, axis: "X" | "Z") {
+      const [low, high] = bodyGeometry[i]?.bounds ?? solidBounds(bodies[i].shape);
+      const across = axis === "X" ? 2 : 0;
+      return Math.max(high[1] - low[1], high[across] - low[across]);
+    }
+    const diameters = { refill: diameter(r,"X"), barrel: diameter(b,fit.barrelAxis), cone: diameter(c,"X"), caps: [] as number[] };
     let caps = 0;
     for (const [id,mount] of Object.entries((project.workspaces?.capMounts ?? {}) as Record<string,CapMount>)) {
       if (mount.barrelId !== barrelId || !ids.includes(id)) continue;
@@ -127,11 +142,17 @@ export function checkWritingGeometry(job: WritingJob, live: Body[], current: Eva
           if (overlap(bodies[r], bodies[ids.indexOf(id)], displaced(local,axis,delta)))
             throw Error("The refill needs more room inside " + bodies[ids.indexOf(id)].name + " at the " + (end === mount.front ? "writing" : "posted") + " end. Deepen its pocket and recheck.");
         }
-        const group = [b,c,r,ids.indexOf(id)];
+        const capIndex = ids.indexOf(id);
+        if (job.slim) verifySlimFlush(bodies[b], bodies[capIndex], mounted.workspaces!.joints[id], alternate[b], alternate[capIndex]);
+        const group = [b,c,r,capIndex];
         verifyCapMount(group.map(i => bodies[i]), group.map(i => ids[i]), id, group.map(i => alternate[i]), mounted.workspaces!.joints[id]);
       }
+      diameters.caps.push(diameter(ids.indexOf(id),"X"));
       caps++;
     }
-    return { fit, checkedBodies: snapshots, caps };
+    const barrelBores = surfaces[b].filter(s => s.side === "bore" && Math.abs(s.axis[fit.barrelAxis === "X" ? 0 : 2]) > 1 - 1e-7 &&
+      s.centerline.every(n => Math.abs(n) < 1e-5)).map(s => s.diameter);
+    const barrelEnds = bodyGeometry[b]!.bounds.map(p => p[fit.barrelAxis === "X" ? 0 : 2]);
+    return { fit, checkedBodies: snapshots, caps, diameters, barrelBores, barrelEnds };
   } finally { releaseBodies(created); }
 }

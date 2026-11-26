@@ -64,6 +64,7 @@ import {
   Save,
   SlidersHorizontal,
   RotateCw,
+  Ruler,
   SquarePen,
   Aperture,
   Camera,
@@ -530,6 +531,18 @@ export default function App() {
     setPendingSketch(null);
     setEditingSketch(null);
   };
+  function openSlimPen() {
+    switchMode("Pen Studio");
+    requestAnimationFrame(() => {
+      const method = document.getElementById("slim-pen-method");
+      if (method) {
+        method.closest("section")?.scrollIntoView({ block: "start" });
+        method.focus({ preventScroll: true });
+      } else {
+        setNotice("To slim a capped pen, insert a cartridge and add a screw-on cone to the barrel. The built-in bolt-action pen also supports slimming.");
+      }
+    });
+  }
   function openPart(part?: PartTab) {
     switchMode("Part");
     setPartSelection(part ? { projectId: project.id, id: part.id } : undefined);
@@ -1177,6 +1190,11 @@ export default function App() {
       disabled: !canExport,
     },
     {
+      title: "Slim pen", group: "Pen Studio", shortcut: "Alt L",
+      keywords: "thin minimum diameter refill radial wall clearance cap cone",
+      run: openSlimPen,
+    },
+    {
       title: "CNC shop package",
       group: "Export",
       shortcut: "Alt P",
@@ -1741,7 +1759,8 @@ export default function App() {
           className={"model-space " + (mode !== "Part" && !showcasing ? "offscreen" : "")}
           aria-hidden={mode !== "Part" && !showcasing}
         >
-          {showcasing ? <div className="photo-tools"><span><Aperture size={16}/> Studio render</span><button disabled={!valid || !!studioPose.error} onClick={downloadPhoto}><Camera size={15}/> Save PNG</button></div> : <div className="model-tools">
+          {showcasing ? <div className="photo-tools"><span><Aperture size={16}/> Studio render</span>
+            <div className="photo-actions"><button onClick={openSlimPen}><Ruler size={15}/> Slim pen</button><button disabled={!valid || !!studioPose.error} onClick={downloadPhoto}><Camera size={15}/> Save PNG</button></div></div> : <div className="model-tools">
             {!treeVisible &&
               iconButton("Show model browser", Menu, () => toggleTree(true))}
             <button onClick={newSketch}>

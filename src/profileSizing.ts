@@ -123,7 +123,13 @@ export function changeProfileRange(sketch: Sketch, range: ProfileRange, field: "
     const number = String(Number(value.toPrecision(15)));
     return isExpression(sketch.points[i][range.axis]) ? number + " mm" : number;
   });
-  const axis = range.axis;
+  const next = setProfileCoordinates(sketch, range.axis, coordinates, values);
+  const saved: SavedRange = { radial: range.radial, lower, size, coordinates: axisSources(next, range.axis) };
+  return { ...next, sizing: { ...sketch.sizing, [range.axis]: saved } };
+}
+
+/** Reuse the sketch's independent coordinate drivers, including dimensional constraints. */
+export function setProfileCoordinates(sketch: Sketch, axis: Axis, coordinates: string[], values: Record<string, number>): Sketch {
   const locked = new Set(sketch.constraints.filter(c => c.type === axis).map(c => c.indices[0]));
   const points = sketch.points.map(p => ({ ...p }));
   for (const members of linkedCoordinateGroups(sketch, axis)) {
@@ -137,7 +143,5 @@ export function changeProfileRange(sketch: Sketch, range: ProfileRange, field: "
     }
   }
   const constraints = sketch.constraints.map(c => c.type === axis ? { ...c, value: coordinates[c.indices[0]] } : c);
-  const next = { ...sketch, points, constraints };
-  const saved: SavedRange = { radial: range.radial, lower, size, coordinates: axisSources(next, axis) };
-  return { ...next, sizing: { ...sketch.sizing, [axis]: saved } };
+  return { ...sketch, points, constraints };
 }

@@ -85,3 +85,5 @@
 .writing-results { border-left:2px solid #7fa397;background:#222e2b;padding:10px;margin:10px 0 0 }
 .writing-results strong { font-size:13px;color:#d4e7de }
 .writing-results dd { font-size:12px }
+
+.photo-actions {display:flex;align-items:center;gap:8px}
