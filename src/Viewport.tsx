@@ -1,13 +1,26 @@
 import type { MenuAnchor } from "./ContextMenu";
 import { observeGeometry } from "../tests/hook/observe";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createStudio, type View } from "./studio";
+import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { createStudio, type DonorFinish, type View } from "./studio";
 import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
+import type { EvaluatedFinish } from "./finishingTypes";
+import type { GripStock } from "./gripBands";
+
+type GripMeasurement = GripStock & {
+  bodyId: string;
+  featureId: string;
+  beforeFinishId?: string;
+  priorKey?: string;
+  error?: string;
+};
 
 export type KernelStatus = {
   signature?: string;
+  gripStock?: GripMeasurement;
+  threadFrames?: import("./threadMates").ThreadFrame[];
+  fitSurfaces?: import("./fitSurfaces").FitSurface[][];
   busy: boolean;
   error: string;
   volume: number;
@@ -30,6 +43,16 @@ type Props = {
   exportRequest: ExportRequest | null;
   appearances?: number[];
   visibleBodyId?: string;
+  photoMode?: boolean;
+  donorFinishes?: Record<string, DonorFinish>;
+  measureRefillFit?: boolean;
+  gripBodyId?: string;
+  gripFeatureId?: string;
+  gripBeforeFinishId?: string;
+  gripPriorFinishes?: EvaluatedFinish[];
+  photoMatrices?: number[][];
+  ghostIds?: string[];
+  savePhoto?: RefObject<(() => Promise<Blob>) | null>;
   onBodyContextMenu?: (anchor: MenuAnchor, bodyId: string | null) => void;
   onBodyPick?: (bodyId: string) => void;
   onStatus: (status: KernelStatus) => void;
@@ -41,6 +64,8 @@ export type KernelReply = { revision: number } & (
       | { type: "updated"; keys: number[]; changes: MeshChange[] }
     ) & {
       volume: number;
+      threadFrames?: import("./threadMates").ThreadFrame[];
+      fitSurfaces?: import("./fitSurfaces").FitSurface[][];
       area: number;
       bodyProperties: import("./materials").BodyProps[];
       center?: [number, number, number];
@@ -74,8 +99,9 @@ export function Viewport({
   exportRequest,
   onStatus,
   takeFinishBody,
-  appearances = [],
-  visibleBodyId,
+  appearances = [], donorFinishes,
+  visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto, measureRefillFit = false,
+  gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
   onBodyPick,
 }: Props) {
@@ -94,12 +120,35 @@ export function Viewport({
   cb.current = onStatus;
   const revision = useRef(0),
     lastExport = useRef<number | undefined>(undefined);
-  const presentation = useRef({ appearances, visibleBodyId, onBodyContextMenu, onBodyPick });
-  presentation.current = { appearances, visibleBodyId, onBodyContextMenu, onBodyPick };
+  const presentation = useRef({ appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick });
+  presentation.current = { appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, donorFinishes, onBodyContextMenu, onBodyPick };
+  const gripFeature = gripFeatureId ?? gripBodyId;
+  const gripPriorKey = JSON.stringify(gripPriorFinishes);
+  const gripTarget = useRef({ gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey });
+  gripTarget.current = { gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey };
+  const builtRevision = useRef(-1);
+  function requestGrip() {
+    const target = gripTarget.current;
+    if (!target.gripBodyId || builtRevision.current !== revision.current) return;
+    engine.current?.postMessage({
+      type: "grip-stock", revision: revision.current, bodyId: target.gripBodyId,
+      featureId: target.gripFeature, beforeFinishId: target.gripBeforeFinishId, priorFinishes: target.gripPriorFinishes,
+    });
+  }
   const showing = useRef<string[]>([]);
   const building = useRef<string[]>([]);
   const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
-  function displayInstalled() {
+  const photographed = useRef(false);
+  function stylePhoto(reframe: boolean) {
+    const { photoMode: on, photoMatrices: pose, ghostIds: ghost, donorFinishes: donors } = presentation.current;
+    if (!on && !photographed.current) return;
+    studio.current?.setProductView(on, showing.current.map(id => ghost.includes(id)), showing.current.map(id => donors?.[id]));
+    const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+    const matrices = showing.current.map((id) => (on && pose?.[installed.current.ids.indexOf(id)]) || identity);
+    studio.current?.setTransforms(matrices, reframe || on !== photographed.current);
+    photographed.current = on;
+  }
+  function displayInstalled(reframe = true) {
     const { visibleBodyId: scope, appearances: colors } = presentation.current;
     const { ids, meshes } = installed.current;
     const index = scope === undefined ? -1 : ids.indexOf(scope);
@@ -108,6 +157,7 @@ export function Viewport({
       scope === undefined ? meshes : index < 0 ? [] : [meshes[index]],
       scope === undefined ? colors : index < 0 ? [] : [colors[index]],
     );
+    stylePhoto(reframe);
   }
   const signature = useMemo(
     () => inputSignature ?? JSON.stringify(features),
@@ -119,6 +169,7 @@ export function Viewport({
     revision: number;
     features: EvaluatedFeature[];
     finishBody?: FinishBodySnapshot;
+    measureRefillFit: boolean;
   } | null>(null);
   function dispatchBuild() {
     if (activeBuild.current || !pendingBuild.current || !engine.current) return;
@@ -148,6 +199,7 @@ export function Viewport({
         const id = index === null ? null : showing.current[index];
         if (id !== undefined) presentation.current.onBodyContextMenu?.(anchor, id);
       });
+      if (savePhoto) savePhoto.current = () => studio.current!.captureProduct();
     } catch {
       setDisplayError(
         "The 3D view needs WebGL 2. Enable hardware acceleration in your browser, then reload.",
@@ -159,7 +211,15 @@ export function Viewport({
     });
     engine.current = worker;
     if(import.meta.env.VITE_CAD_QA==="1") observeGeometry(worker,()=>revision.current);
-    worker.onmessage = ({ data }: MessageEvent<KernelReply>) => {
+    worker.onmessage = ({ data }: MessageEvent<KernelReply | { type: "grip-stock"; revision: number; stock: GripMeasurement }>) => {
+      if (data.type === "grip-stock") {
+        const target = gripTarget.current;
+        const stock = data.stock;
+        if (data.revision === revision.current && stock.bodyId === target.gripBodyId &&
+          stock.featureId === target.gripFeature && stock.beforeFinishId === target.gripBeforeFinishId &&
+          stock.priorKey === target.gripPriorKey) publish({ gripStock: stock });
+        return;
+      }
       const buildReply =
         data.type === "updated" ||
         data.type === "built" ||
@@ -170,6 +230,10 @@ export function Viewport({
         // advertises only meshes actually retained by this viewport.
         dispatchBuild();
         return;
+      }
+      if (buildReply) {
+        builtRevision.current = data.revision;
+        requestGrip();
       }
       if (data.type === "updated" || data.type === "built") {
         if (data.type === "updated") {
@@ -190,6 +254,8 @@ export function Viewport({
           error: "",
           volume: data.volume,
           area: data.area,
+          threadFrames: data.threadFrames,
+          fitSurfaces: data.fitSurfaces,
           bodyProperties: data.bodyProperties,
           center: data.center,
         });
@@ -223,6 +289,7 @@ export function Viewport({
       displayInstalled();
       publish({
         busy: false,
+        gripStock: undefined,
         error:
           "The CAD engine stopped. Reload to reopen the autosaved project.",
         volume: 0,
@@ -240,21 +307,28 @@ export function Viewport({
       pendingBuild.current = null;
       studio.current?.dispose();
       studio.current = undefined;
+      if (savePhoto) savePhoto.current = null;
     };
   }, []);
   useEffect(() => {
     const current = ++revision.current;
-    publish({ signature, busy: true, error: "" });
+    publish({ signature, busy: true, error: "", gripStock: undefined });
     pendingBuild.current = {
       revision: current,
       features,
       finishBody: takeFinishBody?.(),
+      measureRefillFit,
     };
     dispatchBuild();
-  }, [signature]);
+  }, [signature, measureRefillFit]);
   useEffect(() => {
-    displayInstalled();
+    if (status.current.gripStock) publish({ gripStock: undefined });
+    requestGrip();
+  }, [gripBodyId, gripFeature, gripBeforeFinishId, gripPriorKey]);
+  useEffect(() => {
+    displayInstalled(false);
   }, [visibleBodyId, appearances.join(",")]);
+  useEffect(() => { stylePhoto(false); }, [photoMode, JSON.stringify(photoMatrices), ghostIds.join(","), JSON.stringify(donorFinishes)]);
   useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {
     studio.current?.setView(view);
@@ -283,7 +357,7 @@ export function Viewport({
       }}
     >
       <div ref={node} style={{ position: "absolute", inset: 0 }} />
-      {(displayError || selected) && (
+      {(displayError || (!photoMode && selected)) && (
         <div
           role="status"
           style={{

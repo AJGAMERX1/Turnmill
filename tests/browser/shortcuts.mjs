@@ -263,7 +263,7 @@ try {
   for (const [key, workspace] of [
     ["Alt+2", "Assembly"],
     ["Alt+3", "Drawing"],
-    ["Alt+4", "Scales"],
+    ["Alt+4", "Pen Studio"],
     ["Alt+1", "Part"],
   ]) {
     await press(key);
@@ -272,7 +272,7 @@ try {
       Part: ".model-space:not(.offscreen)",
       Assembly: ".joint-studio .joint-view canvas",
       Drawing: ".tm-workspace .tm-work-head:has-text('Drawing')",
-      Scales: ".tm-ruler-stage",
+      "Pen Studio": ".pen-bench",
     }[workspace];
     await page.locator(pane).first().waitFor();
     record(key, "Switched to visible " + workspace + " workspace");

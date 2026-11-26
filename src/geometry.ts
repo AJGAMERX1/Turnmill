@@ -22,6 +22,8 @@ import {
 import { binarySTL, printableMesh } from "./printMesh";
 import { export3MF } from "./exchangeSolids";
 import { applyFinish } from "./finishing";
+import { positioned } from "./motionGeometry";
+import { isRigidTransform } from "./rigidTransform";
 import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
 import type { EvaluatedFeature } from "./types";
 
@@ -221,6 +223,77 @@ export function restoreFinishBody(
   }
 }
 
+function turnRefill(body: Body, length: number) {
+  // A proper half-turn about Z at the axial midpoint preserves thread handedness.
+  const pose = [-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, length, 0, 0, 1];
+  const turned = positioned(body.shape, pose);
+  body.shape.delete();
+  body.shape = turned;
+  body.guides = body.guides?.map((guide) => {
+    const points = guide.slice();
+    for (let i = 0; i < points.length; i += 3) {
+      points[i] = length - points[i];
+      points[i + 1] = -points[i + 1];
+    }
+    return points;
+  });
+  body.threadFrames = body.threadFrames?.map((frame) => {
+    const [x, y, z] = frame.entrance;
+    return { ...frame, entrance: [length - x, -y, z],
+      end: frame.axis === "X" ? (frame.end === "start" ? "end" : "start") : frame.end };
+  });
+}
+
+function mergeBody(target: Body, feature: EvaluatedFeature, bodyId: string) {
+  const merge = feature.merge;
+  if (!merge || !isRigidTransform(merge.transform))
+    throw Error("The saved placement is invalid. Select both parts again.");
+  const sources = buildBodies(merge.features);
+  try {
+    if (sources.length !== 1)
+      throw Error("Restore one source part before merging it.");
+    const source = sources[0], matrix = merge.transform;
+    const tool = positioned(source.shape, matrix);
+    try {
+      let fused: Shape3D | undefined;
+      try {
+        fused = target.shape.fuse(tool);
+        checkSolid(fused);
+      } catch {
+        fused?.delete();
+        throw Error("Move the parts so they overlap or share a face. A gap, edge or point contact cannot make one solid.");
+      }
+      target.shape.delete();
+      target.shape = fused;
+    } finally { tool.delete(); }
+
+    const move = (x: number, y: number, z: number): [number, number, number] => [
+      matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12],
+      matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13],
+      matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14],
+    ];
+    for (const guide of source.guides ?? []) {
+      const placed = new Float32Array(guide.length);
+      for (let i = 0; i < guide.length; i += 3)
+        placed.set(move(guide[i], guide[i + 1], guide[i + 2]), i);
+      (target.guides ??= []).push(placed);
+    }
+    // The thread-mate editor supports axial X and Z references. Preserve these
+    // when a rotated source thread still lies on a supported axis.
+    for (const frame of source.threadFrames ?? []) {
+      const column = frame.axis === "X" ? 0 : 8;
+      const direction = [matrix[column], matrix[column + 1], matrix[column + 2]];
+      if (Math.abs(direction[1]) > 1e-8) continue;
+      const component = Math.abs(direction[2]) < 1e-8 ? 0 : 2;
+      if (Math.abs(direction[component === 0 ? 2 : 0]) > 1e-8) continue;
+      (target.threadFrames ??= []).push({ ...frame, bodyId,
+        axis: component === 0 ? "X" : "Z", entrance: move(...frame.entrance),
+        end: direction[component] > 0 ? frame.end : frame.end === "start" ? "end" : "start",
+      });
+    }
+  } finally { releaseBodies(sources); }
+}
+
 /** New starts a body. An Add or Cut acts on the most recently started body. */
 export function buildBodies(
   features: EvaluatedFeature[],
@@ -232,7 +305,11 @@ export function buildBodies(
     for (const feature of features) {
       let tool: Shape3D | undefined, result: Shape3D | undefined;
       try {
-        if (feature.ruler?.placement) {
+        if (feature.kind === "merge") {
+          const target = bodies.at(-1);
+          if (!target) throw Error("Restore the part to keep before this merge in history.");
+          mergeBody(target, feature, bodyId);
+        } else if (feature.ruler?.placement) {
           if (!bodies.length)
             throw Error(
               "Restore the target part before these graduations in feature history.",
@@ -281,7 +358,7 @@ export function buildBodies(
           try {
             const finished = applyFinish(
               body.shape,
-              feature.kind === "import" ? "extrude" : feature.kind,
+              feature.kind === "revolve" ? "revolve" : "extrude",
               finish,
             );
             try {
@@ -330,6 +407,7 @@ export function buildBodies(
           // A transform or replacement can remove or duplicate the original thread axis.
           if (operation.kind !== "shell") body.threadFrames = [];
         }
+        if (feature.reverseRefillLength !== undefined) turnRefill(body, feature.reverseRefillLength);
       } catch (error) {
         const detail =
           error instanceof Error &&

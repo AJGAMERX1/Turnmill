@@ -4,7 +4,7 @@ import {
   Plus,
   Trash2,
   RotateCw,
-  Ruler,
+  Sliders,
   Box,
   FilePlus2,
 } from "lucide-react";
@@ -396,12 +396,13 @@ export function NewProjectDialog({
   onChoose,
   onClose,
 }: {
-  onChoose: (mode: "turned" | "blank" | "pen" | "ruler" | "guided") => void;
+  onChoose: (mode: "turned" | "blank" | "pen" | "bolt" | "guided") => void;
   onClose: () => void;
 }) {
   return (
     <Modal title="New project" onClose={onClose}>
       <div className="project-choices">
+        <button onClick={() => onChoose("bolt")}><Sliders/><div><b>Bolt-action pen</b><small>Try the side bolt, change the refill and size the grip.</small></div></button>
         <button onClick={() => onChoose("guided")}><RotateCw/><div><b>Guided twist pen</b><small>Build the barrel, assemble the mechanism and make its drawing.</small></div></button>
         <button onClick={() => onChoose("turned")}>
           <RotateCw />
@@ -419,15 +420,6 @@ export function NewProjectDialog({
             <small>
               Four editable parts, modeled threads, and linked cap and refill
               joints.
-            </small>
-          </div>
-        </button>
-        <button onClick={() => onChoose("ruler")}>
-          <Ruler />
-          <div>
-            <b>Pocket ruler</b>
-            <small>
-              Metric and fractional-inch graduations engraved on a 54 mm blank.
             </small>
           </div>
         </button>

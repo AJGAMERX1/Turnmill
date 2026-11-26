@@ -1,0 +1,16 @@
+.bolt-action-card {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid var(--line, #394144);
+  border-radius: 8px;
+  background: var(--panel, #222829);
+}
+.bolt-action-card header { display: flex; align-items: center; justify-content: space-between; }
+.bolt-action-card header h3 { margin: 0; }
+.bolt-action-card header strong { color: var(--accent, #e4b265); font-size: .78rem; }
+.bolt-action-track { display: flex; align-items: center; gap: 14px; padding: 8px 0; }
+.bolt-action-track svg { width: 96px; color: #687370; }
+.bolt-action-track circle { fill: var(--accent, #e4b265); stroke: #171e1e; stroke-width: 1.3; }
+.bolt-action-track b, .bolt-action-track small { display: block; }
+.bolt-action-card .joint-pair { margin-bottom: 6px; }
+.bolt-action-card button[aria-pressed=true] { border-color: var(--accent, #e4b265); }

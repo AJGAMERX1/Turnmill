@@ -1,8 +1,12 @@
 import { observeJoints } from "../tests/hook/observe";
-import { Matrix4, type Vector3 } from "three";
+import { Matrix4, Vector3 } from "three";
+import { Grip, Combine } from "lucide-react";
 import { ContextMenu, menuTrigger, type MenuAnchor, type MenuItem } from "./ContextMenu";
 import type { Project } from "./types";
 import { penGuide, recordGuideClearance, recordGuideMotion } from "./penGuide";
+import { refillTipX } from "./refills";
+import BoltActionPanel from "./BoltActionPanel";
+import { defaultBoltTrack, resolveBoltTrack } from "./boltTrack";
 import CamStudy from "./CamStudy";
 import CamReadout from "./CamReadout";
 import SliderSpring from "./SliderSpring";
@@ -83,11 +87,14 @@ function ExprField({
   );
 }
 export type LiveAssembly = {
+  project: Project;
+  matrices: Record<string, number[]>;
+  pause: () => void;
   selected: string;
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { onOpenPart?: (bodyId: string) => void };
+type PartNavigation = { onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -219,6 +226,7 @@ function JointStudio({
   guideAssist,
   liveAssembly,
   onOpenPart,
+  onMillGrip, onMergeParts,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
   const latestProject = useRef(project);
   latestProject.current=project;
@@ -239,7 +247,7 @@ function JointStudio({
   const gapText = String(
     project.workspaces?.assemblyClearance?.requiredGap ?? "0 mm",
   );
-  const [sel, setSel] = useState(penGuide(project) && !penGuide(project)?.paused && ids.includes("pen-cap") ? "pen-cap" : ids[1] || ids[0]),
+  const [sel, setSel] = useState(ids.find(id => raw[id]?.kind === "bolt") ?? (penGuide(project) && !penGuide(project)?.paused && ids.includes("pen-cap") ? "pen-cap" : ids[1] || ids[0])),
     [compare, setCompare] = useState(ids[0]),
     [component, setComponent] = useState(0),
     [poses, setPoses] = useState<Record<string, number[]>>(
@@ -314,6 +322,9 @@ function JointStudio({
     current = 0,
     lead = 0,
     matrices: number[][] = [];
+  const boltId = ids.find(id => config[id]?.kind === "bolt");
+  let boltTrack: ReturnType<typeof resolveBoltTrack> | undefined;
+  let tipExposure: number | undefined;
   let readings: ReturnType<typeof assemblyCamReadings> = [];
   try {
     [min, max] = limits(joint, d, values);
@@ -322,14 +333,27 @@ function JointStudio({
     const following = readings.find((r) => r.followerId === selected);
     if (following) current = following.position;
     matrices = buildPoses(ids, config, poses, values);
+    if (boltId) {
+      boltTrack = resolveBoltTrack(config[boltId].bolt, values);
+      const pen = project.workspaces?.boltPen;
+      const tip = matrices[ids.indexOf(pen?.refillId)], nose = matrices[ids.indexOf(pen?.noseId)];
+      if (pen?.carrierId === boltId && tip && nose) {
+        const tipInNose = new Matrix4().fromArray(nose).invert().multiply(new Matrix4().fromArray(tip));
+        tipExposure = -new Vector3(refillTipX(project, pen.refillId, values), 0, 0).applyMatrix4(tipInNose).x;
+      }
+    }
     if (joint.kind === "screw") lead = screwLead(joint, values);
   } catch (e) {
     problem = (e as Error).message;
   }
   useLayoutEffect(() => {
-    liveAssembly.current = { selected, drivers: poses, problem };
+    liveAssembly.current = {
+      project, selected, drivers: poses, problem,
+      matrices: Object.fromEntries(ids.map((id, i) => [id, matrices[i]])),
+      pause: () => { play(false); stopGuideTwist(); },
+    };
     return () => { liveAssembly.current = null; };
-  }, [liveAssembly, selected, poses, problem]);
+  });
   useEffect(()=>{
     if(import.meta.env.VITE_CAD_QA==="1") {
       observeJoints(()=>({ids,selected,poses,matrices,config,min,max,current,lead,readings,problem}));
@@ -738,6 +762,10 @@ function JointStudio({
   const targetBody = bodies.find((body) => body.id === targetId);
   if (targetId && targetBody) {
     const free = isFloating(raw[targetId]);
+    if (onMergeParts && bodies.length > 1)
+      menuItems.push({ label: "Merge parts…", icon: Combine, shortcut: "U", run: () => onMergeParts(targetId) });
+    if (onMillGrip)
+      menuItems.push({ label: "Mill grip…", icon: Grip, shortcut: "M", run: () => onMillGrip(targetId) });
     if (onOpenPart)
       menuItems.push({ label: "Open part tab", icon: FolderOpen, run: () => onOpenPart(targetId) });
     if (free)
@@ -783,7 +811,10 @@ function JointStudio({
             )
               return;
             const which = view.pickBodyAt(e.nativeEvent),
-              id = ids[which];
+              pickedId = ids[which];
+            // Grabbing the external thumb stud drives the carrier to which it is fixed.
+            const id = config[pickedId]?.kind === "fixed" && config[config[pickedId].parent]?.kind === "bolt"
+              ? config[pickedId].parent : pickedId;
             if (!id) return;
             const j = config[id] || defaultJoint(),
               coord = id === selected ? d : 0,
@@ -805,7 +836,7 @@ function JointStudio({
             let dx =
                 (hi - lo) / Math.max(200, e.currentTarget.clientWidth * 0.65),
               dy = 0;
-            if (degree.unit === "length") {
+            if (degree.unit === "length" && j.kind !== "bolt") {
               const step =
                 value < (lo + hi) / 2
                   ? Math.min(1, hi - value)
@@ -936,6 +967,30 @@ function JointStudio({
         </div>
       </div>
       <aside className="joint-panel">
+        {boltId && boltTrack && <BoltActionPanel track={boltTrack} distance={poses[boltId]?.[0] ?? 0}
+          tipExposure={tipExposure} springSpace={project.workspaces?.boltPen?.carrierId === boltId ? values.spring_space : undefined} disabled={!meshVersion || !!problem} onMove={target => {
+            stopGuideTwist();
+            play(false);
+            setSel(boltId);
+            setComponent(0);
+            const start = Math.min(boltTrack.total, Math.max(0, poses[boltId]?.[0] ?? 0));
+            const begin = performance.now();
+            const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 550;
+            const snapshot = project;
+            const move = (now: number) => {
+              if (latestProject.current !== snapshot) return;
+              const t = duration ? Math.min(1, (now - begin) / duration) : 1;
+              const steps = { ...poses, [boltId]: [start + (target - start) * t * t * (3 - 2*t)] };
+              setPoses(steps);
+              if (t < 1) twistFrame.current = requestAnimationFrame(move);
+              else {
+                twistFrame.current = null;
+                savedByStudio.current = steps;
+                onChange({ ...snapshot, workspaces: { ...snapshot.workspaces, jointPose: steps } });
+              }
+            };
+            twistFrame.current = requestAnimationFrame(move);
+          }}/>}
         <h2>Joints & movement</h2>
         <label>
           Component
@@ -1060,7 +1115,12 @@ function JointStudio({
         )}
         {!!doFs.length && (
           <>
-            <div className="joint-pair">
+            {joint.kind === "bolt" ? <details>
+              <summary>J-slot dimensions</summary>
+              {([["throw", "Forward throw"], ["latch", "Latch return"], ["radius", "Track radius"], ["side", "Latch lane offset"]] as const).map(([key, label]) =>
+                <ExprField key={key} label={label} value={(joint.bolt ?? defaultBoltTrack)[key]}
+                  onCommit={value => patch({ bolt: { ...(joint.bolt ?? defaultBoltTrack), [key]: value } })}/>)}
+            </details> : <div className="joint-pair">
               <ExprField
                 label="Lower limit"
                 value={limitText[0]}
@@ -1071,7 +1131,7 @@ function JointStudio({
                 value={limitText[1]}
                 onCommit={(s) => updateLimit(1, s)}
               />
-            </div>
+            </div>}
             {joint.kind === "screw" && !joint.threadMate && (
               <>
                 <div className="joint-pair">

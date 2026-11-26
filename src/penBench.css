@@ -1,0 +1,82 @@
+.release-version {font:600 10px ui-monospace,monospace;align-self:center;letter-spacing:.03em;color:#ddb676;border:1px solid #544738;padding:2px 4px;border-radius:3px}
+.refill-entry,.photo-tools,.photo-tools span,.photo-tools button,.bench-heading,.bench-heading button,.bench-action,.bench-text,.pen-bench li,.bench-check {display:flex;align-items:center;gap:8px}
+.refill-entry {color:#e6c38b;font-size:13px}
+.work-area.pen-studio-area {display:grid;grid-template-columns:minmax(0,1fr) 306px}
+.pen-studio-area .stage {background:radial-gradient(ellipse at 48% 38%,#465153 0%,#2b3538 44%,#161d20 100%)}
+.photo-tools {height:44px;flex:none;padding:0 18px;justify-content:space-between;border-bottom:1px solid var(--line);background:#202628;color:#d4dedb;font-size:12px}
+.photo-tools span {font-weight:650}
+.photo-tools button,.bench-action {border:1px solid #4c5957;border-radius:5px;padding:6px 11px}
+.pen-bench.tm-workspace {display:block;overflow:auto;min-width:0;min-height:0;border-left:1px solid var(--line);background:#1b2223;padding:16px 18px;color:#d8dfdb}
+.bench-heading {justify-content:space-between;gap:5px}
+.bench-heading h2 {margin:0;font-size:18px;letter-spacing:-.025em}
+.bench-heading button,.bench-text {color:#e8b568;font-size:12px}
+.pen-bench section {padding:14px 0;border-bottom:1px solid var(--line)}
+.pen-bench h3 {margin:0 0 8px;font:600 11px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em;color:#b3c0bb}
+.pen-bench p {color:#adb9b7;font-size:12px;line-height:1.5;margin:7px 0}
+.pen-bench dl,.pen-bench ul {padding:0;margin:0;list-style:none}
+.pen-bench li {font-size:13px;margin:7px 0}
+.pen-bench dl>div,.pen-bench label {display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:13px}
+.pen-bench dd {font-family:ui-monospace,monospace;margin:0;color:#f1e6d5}
+.pen-bench input:not([type=checkbox]) {min-width:0;width:103px;text-align:right;font:12px ui-monospace,monospace}
+.bench-action {font-size:12px;justify-content:center;width:100%;color:#f0d2a4;background:#2a2e29}
+.bench-text {margin-top:8px}
+.pen-bench .bench-check {justify-content:flex-start}
+.bench-check input {margin-left:auto;width:auto}
+@media(max-width:790px) {
+ .work-area.pen-studio-area {display:flex;flex-direction:column;overflow:auto}
+ .pen-studio-area>.model-space {display:flex;min-height:280px;flex:1 0 45%}
+ .pen-bench.tm-workspace {overflow:visible;flex:none;border-left:0;border-top:1px solid var(--line)}
+ .release-version {display:none}
+}
+@media(max-width:600px) {
+ .workspace-bar {overflow-x:auto}
+ .workspace-bar .mode-tabs {flex-shrink:0}
+ .workspace-bar .mode-tabs button {padding:0 7px}
+ .workspace-right .refill-entry {font-size:0;gap:0}
+}
+
+@media (max-width: 590px) {
+  .pen-studio-area > .pen-bench.tm-workspace {
+    height: auto;
+    padding-bottom: 22px;
+  }
+  .pen-bench .bench-heading button,
+  .pen-bench .bench-action,
+  .pen-bench .bench-text,
+  .pen-bench .bench-check {
+    min-height: 42px;
+  }
+  .pen-bench input:not([type="checkbox"]) {
+    height: 40px;
+    width: 120px;
+    font-size: 16px;
+  }
+  .workspace-bar .workspace-right > button {
+    min-height: 38px;
+    min-width: 38px;
+    justify-content: center;
+  }
+}
+@media (max-width: 430px) {
+  .workspace-bar .mode-tabs button {
+    padding-inline: 7px;
+  }
+  .workspace-bar .mode-tabs button svg {
+    display: none;
+  }
+}
+
+.barrel-finishes {padding:0;border:0;margin:8px 0 13px;min-width:0}
+.barrel-finishes legend {width:100%;font-size:12px;color:#cfdbd7}
+.barrel-finishes legend strong {float:right;font-weight:500;color:#ebd5b5}
+.barrel-finishes div {display:flex;gap:7px;margin-top:7px}
+.pen-bench .barrel-finishes button {padding:0;width:28px;height:24px;border-radius:4px;border:2px solid transparent;box-shadow:inset 0 0 0 2px #252e30;background:linear-gradient(147deg,#ffffff88,transparent 42%,#0004),var(--swatch)}
+.pen-bench .barrel-finishes button[aria-pressed=true] {border-color:#e5ae66}
+.refill-mass-note {font-size:11px;line-height:1.45;color:#acb7b4}
+.pen-bench .diameter-result {padding:8px 9px;margin:7px 0;background:#202c29;border-left:2px solid #719a8b;border-radius:2px}
+.pen-bench .diameter-result.tight {background:#332b23;border-color:#e6b066}
+.diameter-result strong {display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#d1e4da}
+.diameter-result.tight strong {color:#f0c58c}
+.diameter-result small {font-size:11px;display:block;color:#c2cac5;margin-top:3px;overflow-wrap:anywhere}
+.pen-bench details>summary {font-size:12px;cursor:pointer;padding:6px 0;color:#d6c8ad}
+.pen-bench .manual-diameter select {min-width:100px}

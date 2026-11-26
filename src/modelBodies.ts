@@ -9,6 +9,7 @@ import {
   type RenderBody,
 } from "./geometry";
 import type { BodyProps } from "./materials";
+import { solidBounds } from "./secondaryProjection";
 import type { EvaluatedFeature } from "./types";
 
 interface CachedBody {
@@ -125,13 +126,18 @@ export class ModelBodies {
         body.name = name;
         created.push(body);
         const { meshes, bodyProperties, area } = displayBodies([body]);
+        const properties = bodyProperties[0];
+        if (history.some(f => f.kind === "import" || f.kind === "merge")) {
+          const [lo, hi] = solidBounds(body.shape);
+          properties.dimensions = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
+        }
         const key = ++this.serial;
         next.set(id, {
           key,
           signature,
           prefix,
           body,
-          properties: bodyProperties[0],
+          properties,
           area,
         });
         changes.push({ key, mesh: meshes[0] });

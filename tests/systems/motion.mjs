@@ -30,11 +30,12 @@ try {
         max: isAngle ? "180 deg" : "4 mm",
         bounds,
         pitch: "0.8 mm",
+        ...(kind === "bolt" ? { bolt: { throw: "2 mm", latch: "1 mm", radius: "2 mm", side: "1 mm" } } : {}),
       },
     };
     for (let k = 0; k < Math.max(freedoms.length, 1); k++) {
       const angle = freedoms[k]?.unit === "angle",
-        end = angle ? 180 : freedoms.length ? 4 : 0;
+        end = kind === "bolt" ? 3 + Math.PI / 3 : angle ? 180 : freedoms.length ? 4 : 0;
       const step = angle ? 5 : 0.25;
       const poses = [];
       for (let v = 0; v <= end; v += step) {
@@ -44,7 +45,10 @@ try {
           drivers = { carrier: coords };
         const expected = [10, 0, 0];
         if (kind === "screw") expected[0] += (v * 0.8) / 360;
-        if (freedoms[k]?.unit === "length") expected[freedoms[k].axis] += v;
+        if (kind === "bolt") {
+          // Two millimetres forward, a 30° turn at 2 mm radius, then a 1 mm return.
+          expected[0] -= Math.min(v, 2) - Math.max(0, v - 2 - Math.PI / 3);
+        } else if (freedoms[k]?.unit === "length") expected[freedoms[k].axis] += v;
         const matrix = buildPoses(ids, cfg, drivers, {})[1];
         expected.forEach((n, i) =>
           near(matrix[i + 12], n, 0.01, "pose " + kind),
@@ -99,7 +103,7 @@ try {
     rows.reduce((n, v) => n + v.poses.length, 0),
     "exact B-rep gap measurements and",
     rows.length,
-    "coverage certificates for seven joints.",
+    "coverage certificates for", jointKinds.length, "joint types.",
   );
 } finally {
   releaseBodies(bodies);

@@ -2,30 +2,21 @@ import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { appUrl, openBrowser } from "./browser.mjs";
-import { button, download, newProject, ready } from "../projects/support.mjs";
+import { button, native, saved, stepExport } from "../projects/support.mjs";
+import { legacyVectors, openLegacyRuler } from "../projects/ruler.mjs";
 
 const output = resolve(process.env.QA_RULER_EXPORT_OUT || "test-evidence/ruler-export");
 await mkdir(output, { recursive: true });
 const browser = await openBrowser();
 try {
-  const p = await browser.newPage({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
   const errors = [];
-  p.on("pageerror", (e) => errors.push(e.message));
-  async function fromMenu(item, file) {
-    await button(p, "Export").click();
-    await download(p, () => p.getByRole("button", { name: item }).click(), join(output, file));
-  }
-  await p.goto(appUrl);
-  await ready(p);
-  await button(p, "Scales").click();
-  await button(p, "Export SVG").waitFor();
-  assert(await button(p, "Export STEP").isDisabled(), "An unrelated solid must never export as the ruler");
-  await fromMenu(/Ruler engraving SVG/, "draft.svg");
-  assert.match(await readFile(join(output, "draft.svg"), "utf8"), /Graduation_outlines/);
-
-  await newProject(p, /Pocket ruler/);
-  await fromMenu(/Ruler engraving SVG/, "ruler.svg");
-  await fromMenu(/Ruler engraving DXF/, "ruler.dxf");
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(appUrl);
+  await saved(page);
+  const original = await openLegacyRuler(page, "examples/pocket-ruler.turnmill");
+  assert.equal(await button(page, "Scales").count(), 0);
+  await legacyVectors(original, output);
   const svg = await readFile(join(output, "ruler.svg"), "utf8");
   assert.match(svg, /width="52mm" height="18mm"/);
   assert.equal((svg.match(/data-layer="Graduation_outlines"/g) || []).length, 85);
@@ -53,24 +44,20 @@ try {
   assert.equal(imperial.length, 33);
   assert(Math.abs(metric[50] - metric[0] - 50) < 1e-8);
   assert(Math.abs(imperial[32] - imperial[0] - 50.8) < 1e-8);
-  await p.getByLabel("Export tick centerlines").check();
-  await fromMenu(/Ruler engraving SVG/, "centerlines.svg");
-  await download(p, () => button(p, "Export SVG").click(), join(output, "panel.svg"));
-  const centered = await readFile(join(output, "centerlines.svg"), "utf8");
-  assert.equal(centered, await readFile(join(output, "panel.svg"), "utf8"));
-  assert.equal((centered.match(/data-layer="Graduations"/g) || []).length, 85);
-  await button(p, "Part").click();
-  await button(p, "New part").click();
-  await p.getByLabel("Part name").fill("Fixture block");
-  await button(p, "Create part").click();
-  await button(p, "Extrude").click();
-  await button(p.getByRole("dialog"), "Create feature").click();
-  await ready(p);
-  await button(p, "Scales").click();
-  await fromMenu(/Engraved ruler STEP/, "ruler.step");
-  await download(p, () => button(p, "Export STEP").click(), join(output, "panel.step"));
+  const session = { page, dir: output };
+  await stepExport(session, "ruler");
+  await native(session, "reopened");
+  const disk = JSON.parse(await readFile(join(output, "reopened.turnmill"), "utf8"));
+  assert.deepEqual(disk.workspaces.scale, original.workspaces.scale);
+  await page.close();
+  const reopened = await browser.newPage({ acceptDownloads: true });
+  reopened.on("pageerror", error => errors.push(error.message));
+  await reopened.goto(appUrl);
+  await saved(reopened);
+  await openLegacyRuler(reopened, join(output, "reopened.turnmill"));
+  await stepExport({ page: reopened, dir: output }, "reopened");
   assert.deepEqual(errors, []);
-  console.log("PASS ruler toolbar and panel downloads, 85 metric/imperial marks at 1:1, option parity and scoped engraved STEP with fixture present.");
+  console.log("PASS opened v1 stock and saved its graduated B-rep as STEP before and after a native file round-trip; reference vectors preserve 85 marks.");
 } finally {
   await browser.close();
 }

@@ -40,15 +40,29 @@ export function partFeatures(project: Project, partId: string): Feature[] {
   return project.features.filter((f) => owners.get(f.id) === partId);
 }
 
-export function partSketches(project: Project, partId: string, features: Feature[]): Sketch[] {
-  const used = new Set(features.map((f) => f.sketchId));
-  for (const f of features) {
-    const operations = f.operations?.map((entry) => entry.operation) ?? (f.advanced ? [f.advanced] : []);
-    for (const op of operations) {
-      if (op.kind === "loft") { used.add(op.lowerId); used.add(op.upperId); }
-      if (op.kind === "sweep") { used.add(op.pathId); used.add(op.sectionId); }
-    }
+/** Profiles referenced by a retained feature, including histories absorbed by earlier merges. */
+function collectSketchIds(feature: Feature, ids: Set<string>) {
+  if (feature.sketchId) ids.add(feature.sketchId);
+  const operations = [
+    ...(feature.advanced ? [feature.advanced] : []),
+    ...(feature.operations ?? []).map(entry => entry.operation),
+  ];
+  for (const op of operations) {
+    if (op.kind === "loft") { ids.add(op.lowerId); ids.add(op.upperId); }
+    if (op.kind === "sweep") { ids.add(op.pathId); ids.add(op.sectionId); }
   }
+  for (const nested of feature.merge?.features ?? []) collectSketchIds(nested, ids);
+}
+
+export function featureUsesSketch(feature: Feature, sketchId: string) {
+  const ids = new Set<string>();
+  collectSketchIds(feature, ids);
+  return ids.has(sketchId);
+}
+
+export function partSketches(project: Project, partId: string, features: Feature[]): Sketch[] {
+  const used = new Set<string>();
+  for (const feature of features) collectSketchIds(feature, used);
   return project.sketches.filter((s) => s.partId === partId || used.has(s.id));
 }
 

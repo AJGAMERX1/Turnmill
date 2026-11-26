@@ -38,7 +38,7 @@ export function assemblyParts(project: Project, features: EvaluatedFeature[]) {
         item: numbers[body.id],
         name: body.name,
         quantity: 1,
-        material: Object.hasOwn(materials, materialName ?? "")
+        material: project.workspaces?.refills?.[body.id] ? "Ink, metal and polymer" : Object.hasOwn(materials, materialName ?? "")
           ? String(materialName)
           : String(fallback),
         joint: String(joint?.kind ?? "fixed"),

@@ -9,6 +9,7 @@ import {
   type Edge,
 } from "replicad";
 import { cutHole } from "./holeMachining";
+import { applyGripMilling } from "./gripMilling";
 import { applyKnurl, applyMark } from "./surfaceFinishes";
 import type { EvaluatedFinish } from "./finishingTypes";
 import type { ThreadFrame } from "./threadMates";
@@ -334,6 +335,7 @@ export function applyFinish(
   guides?: Float32Array;
   thread?: Omit<ThreadFrame, "featureId" | "bodyId">;
 } {
+  if (finish.kind === "grip") return { shape: applyGripMilling(shape, finish) };
   if (finish.kind === "knurl")
     return { shape: applyKnurl(shape, finish, kind) };
   if (finish.kind === "mark") return { shape: applyMark(shape, finish, kind) };

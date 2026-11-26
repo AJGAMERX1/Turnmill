@@ -1,5 +1,6 @@
 import { Euler, Matrix4, Vector3, Quaternion } from "three";
 import type { EvaluatedFeature } from "./types";
+import { boltTrackPosition, resolveBoltTrack, type BoltTrack } from "./boltTrack";
 import { evaluate } from "./expressions";
 import { springReading, type CompressionSpring } from "./springForce";
 import {
@@ -16,6 +17,7 @@ export const jointKinds = [
   "ball",
   "planar",
   "screw",
+  "bolt",
 ] as const;
 export type JointKind = (typeof jointKinds)[number];
 type Triple = [string, string, string];
@@ -57,9 +59,12 @@ export type Joint = {
   starts: string;
   hand: 1 | -1;
   bounds?: Record<string, [string, string]>;
+  bolt?: BoltTrack;
   cam?: CamLink;
   spring?: CompressionSpring;
   threadMate?: import("./threadMates").ThreadMate;
+  /** Extra parent frame when a former parent was absorbed by a solid union. */
+  parentFrame?: number[];
   mount?: number[];
   floating?: boolean;
   placement?: Placement;
@@ -67,7 +72,9 @@ export type Joint = {
 export const isFloating = (j?: Joint) => !j || (j.kind === "fixed" && !j.parent && j.floating === true);
 export function jointMount(j: Joint, values: Record<string, number>) {
   const matrix = j.placement ? placementMatrix(j.placement, values) : new Matrix4();
-  return j.mount ? matrix.multiply(new Matrix4().fromArray(j.mount)) : matrix;
+  if (j.mount) matrix.multiply(new Matrix4().fromArray(j.mount));
+  if (j.parentFrame) matrix.premultiply(new Matrix4().fromArray(j.parentFrame));
+  return matrix;
 }
 export type Driver = { active: number; coords: number[] };
 export type JointConfig = Record<string, Joint>;
@@ -92,6 +99,8 @@ export function specs(
     case "revolute":
     case "screw":
       return [{ label: "Rotation", unit: "angle", axis: 0 }];
+    case "bolt":
+      return [{ label: "Bolt travel", unit: "length", axis: 0 }];
     case "slider":
       return [{ label: "Position", unit: "length", axis: 0 }];
     case "cylindrical":
@@ -118,6 +127,7 @@ export function limits(
   k: number,
   values: Record<string, number>,
 ): [number, number] {
+  if (j.kind === "bolt" && k === 0) return [0, resolveBoltTrack(j.bolt, values).total];
   const u = specs(j.kind)[k]?.unit;
   if (!u) return [0, 0];
   const range =
@@ -388,6 +398,12 @@ export function buildPoses(
         const issue = springReading(j.spring, value, values).error;
         if (issue) throw Error(issue);
       }
+      if (j.kind === "bolt") {
+        const pose = boltTrackPosition(resolveBoltTrack(j.bolt, values), value);
+        displacement.addScaledVector(axes[0], pose.axial);
+        rotation.setFromAxisAngle(axes[0], pose.angle);
+        return;
+      }
       if (spec.unit === "angle")
         rotation.multiply(
           new Quaternion().setFromAxisAngle(
@@ -409,7 +425,7 @@ export function buildPoses(
       .multiply(
         new Matrix4().makeTranslation(-origin[0], -origin[1], -origin[2]),
       );
-    if (j.mount || j.placement) mat.premultiply(jointMount(j, values));
+    if (j.parentFrame || j.mount || j.placement) mat.premultiply(jointMount(j, values));
     if (j.parent) {
       if (!ids.includes(j.parent))
         throw Error(

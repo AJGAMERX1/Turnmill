@@ -1,6 +1,7 @@
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type SetStateAction,
@@ -18,11 +19,24 @@ import {
   threadPresets,
   type Finish,
   type FinishKind,
+  type EvaluatedFinish,
 } from "./finishingTypes";
 import type { Project, Feature } from "./types";
+import { GripSettings, initialGripBand } from "./GripSettings";
 
+import type { GripStock } from "./gripBands";
+
+export type GripRequest = {
+  featureId: string;
+  beforeFinishId?: string;
+  priorFinishes?: EvaluatedFinish[];
+};
 type Props = {
   initialKind?: FinishKind;
+  gripStock?: GripStock & { beforeFinishId?: string; priorKey?: string; error?: string };
+  onGripRequest: (request?: GripRequest) => void;
+  values: Record<string, number>;
+  measurementError?: string;
   initialFinishId?: string;
   onPreview?: (finishes: Finish[]) => Promise<{ ok: boolean; message: string }>;
   onClearPreview?: () => void;
@@ -39,6 +53,7 @@ export default function FinishDialog({
   onClose,
   initialKind,
   initialFinishId,
+  gripStock, onGripRequest, values, measurementError,
   onPreview,
   onClearPreview,
   previewPanel,
@@ -57,6 +72,8 @@ export default function FinishDialog({
         profile: "straight",
         termination: "blind",
       };
+    if (kind === "grip")
+      return { ...base, kind, end: "start", style: "rings", count: "6", offset: "2 mm", length: "10 mm", width: "0.6 mm", depth: "0.18 mm" };
     if (kind === "knurl")
       return {
         ...base,
@@ -172,7 +189,7 @@ export default function FinishDialog({
       close();
   }, [project, feature.id, onClose]);
   async function checkDraft(apply: boolean) {
-    if (preview === "pending" || readingGraphic) return;
+    if (preview === "pending" || readingGraphic || (waitingForStock && !active.suppressed)) return;
     if (apply && verified.current === rows) {
       onSave(rows);
       return;
@@ -223,10 +240,47 @@ export default function FinishDialog({
     }
   }
   const active = rows[index];
-  const update = (patch: Record<string, unknown>) =>
+  const editingGrip = active?.kind === "grip";
+  const autoPlace = useRef(new Set(initialKind === "grip" && rows.length ? [rows[rows.length - 1].id] : []));
+  const beforeFinishId = feature.finishes?.find(f => f.id === active?.id)?.id;
+  const inspection = useMemo(() => {
+    if (!editingGrip) return {};
+    const source = feature.finishes ?? [];
+    const before = beforeFinishId ? source.findIndex(f => f.id === beforeFinishId) : source.length;
+    const prior = rows.slice(0, index).filter(f => !f.suppressed);
+    const saved = source.slice(0, before).filter(f => !f.suppressed);
+    try {
+      const priorFinishes = !source[before]?.suppressed && JSON.stringify(prior) === JSON.stringify(saved)
+        ? undefined : prior.map(f => evaluateFinish(f, values));
+      return { request: { featureId: feature.id, beforeFinishId, priorFinishes } };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Check the dimensions of the preceding finish." };
+    }
+  }, [editingGrip, rows, index, feature, beforeFinishId, values]);
+  const requestKey = JSON.stringify(inspection.request);
+  useLayoutEffect(() => {
+    onGripRequest(inspection.request);
+    return () => onGripRequest(undefined);
+  }, [onGripRequest, requestKey]);
+  const measured = inspection.request && gripStock?.beforeFinishId === beforeFinishId &&
+    gripStock?.priorKey === JSON.stringify(inspection.request.priorFinishes) ? gripStock : undefined;
+  const stockIssue = inspection.error || measured?.error || (!measured && measurementError);
+  const waitingForStock = editingGrip && !stockIssue && !measured;
+  useLayoutEffect(() => {
+    if (active?.kind !== "grip" || !measured?.bands.length || !autoPlace.current.delete(active.id)) return;
+    const patch = initialGripBand(active, measured, values);
+    if (patch) setRows(all => all.map(row => row.id === active.id ? { ...row, ...patch } as Finish : row));
+  }, [active, measured, values]);
+  const gripShortcut = (initialKind === "grip" ||
+    feature.finishes?.some(f => f.id === initialFinishId && f.kind === "grip")) && editingGrip;
+
+  const update = (patch: Record<string, unknown>) => {
+    if (active?.kind === "grip" && ["offset","length","width","depth","end"].some(key => key in patch))
+      autoPlace.current.delete(active.id);
     setRows((old) =>
       old.map((r, i) => (i === index ? ({ ...r, ...patch } as Finish) : r)),
     );
+  };
   const field = (label: string, key: string, value: string) => (
     <label>
       {label}
@@ -245,8 +299,81 @@ export default function FinishDialog({
       />
     </label>
   );
+  const historyFields = active && <>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          marginTop: 12,
+        }}
+      >
+        <label
+          style={{ display: "flex", alignItems: "center", gap: 7 }}
+        >
+          <input
+            style={{ width: 15 }}
+            type="checkbox"
+            checked={!active.suppressed}
+            onChange={(e) => update({ suppressed: !e.target.checked })}
+          />
+          Enabled
+        </label>
+        <button
+          type="button"
+          disabled={index === 0}
+          title="Move finish earlier"
+          onClick={() => {
+            const next = [...rows];
+            [next[index], next[index - 1]] = [
+              next[index - 1],
+              next[index],
+            ];
+            setRows(next);
+            setIndex(index - 1);
+          }}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          disabled={index === rows.length - 1}
+          title="Move finish later"
+          onClick={() => {
+            const next = [...rows];
+            [next[index], next[index + 1]] = [
+              next[index + 1],
+              next[index],
+            ];
+            setRows(next);
+            setIndex(index + 1);
+          }}
+        >
+          ↓
+        </button>
+        <button
+          type="button"
+          className="text-btn"
+          onClick={() => {
+            setRows(rows.filter((_, i) => i !== index));
+            setIndex(Math.max(0, index - 1));
+          }}
+        >
+          <Trash2 size={14} /> Remove finish
+        </button>
+      </div>
+      <label>
+        Finish name
+        <input
+          value={active.name}
+          required
+          onChange={(e) => update({ name: e.target.value })}
+        />
+      </label>
+  </>;
   return (
-    <Modal title={"Finish " + feature.name} onClose={close}>
+    <Modal title={editingGrip ? "Grip milling · " + feature.name : "Finish " + feature.name} onClose={close}>
       <div className="finish-layout" data-has-panel={showPanel}>
         {previewPanel && (
           <section
@@ -266,7 +393,7 @@ export default function FinishDialog({
             void checkDraft(true);
           }}
         >
-          <div
+          {!gripShortcut && <div
             style={{
               display: "flex",
               gap: 5,
@@ -298,10 +425,10 @@ export default function FinishDialog({
             >
               <Plus size={16} />
             </button>
-          </div>
+          </div>}
           {active && (
             <>
-              <div className="two-cols">
+              {!gripShortcut && <div className="two-cols">
                 <label>
                   Operation
                   <select
@@ -309,6 +436,8 @@ export default function FinishDialog({
                     value={active.kind}
                     onChange={(e) => {
                       const next = fresh(e.target.value as FinishKind);
+                      if (next.kind === "grip") autoPlace.current.add(active.id);
+                      else autoPlace.current.delete(active.id);
                       setRows((old) =>
                         old.map((r, i) =>
                           i === index ? { ...next, id: r.id } : r,
@@ -323,7 +452,7 @@ export default function FinishDialog({
                     ))}
                   </select>
                 </label>
-                <label>
+                {!editingGrip && <label>
                   End
                   <select
                     aria-label="End"
@@ -337,8 +466,11 @@ export default function FinishDialog({
                       End · maximum {turning || active.kind === "mark" ? "X" : "Z"}
                     </option>
                   </select>
-                </label>
-              </div>
+                </label>}
+              </div>}
+              {active.kind === "grip" && <GripSettings grip={active} update={update} field={field}
+                stock={measured} values={values} stockMessage={stockIssue ? "Surface placement unavailable. " + stockIssue
+                  : waitingForStock ? "Measuring barrel surfaces…" : undefined}/>}
               {(active.kind === "fillet" || active.kind === "chamfer") && (
                 <div className="two-cols">
                   {field(
@@ -656,81 +788,11 @@ export default function FinishDialog({
                   </p>
                 </>
               )}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  marginTop: 12,
-                }}
-              >
-                <label
-                  style={{ display: "flex", alignItems: "center", gap: 7 }}
-                >
-                  <input
-                    style={{ width: 15 }}
-                    type="checkbox"
-                    checked={!active.suppressed}
-                    onChange={(e) => update({ suppressed: !e.target.checked })}
-                  />
-                  Enabled
-                </label>
-                <button
-                  type="button"
-                  disabled={index === 0}
-                  title="Move finish earlier"
-                  onClick={() => {
-                    const next = [...rows];
-                    [next[index], next[index - 1]] = [
-                      next[index - 1],
-                      next[index],
-                    ];
-                    setRows(next);
-                    setIndex(index - 1);
-                  }}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  disabled={index === rows.length - 1}
-                  title="Move finish later"
-                  onClick={() => {
-                    const next = [...rows];
-                    [next[index], next[index + 1]] = [
-                      next[index + 1],
-                      next[index],
-                    ];
-                    setRows(next);
-                    setIndex(index + 1);
-                  }}
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className="text-btn"
-                  onClick={() => {
-                    setRows(rows.filter((_, i) => i !== index));
-                    setIndex(Math.max(0, index - 1));
-                  }}
-                >
-                  <Trash2 size={14} /> Remove finish
-                </button>
-              </div>
             </>
           )}
-          {active && (
-            <label>
-              Finish name
-              <input
-                value={active.name}
-                required
-                onChange={(e) => update({ name: e.target.value })}
-              />
-            </label>
-          )}
+          {gripShortcut ? <details className="grip-history">
+            <summary>History settings</summary>{historyFields}
+          </details> : historyFields}
           <div className="finish-footer">
             {error && (
               <p role="alert" className="error-text">
@@ -752,7 +814,7 @@ export default function FinishDialog({
                 <button
                   type="button"
                   className="finish-preview-button"
-                  disabled={preview === "pending" || readingGraphic}
+                  disabled={preview === "pending" || readingGraphic || (waitingForStock && !active?.suppressed)}
                   onClick={() => void checkDraft(false)}
                 >
                   <Eye size={15} />
@@ -764,9 +826,9 @@ export default function FinishDialog({
               </button>
               <button
                 className="primary"
-                disabled={preview === "pending" || readingGraphic}
+                disabled={preview === "pending" || readingGraphic || (waitingForStock && !active?.suppressed)}
               >
-                Apply finishes
+                {editingGrip ? "Apply grip" : "Apply finishes"}
               </button>
             </div>
           </div>

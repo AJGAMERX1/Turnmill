@@ -88,3 +88,24 @@
     flex-wrap: wrap;
   }
 }
+
+.grip-patterns {border:none;padding:0;margin:0 0 12px}
+.grip-patterns legend {font-size:13px;color:inherit;margin:0 0 6px}
+.grip-patterns>div {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.grip-patterns button {display:grid;gap:6px;justify-items:center;padding:8px 5px;font-size:12px;background:#191f21;border:1px solid #45504e;border-radius:5px;color:#d5dcd9}
+.grip-patterns button[aria-pressed=true] {border-color:var(--gold);color:var(--gold);background:#333129}
+.grip-sample {width:100%;max-width:78px;height:20px;display:block;border-radius:3px;overflow:hidden;background-color:#b2b4a8;box-shadow:inset 0 -4px 4px #24292685,inset 0 2px 2px #f5edce88}
+.grip-sample-rings,.grip-sample-crosscut {background-image:repeating-linear-gradient(90deg,transparent 0 6px,#545c55 6px 8px,#d1d1bc 8px 9px)}
+.grip-sample-flutes {background-image:repeating-linear-gradient(0deg,transparent 0 5px,#545c55 5px 7px,#d1d1bc 7px 8px)}
+.grip-sample-crosscut {background-image:repeating-linear-gradient(0deg,transparent 0 5px,#545c55 5px 7px),repeating-linear-gradient(90deg,transparent 0 6px,#545c55 6px 8px,#d1d1bc 8px 9px)}
+.grip-patterns p {margin:6px 0;color:var(--muted);font-size:12px;line-height:1.4}
+.grip-history {border-top:1px solid var(--line);padding-top:9px;margin:7px 0 12px}
+.grip-history summary {font-size:12px;color:var(--muted);cursor:pointer}
+
+.grip-placement {margin: 5px 0 12px; padding: 9px 12px; background: #191f21; border: 1px solid var(--line); border-radius: 6px}
+.grip-placement-heading {display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px}
+.grip-placement-heading button {font-size: 12px; padding: 4px 8px}
+.grip-band-diagram {display: block; width: 100%; height: 36px; margin: 4px 0; color: var(--gold)}
+.grip-placement p,.grip-stock-note {margin: 6px 0 2px; font-size: 12px; color: var(--muted); line-height: 1.4}
+.grip-placement p.grip-placement-warning {color: #ffb886}
+.grip-placement label {margin-top: 8px}

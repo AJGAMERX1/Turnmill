@@ -129,7 +129,7 @@ export function projectView(shape: AnyShape, dir: Direction, x: Direction) {
 type XYZ = [number, number, number];
 type Bounds3D = [XYZ, XYZ];
 
-function solidBounds(shape: Shape3D): Bounds3D {
+export function solidBounds(shape: Shape3D): Bounds3D {
   const oc = getOC(),
     box = new BoundingBox();
   let bounds;
