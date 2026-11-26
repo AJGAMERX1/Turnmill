@@ -1,3 +1,4 @@
+import type { MenuAnchor } from "./ContextMenu";
 import { observeGeometry } from "../tests/hook/observe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createStudio, type View } from "./studio";
@@ -28,6 +29,9 @@ type Props = {
   fitToken: number;
   exportRequest: ExportRequest | null;
   appearances?: number[];
+  visibleBodyId?: string;
+  onBodyContextMenu?: (anchor: MenuAnchor, bodyId: string | null) => void;
+  onBodyPick?: (bodyId: string) => void;
   onStatus: (status: KernelStatus) => void;
   takeFinishBody?: () => FinishBodySnapshot | undefined;
 };
@@ -71,6 +75,9 @@ export function Viewport({
   onStatus,
   takeFinishBody,
   appearances = [],
+  visibleBodyId,
+  onBodyContextMenu,
+  onBodyPick,
 }: Props) {
   const node = useRef<HTMLDivElement>(null);
   const engine = useRef<Worker | undefined>(undefined);
@@ -87,8 +94,19 @@ export function Viewport({
   cb.current = onStatus;
   const revision = useRef(0),
     lastExport = useRef<number | undefined>(undefined);
-  const colors = useRef(appearances);
-  colors.current = appearances;
+  const presentation = useRef({ appearances, visibleBodyId, onBodyContextMenu, onBodyPick });
+  presentation.current = { appearances, visibleBodyId, onBodyContextMenu, onBodyPick };
+  const showing = useRef<string[]>([]);
+  const building = useRef<string[]>([]);
+  const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
+  function displayInstalled() {
+    const { visibleBodyId: scope, appearances: colors } = presentation.current;
+    const { ids, meshes } = installed.current;
+    const index = scope === undefined ? -1 : ids.indexOf(scope);
+    showing.current = scope === undefined ? ids : index < 0 ? [] : [scope];
+    studio.current?.updateMeshes(scope === undefined ? meshes : index < 0 ? [] : [meshes[index]]);
+    studio.current?.setColors(scope === undefined ? colors : index < 0 ? [] : [colors[index]]);
+  }
   const signature = useMemo(
     () => inputSignature ?? JSON.stringify(features),
     [features, inputSignature],
@@ -105,6 +123,7 @@ export function Viewport({
     const job = pendingBuild.current;
     pendingBuild.current = null;
     activeBuild.current = true;
+    building.current = job.features.filter((feature) => feature.operation === "new").map((feature) => feature.id);
     engine.current.postMessage({
       type: "build",
       ...job,
@@ -119,7 +138,14 @@ export function Viewport({
   useEffect(() => {
     if (!node.current) return;
     try {
-      studio.current = createStudio(node.current, setSelected);
+      studio.current = createStudio(node.current, (label, index) => {
+        setSelected(label);
+        const id = index === null ? undefined : showing.current[index];
+        if (id !== undefined) presentation.current.onBodyPick?.(id);
+      }, (anchor, index) => {
+        const id = index === null ? null : showing.current[index];
+        if (id !== undefined) presentation.current.onBodyContextMenu?.(anchor, id);
+      });
     } catch {
       setDisplayError(
         "The 3D view needs WebGL 2. Enable hardware acceleration in your browser, then reload.",
@@ -151,12 +177,12 @@ export function Viewport({
             data.keys.map((key) => [key, available.get(key)!]),
           );
           retained.current = next;
-          studio.current?.updateMeshes([...next.values()]);
+          installed.current = { ids: building.current, meshes: [...next.values()] };
         } else {
           retained.current.clear();
-          studio.current?.updateMeshes(data.meshes);
+          installed.current = { ids: building.current, meshes: data.meshes };
         }
-        studio.current?.setColors(colors.current);
+        displayInstalled();
         publish({
           busy: false,
           error: "",
@@ -175,7 +201,8 @@ export function Viewport({
       } else {
         if (data.task === "build") {
           retained.current.clear();
-          studio.current?.updateMeshes([]);
+          installed.current = { ids: [], meshes: [] };
+          displayInstalled();
           publish({
             volume: 0,
             area: 0,
@@ -190,7 +217,8 @@ export function Viewport({
       retained.current.clear();
       activeBuild.current = false;
       pendingBuild.current = null;
-      studio.current?.updateMeshes([]);
+      installed.current = { ids: [], meshes: [] };
+      displayInstalled();
       publish({
         busy: false,
         error:
@@ -223,8 +251,9 @@ export function Viewport({
     dispatchBuild();
   }, [signature]);
   useEffect(() => {
-    studio.current?.setColors(colors.current);
-  }, [appearances.join(",")]);
+    displayInstalled();
+  }, [visibleBodyId, appearances.join(",")]);
+  useEffect(() => { studio.current?.fit(); }, [visibleBodyId]);
   useEffect(() => {
     studio.current?.setView(view);
   }, [view]);

@@ -83,11 +83,13 @@ export default function PenGuidePanel({
       "Set Barrel length in the Inspector, then revolve the closed profile 360° about X.",
     cap: "Set Thread pitch in the Inspector. Both threads will use that parameter.",
     internals:
-      "The refill slides inside the bore. The pocket clip stays fixed to the cap.",
+      "Turning the cap drives a cam that slides the refill through the barrel. The clip turns with the cap.",
     motion:
-      "Select Threaded cap. Enter 360° in Drive value, then choose Save current pose.",
+      "Choose Twist cap to extend the tip by a half-turn. Twist again to retract it. Save current pose with the tip extended to continue.",
     clearance:
-      (guide.travel === undefined
+      (guide.refillTravel !== undefined
+        ? "The refill moved " + Number(Math.abs(guide.refillTravel).toFixed(3)) + " mm. "
+        : guide.travel === undefined
         ? ""
         : "Saved travel " + Number(guide.travel.toFixed(4)) + " mm. ") +
       "Run Full travel for the threaded cap against the barrel.",
@@ -104,7 +106,7 @@ export default function PenGuidePanel({
     barrel: "Revolve barrel",
     cap: "Add threaded cap",
     internals: "Add refill and clip",
-    motion: "Find rotation control",
+    motion: "Twist cap",
     clearance: "Find clearance check",
     drawing: drawingReady ? "Find PDF export" : "Open barrel drawing",
     finished: "Finish",

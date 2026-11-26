@@ -11,8 +11,15 @@ export type Constraint = {
 export type Sketch = {
   id: string;
   name: string;
+  partId?: string;
   points: Point[];
   constraints: Constraint[];
+  sizing?: Partial<Record<"x" | "y", {
+    radial: boolean;
+    lower: string;
+    size: string;
+    coordinates: string[];
+  }>>;
 };
 export type OperationEntry = {
   id: string;
@@ -65,6 +72,7 @@ export type Parameter = {
   label?: string;
   kind?: "length" | "angle" | "scalar";
 };
+export type PartTab = { id: string; name: string };
 export type Project = {
   version: 1;
   id: string;
@@ -72,6 +80,7 @@ export type Project = {
   parameters: Parameter[];
   sketches: Sketch[];
   features: Feature[];
+  emptyParts?: PartTab[];
   importedFiles?: ImportedFile[];
   workspaces?: Record<string, any>;
 };

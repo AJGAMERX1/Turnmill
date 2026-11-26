@@ -3,7 +3,7 @@
 // their distances to that surface bounds their separation throughout travel.
 import { cast, getOC, makeBox, type AnyShape, type Shape3D } from "replicad";
 import { Matrix4, Vector3 } from "three";
-import { buildPoses, screwLead } from "./kinematics";
+import { buildPoses, jointMount, screwLead } from "./kinematics";
 import type { ThreadFrame } from "./threadMates";
 import { evaluate } from "./expressions";
 import type { Probe } from "./clearance";
@@ -269,7 +269,7 @@ export async function threadClearanceBound(
   const radius = male.diameter / 2,
     minor = radius - (5 * Math.sqrt(3) * p) / 16;
   if (minor <= 0) return;
-  const mount = new Matrix4().fromArray(j.mount || new Matrix4().toArray());
+  const mount = jointMount(j, values);
   const toAxis = (
     male.axis === "Z" ? new Matrix4().makeRotationY(Math.PI / 2) : new Matrix4()
   ).multiply(

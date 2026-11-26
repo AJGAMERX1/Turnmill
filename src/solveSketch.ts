@@ -4,7 +4,8 @@ import {
   type SketchPrimitive,
 } from "@salusoft89/planegcs";
 import solverUrl from "@salusoft89/planegcs/dist/planegcs_dist/planegcs.wasm?url";
-import { evaluate } from "./expressions";
+import { evaluate, isExpression } from "./expressions";
+import { validateProfileSizing } from "./profileSizing";
 import type { Constraint, Point, Sketch } from "./types";
 
 export type XY = { x: number; y: number };
@@ -19,9 +20,7 @@ export type SketchSolution = {
 };
 let engine: ReturnType<typeof init_planegcs_module> | undefined;
 
-export function isExpression(value: string) {
-  return !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim());
-}
+export { isExpression } from "./expressions";
 
 export const ruleNames: Record<string, string> = {
   symmetricX: "Symmetric about X axis",
@@ -96,6 +95,7 @@ export async function solveSketch(
   sketch: Sketch,
   parameters: Record<string, number>,
 ): Promise<SketchSolution> {
+  validateProfileSizing(sketch, parameters);
   const seeds = coordinateSeeds(sketch.points, parameters),
     n = seeds.length;
   if (n < 3) throw new Error("A closed profile needs at least three vertices.");

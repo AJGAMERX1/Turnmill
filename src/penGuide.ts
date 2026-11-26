@@ -18,6 +18,8 @@ export type PenGuide = {
   stage: Stage;
   paused: boolean;
   barrelId: string;
+  refillMechanism?: 1;
+  refillTravel?: number;
   rotation?: number;
   travel?: number;
   lowerBound?: number;
@@ -29,7 +31,7 @@ export function penGuide(project: Project): PenGuide | undefined {
     guideSteps.includes(state.stage) &&
     typeof state.barrelId === "string" &&
     typeof state.paused === "boolean" &&
-    [state.rotation, state.travel, state.lowerBound].every(
+    [state.rotation, state.travel, state.refillTravel, state.lowerBound].every(
       (value) => value === undefined || Number.isFinite(value),
     )
     ? state
@@ -63,6 +65,7 @@ export function guidedPen(): Project {
         stage: "barrel",
         paused: false,
         barrelId: "",
+        refillMechanism: 1,
       } satisfies PenGuide,
     },
   };
@@ -177,7 +180,7 @@ export function addGuideParts(project: Project): Project {
       },
     },
   };
-  return setGuide(p, { stage: capStep ? "internals" : "motion" });
+  return setGuide(p, { stage: capStep ? "internals" : "motion", refillMechanism: 1 });
 }
 
 export function recordGuideMotion(
@@ -186,6 +189,7 @@ export function recordGuideMotion(
   angle: number,
   lead: number,
   isMatedScrew: boolean,
+  refillTravel: number,
 ) {
   const guide = penGuide(p);
   if (
@@ -193,6 +197,7 @@ export function recordGuideMotion(
     guide.paused ||
     selected !== "pen-cap" ||
     !isMatedScrew ||
+    !Number.isFinite(refillTravel) || Math.abs(refillTravel) <= 0.001 ||
     !(Math.abs(angle) > 0.001) ||
     !Number.isFinite(lead) ||
     !lead
@@ -202,6 +207,7 @@ export function recordGuideMotion(
     stage: "clearance",
     rotation: angle,
     travel: (angle * lead) / 360,
+    refillTravel,
   });
 }
 

@@ -110,6 +110,10 @@ try {
         ...config,
         "pen-cap": { ...cap, threadMate: link },
       });
+      assert.throws(() => pose(mounted, 0), /same joint axis and parent/,
+        "A cap remounted across axes cannot drive the original coaxial refill");
+      // Study the remounted screw with its original follower uncoupled.
+      mounted["pen-refill"] = { ...mounted["pen-refill"], cam: undefined };
       const point = (v) =>
         new Vector3(...a.entrance).applyMatrix4(pose(mounted, v));
       assert(point(0).distanceTo(new Vector3(4, -2, 22)) < 1e-8);

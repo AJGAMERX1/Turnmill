@@ -11,6 +11,8 @@ import {
 import type { Project, Feature, Parameter, Sketch } from "./types";
 import { evaluate, resolveParameters } from "./expressions";
 import { uid } from "./projects";
+import { solveSketch } from "./solveSketch";
+import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
 export function Modal({
   title,
   children,
@@ -174,25 +176,30 @@ export function ParameterDialog({
 }
 export function FeatureDialog({
   project,
+  scopedPart = false,
+  editingProfile,
+  onKindChange,
   initial,
   preferred,
   suggestedName,
   sketchId,
+  onEditSketch,
   onSave,
   onClose,
 }: {
   project: Project;
+  scopedPart?: boolean;
+  editingProfile: boolean;
+  onKindChange: (kind: "revolve" | "extrude") => void;
   initial?: Feature;
   preferred: "revolve" | "extrude";
   suggestedName?: string;
   sketchId?: string;
+  onEditSketch: (sketch: Sketch) => void;
   onSave: (f: Feature, s?: Sketch) => void;
   onClose: () => void;
 }) {
-  const fresh = !initial,
-    [kind, setKind] = useState<"revolve" | "extrude">(
-      initial?.kind === "import" ? preferred : initial?.kind || preferred,
-    );
+  const fresh = !initial, kind = preferred;
   const [name, setName] = useState(
     initial?.name || suggestedName ||
       (preferred === "revolve" ? "Revolve" : "Extrude") +
@@ -205,9 +212,39 @@ export function FeatureDialog({
   const [amount, setAmount] = useState(
       initial?.amount || (preferred === "revolve" ? "360 deg" : "4 mm"),
     ),
-    [op, setOp] = useState<Feature["operation"]>(initial?.operation || "new"),
+    [op, setOp] = useState<Feature["operation"]>(initial?.operation || (scopedPart && project.features.length ? "add" : "new")),
     [err, setErr] = useState("");
+  const previousKind = useRef(kind);
+  useEffect(() => {
+    if (previousKind.current === kind) return;
+    previousKind.current = kind;
+    setAmount(kind === "revolve" ? "360 deg" : "4 mm");
+  }, [kind]);
+  const sketch = project.sketches.find((s) => s.id === source);
+  const [axisCheck, setAxisCheck] = useState<{
+    sketch: Sketch; parameters: Parameter[]; problem: string;
+  }>();
+  useEffect(() => {
+    if (kind !== "revolve" || !sketch) return;
+    let current = true;
+    async function check(profile: Sketch) {
+      let problem = "";
+      try {
+        const solved = await solveSketch(profile, resolveParameters(project.parameters));
+        if (crossesRevolveAxis(solved.points.map(({ x, y }) => [x, y]))) problem = axisCrossingMessage;
+      } catch (e) {
+        problem = (e as Error).message;
+      }
+      if (current) setAxisCheck({ sketch: profile, parameters: project.parameters, problem });
+    }
+    void check(sketch);
+    return () => { current = false; };
+  }, [kind, sketch, project.parameters]);
+  const checking = kind === "revolve" && !!sketch &&
+    (axisCheck?.sketch !== sketch || axisCheck.parameters !== project.parameters);
+  const axisProblem = kind === "revolve" && sketch && !checking ? axisCheck?.problem : "";
   const submit = () => {
+    if (checking || axisProblem) return;
     try {
       const n = evaluate(
         amount,
@@ -267,6 +304,8 @@ export function FeatureDialog({
       setErr((e as Error).message);
     }
   };
+  // Keep the unfinished feature form mounted while its source sketch is being repaired.
+  if (editingProfile) return null;
   return (
     <Modal title={fresh ? "Create feature" : "Edit feature"} onClose={onClose}>
       <form
@@ -281,12 +320,7 @@ export function FeatureDialog({
               type="button"
               key={k}
               className={kind === k ? "selected" : ""}
-              onClick={() => {
-                if (k !== kind) {
-                  setKind(k);
-                  setAmount(k === "revolve" ? "360 deg" : "4 mm");
-                }
-              }}
+              onClick={() => onKindChange(k)}
             >
               {k === "revolve" ? <RotateCw size={17} /> : <Box size={17} />}{" "}
               {k === "revolve" ? "Revolve" : "Extrude"}
@@ -327,12 +361,20 @@ export function FeatureDialog({
               value={op}
               onChange={(e) => setOp(e.target.value as Feature["operation"])}
             >
-              <option value="new">New body</option>
-              <option value="add">Add material</option>
-              <option value="cut">Cut material</option>
+              {(!scopedPart || !project.features.length || initial?.operation === "new") && <option value="new">New body</option>}
+              {(!scopedPart || (project.features.length > 0 && initial?.operation !== "new")) && <>
+                <option value="add">Add material</option>
+                <option value="cut">Cut material</option>
+              </>}
             </select>
           </label>
         </div>
+        {kind === "revolve" && (axisProblem && sketch ? (
+          <div role="alert" className="error-text">
+            <p>{axisProblem}</p>
+            <button type="button" className="outline-btn" onClick={() => onEditSketch(sketch)}>Edit sketch</button>
+          </div>
+        ) : <p className="muted">The horizontal dashed line at Y = 0 is the turning axis. A profile that touches it makes a solid center. A gap leaves a bore.</p>)}
         {err && (
           <p className="error-text" role="alert">
             {err}
@@ -342,7 +384,7 @@ export function FeatureDialog({
           <button type="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="primary">
+          <button className="primary" disabled={!!axisProblem || checking}>
             {fresh ? "Create feature" : "Apply changes"}
           </button>
         </div>

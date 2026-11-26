@@ -1,0 +1,40 @@
+.tm-context-menu {
+  position: fixed;
+  z-index: 110;
+  min-width: min(210px, calc(100vw - 12px));
+  max-width: calc(100vw - 12px);
+  max-height: calc(100dvh - 12px);
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #424b4c;
+  border-radius: 7px;
+  background: var(--panel);
+  color: #e5e9e6;
+  box-shadow: 0 8px 30px #0008;
+}
+.tm-context-title {
+  padding: 5px 8px 7px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-context-menu [role=menuitem] {
+  width: 100%;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 9px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.tm-context-menu [role=menuitem]:focus-visible {
+  outline: 1px solid var(--gold);
+  outline-offset: -1px;
+  background: var(--raised);
+}
+.tm-context-menu kbd { margin-left: auto; color: var(--muted); font: 10px var(--mono); }
+.tm-context-menu .divider { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 4px 4px; }
+.tm-context-menu .danger { color: #f0a59c; }

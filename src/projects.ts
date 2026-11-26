@@ -1,4 +1,6 @@
 import { validateImportedFiles, getImportedBrep } from "./exchangeTypes";
+import { camDefaults } from "./camLaw";
+import type { CamLink, Joint } from "./kinematics";
 import type { Project, Point, Sketch, Feature } from "./types";
 export const uid = () => crypto.randomUUID();
 const point = (x: string, y: string): Point => ({ x, y });
@@ -94,6 +96,7 @@ export function validateProject(raw: unknown): Project {
       !s ||
       typeof s.id !== "string" ||
       typeof s.name !== "string" ||
+      (s.partId !== undefined && typeof s.partId !== "string") ||
       ids.has(s.id) ||
       !Array.isArray(s.points) ||
       !s.points.every(
@@ -136,6 +139,16 @@ export function validateProject(raw: unknown): Project {
       throw Error("A saved finishing operation is damaged.");
     ids.add(f.id);
   }
+  if (p.emptyParts !== undefined) {
+    if (!Array.isArray(p.emptyParts)) throw Error("The saved list of part tabs is damaged.");
+    for (const part of p.emptyParts) {
+      if (!part || typeof part.id !== "string" || !part.id || ids.has(part.id) ||
+        typeof part.name !== "string" || !part.name.trim()) {
+        throw Error("A saved part tab needs a unique ID and a name.");
+      }
+      ids.add(part.id);
+    }
+  }
   for (const a of p.parameters)
     if (
       !a ||
@@ -149,7 +162,76 @@ export function validateProject(raw: unknown): Project {
     (typeof p.workspaces !== "object" || Array.isArray(p.workspaces))
   )
     throw Error("Workspace settings are damaged.");
-  return p;
+  return upgradeGuidedRefill(p);
+}
+
+function stockRefillSlider(parent: string): Joint {
+  return {
+    kind: "slider",
+    parent,
+    axis: "X",
+    origin: ["0", "0", "0"],
+    offset: ["0", "0", "0"],
+    min: "0",
+    max: "4 mm",
+    pitch: "thread_pitch",
+    starts: "1",
+    hand: 1,
+  };
+}
+
+function twistRefillJoint(parent: string): Joint {
+  const cam: CamLink = {
+    driver: "pen-cap",
+    direction: -1,
+    datum: "2 mm",
+    phase: "0 deg",
+    springEnabled: true,
+    law: {
+      ...camDefaults({}),
+      radius: "outer_diameter * 3 / 8",
+      lift: "3 mm",
+      lobes: "1",
+      rise: "160 deg",
+      high: "40 deg",
+      returnAngle: "160 deg",
+      travel: "3 mm + 2 * thread_pitch",
+      compression: "5 mm",
+    },
+  };
+  return {
+    ...stockRefillSlider(parent),
+    min: "-1 mm",
+    max: "2 mm + 2 * thread_pitch",
+    cam,
+  };
+}
+
+// Only replace the original tutorial slider. A changed joint or independently
+// positioned refill is a maker's saved design, even if the guide is still open.
+function upgradeGuidedRefill(project: Project): Project {
+  const ws = project.workspaces;
+  const guide = ws?.penGuide;
+  if (!ws || guide?.version !== 1 || guide.refillMechanism) return project;
+  const driver = ws.joints?.["pen-cap"] as Joint | undefined;
+  const slider = ws.joints?.["pen-refill"] as Joint | undefined;
+  if (driver?.kind !== "screw" || driver.parent !== guide.barrelId || driver.axis !== "X" || !slider)
+    return project;
+  const rest = ws.jointPose?.["pen-refill"] ?? [];
+  const stock = stockRefillSlider(guide.barrelId);
+  if (!Array.isArray(rest) || rest.some((n) => n !== 0) ||
+      !project.features.some((f) => f.id === "pen-refill") ||
+      Object.keys(slider).length !== Object.keys(stock).length ||
+      !Object.entries(stock).every(([key, v]) => JSON.stringify(slider[key as keyof Joint]) === JSON.stringify(v)))
+    return project;
+  return {
+    ...project,
+    workspaces: {
+      ...ws,
+      joints: { ...ws.joints, "pen-refill": twistRefillJoint(guide.barrelId) },
+      penGuide: { ...guide, refillMechanism: 1 },
+    },
+  };
 }
 export function twistPenProject(): Project {
   const p = turnedProject();
@@ -318,7 +400,7 @@ export function twistPenProject(): Project {
           phase: "0 deg",
         },
       },
-      "pen-refill": j("slider", barrel.id, "4 mm"),
+      "pen-refill": twistRefillJoint(barrel.id),
       "pen-clip": j("fixed", "pen-cap", "360 deg"),
     },
   };

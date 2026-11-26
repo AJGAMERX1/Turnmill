@@ -22,6 +22,7 @@ import {
 import { binarySTL, printableMesh } from "./printMesh";
 import { export3MF } from "./exchangeSolids";
 import { applyFinish } from "./finishing";
+import { axisCrossingMessage, crossesRevolveAxis } from "./revolveAxis";
 import type { EvaluatedFeature } from "./types";
 
 const ORIGIN: [number, number, number] = [0, 0, 0];
@@ -130,14 +131,8 @@ function featureTool(feature: EvaluatedFeature): Shape3D {
     throw new Error("Choose an angle of one full turn (360°) or less.");
   if (points.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y)))
     throw new Error("Give every sketch corner a valid X and Y dimension.");
-  if (
-    kind === "revolve" &&
-    points.some(([, y]) => y < -LINEAR_TOLERANCE) &&
-    points.some(([, y]) => y > LINEAR_TOLERANCE)
-  )
-    throw new Error(
-      "Keep the turning profile on one side of the X axis. Its outline can touch the axis.",
-    );
+  if (kind === "revolve" && crossesRevolveAxis(points))
+    throw new Error(axisCrossingMessage);
   for (let i = 0; i < points.length; i++) {
     const [x, y] = points[i],
       [nx, ny] = points[(i + 1) % points.length];

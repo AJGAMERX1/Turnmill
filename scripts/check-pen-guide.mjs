@@ -64,13 +64,32 @@ try {
   assert.equal(project.workspaces.joints["pen-refill"].parent, barrel.id);
   assert.equal(resolveParameters(project.parameters).barrel_length, 101.6);
   assert.equal(addGuideParts(project), project);
-  assert.equal(recordGuideMotion(project, "pen-cap", 0, 0.75, true), project);
+  const { assemblyCamReadings, buildPoses, jointTravelProblem } = await server.ssrLoadModule("/src/kinematics.ts");
+  const ids = project.features.map((f) => f.id), joints = project.workspaces.joints;
+  const values = resolveParameters(project.parameters);
+  assert.equal(jointTravelProblem(ids, joints, {}, values, "pen-cap", 0), "");
+  for (const [angle, tip] of [[0, 0.5], [180, -2.125], [360, 1.25], [720, 2], [0, 0.5]]) {
+    const pose = { "pen-cap": [angle] };
+    assert.equal(assemblyCamReadings(ids, joints, pose, values)[0].error, "");
+    assert.equal(buildPoses(ids, joints, pose, values)[ids.indexOf("pen-refill")][12] - 1.5, tip);
+  }
+  const legacy = structuredClone(project);
+  delete legacy.workspaces.penGuide.refillMechanism;
+  const oldRefill = legacy.workspaces.joints["pen-refill"];
+  delete oldRefill.cam;
+  Object.assign(oldRefill, { min: "0", max: "4 mm" });
+  assert.equal(validateProject(legacy).workspaces.joints["pen-refill"].cam.driver, "pen-cap");
+  oldRefill.max = "5 mm";
+  assert.equal(validateProject(legacy).workspaces.joints["pen-refill"].cam, undefined);
+  assert.equal(recordGuideMotion(project, "pen-cap", 0, 0.75, true, 0), project);
+  assert.equal(recordGuideMotion(project, "pen-cap", 180, 0.75, true, 0), project);
   assert.equal(
-    recordGuideMotion(project, "pen-cap", 360, 0.75, false),
+    recordGuideMotion(project, "pen-cap", 360, 0.75, false, 0.75),
     project,
   );
-  project = recordGuideMotion(project, "pen-cap", 360, 0.75, true);
-  assert.equal(penGuide(project).travel, 0.75);
+  project = recordGuideMotion(project, "pen-cap", 180, 0.75, true, -2.625);
+  assert.equal(penGuide(project).travel, 0.375);
+  assert.equal(penGuide(project).refillTravel, -2.625);
   const report = {
     id: "pen-cap",
     pair: barrel.id,

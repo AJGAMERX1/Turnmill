@@ -385,11 +385,32 @@
           "0",
           "0"
         ],
-        "min": "0",
-        "max": "4 mm",
+        "min": "-1 mm",
+        "max": "2 mm + 2 * thread_pitch",
         "pitch": "thread_pitch",
         "starts": "1",
-        "hand": 1
+        "hand": 1,
+        "cam": {
+          "driver": "pen-cap",
+          "direction": -1,
+          "datum": "2 mm",
+          "phase": "0 deg",
+          "springEnabled": true,
+          "law": {
+            "lift": "3 mm",
+            "radius": "outer_diameter * 3 / 8",
+            "lobes": "1",
+            "rise": "160 deg",
+            "high": "40 deg",
+            "returnAngle": "160 deg",
+            "preload": "0.6",
+            "rate": "0.7",
+            "load": "0.2",
+            "travel": "3 mm + 2 * thread_pitch",
+            "compression": "5 mm",
+            "pressure": "45 deg"
+          }
+        }
       },
       "pen-clip": {
         "kind": "fixed",

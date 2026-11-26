@@ -5,12 +5,14 @@ import {
   ChevronDown,
   Crosshair,
   Diamond,
+  Box,
   Hand,
   Maximize,
   Minus,
   MousePointer2,
   Plus,
   Redo2,
+  RotateCw,
   Spline,
   Square,
   Trash2,
@@ -18,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import type { Constraint, Point, Sketch } from "./types";
+import { ContextMenu, menuTrigger, type MenuAnchor } from "./ContextMenu";
 import {
   coordinateSeeds,
   isExpression,
@@ -34,6 +37,7 @@ type Props = {
   turned: boolean;
   onChange: (s: Sketch) => void;
   onClose: () => void;
+  onFeature: (kind: "extrude" | "revolve", sketchId: string) => void;
 };
 type Tool = "select" | "polygon" | "rectangle" | "pan";
 type Camera = { cx: number; cy: number; scale: number };
@@ -161,8 +165,10 @@ export default function SketchEditor({
   turned,
   onChange,
   onClose,
+  onFeature,
 }: Props) {
   const [draft, setDraft] = useState<Sketch>(sketch);
+  const [menu, setMenu] = useState<MenuAnchor | null>(null);
   const [undo, setUndo] = useState<Sketch[]>([]),
     [redo, setRedo] = useState<Sketch[]>([]);
   const [solved, setSolved] = useState<{
@@ -361,6 +367,7 @@ export default function SketchEditor({
   }
   function start(e: ReactPointerEvent<SVGElement>, index = -1) {
     if (e.button !== 0 && e.button !== 1) return;
+    if (e.button === 0 && e.ctrlKey) return;
     e.stopPropagation();
     const loc = local(e);
     if (tool === "pan" || e.button === 1) {
@@ -557,6 +564,12 @@ export default function SketchEditor({
           : "Select a vertex to edit its coordinates, or an edge to add a constraint.";
   const dof = active?.value?.dof;
   const isValid = !!active?.value && !drawingMode;
+  function finish(kind?: "extrude" | "revolve") {
+    if (!isValid) return;
+    onChange(draft);
+    onClose();
+    if (kind) onFeature(kind, draft.id);
+  }
   const selectedIndex = Math.min(selected.i, Math.max(0, verts.length - 1));
   function onKey(e: React.KeyboardEvent) {
     if (e.key === "Tab" && dialog.current) {
@@ -716,7 +729,7 @@ export default function SketchEditor({
                 </button>
               </form>
             )}
-            <div className="sk-plot">
+            <div className="sk-plot" tabIndex={0} aria-label="Sketch canvas" {...menuTrigger(setMenu)}>
               <svg
                 ref={svg}
                 className={"sk-canvas mode-" + tool}
@@ -782,7 +795,7 @@ export default function SketchEditor({
                   textAnchor="end"
                   className="sk-axis"
                 >
-                  {turned ? "X · turning axis" : "X"}
+                  X · revolve axis (Y = 0)
                 </text>
                 <text
                   x={Math.max(9, Math.min(size.width - 30, origin.x + 7))}
@@ -1207,14 +1220,24 @@ export default function SketchEditor({
           <button
             className="sk-finish"
             disabled={!isValid}
-            onClick={() => {
-              onChange(draft);
-              onClose();
-            }}
+            onClick={() => finish()}
           >
             <Check size={16} /> Finish sketch
           </button>
         </footer>
+        {menu && (
+          <ContextMenu anchor={menu} title={draft.name} onClose={() => setMenu(null)}
+            items={[
+              ...(tool === "polygon" && drawing.length >= 3
+                ? [{ label: "Close profile", icon: Check, run: () => replace(drawing) }]
+                : []),
+              { label: "Revolve", icon: RotateCw, disabled: !isValid, run: () => finish("revolve") },
+              { label: "Extrude", icon: Box, disabled: !isValid, run: () => finish("extrude") },
+              { label: "Finish sketch", icon: Check, disabled: !isValid, run: () => finish() },
+              { label: "Fit sketch to view", icon: Maximize, divider: true, run: () => setCamera(null) },
+            ]}
+          />
+        )}
       </div>
     </div>
   );
