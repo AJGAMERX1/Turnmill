@@ -175,8 +175,8 @@ export function createStudio(
     fittedWidth = xExtent * 1.43;
     fittedHeight = Math.max(yExtent, diagonal * 0.045) * 1.43;
     updateProjection();
-    controls.update();
-    render();
+    // A camera change already draws through the OrbitControls change listener.
+    if (!controls.update()) render();
   }
   function markFaces(previous: FaceHit | null) {
     const bodies = new Set([previous?.body, hover?.body, selected?.body]);
@@ -242,12 +242,35 @@ export function createStudio(
     group.add(root);
     return { body, root, mesh };
   }
-  function updateMeshes(data: RenderBody[]) {
+  function applyColors(tones: number[]) {
+    let changed = false;
+    meshes.forEach((mesh, i) => {
+      const color = tones[i];
+      if (!color) return;
+      let mat = colors.get(color);
+      if (!mat) {
+        mat = bodyMaterial.clone();
+        mat.color.setHex(color);
+        if (color === 0x50585a) {
+          mat.metalness = 0.05;
+          mat.roughness = 0.5;
+        }
+        colors.set(color, mat);
+      }
+      if (Array.isArray(mesh.material) && mesh.material[0] === mat) return;
+      mesh.material = [mat, hoverMaterial, chosenMaterial];
+      changed = true;
+    });
+    return changed;
+  }
+  function updateMeshes(data: RenderBody[], tones?: number[]) {
     if (
       data.length === instances.length &&
       data.every((body, i) => instances[i].body === body)
-    )
+    ) {
+      if (tones && applyColors(tones)) render();
       return;
+    }
     const oldBox = box.clone();
     const reusable = new Map(
       instances.map((instance) => [instance.body, instance]),
@@ -264,6 +287,7 @@ export function createStudio(
     instances = next;
     meshes.length = 0;
     for (const instance of next) meshes.push(instance.mesh);
+    if (tones) applyColors(tones);
     const stillVisible = (face: FaceHit | null): FaceHit | null => {
       if (!face) return null;
       const index = meshes.findIndex((mesh) => mesh.geometry === face.geometry);
@@ -406,22 +430,7 @@ export function createStudio(
   return {
     updateMeshes,
     setColors(tones: number[]) {
-      meshes.forEach((mesh, i) => {
-        const color = tones[i];
-        if (!color) return;
-        let mat = colors.get(color);
-        if (!mat) {
-          mat = bodyMaterial.clone();
-          mat.color.setHex(color);
-          if (color === 0x50585a) {
-            mat.metalness = 0.05;
-            mat.roughness = 0.5;
-          }
-          colors.set(color, mat);
-        }
-        mesh.material = [mat, hoverMaterial, chosenMaterial];
-      });
-      render();
+      if (applyColors(tones)) render();
     },
     pickBodyAt(event: PointerEvent) {
       const face = hit(event);

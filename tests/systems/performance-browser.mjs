@@ -7,7 +7,8 @@ import {
 import { openBrowser, appUrl, measure } from "../qa/browser.mjs";
 import { evidence, save, near } from "./runtime.mjs";
 const browser = await openBrowser({ displayEvidence: true }),
-  durations = [];
+  durations = [],
+  samples = [];
 try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 900 },
@@ -30,40 +31,47 @@ try {
       .getByText("f99", { exact: true })
       .dblclick();
     await page.getByLabel("Depth along Z").fill(String(depth));
-    await page.evaluate(() => {
-      const status = document.querySelector(".status-bar");
+    const apply = page.getByRole("button", { name: "Apply changes", exact: true });
+    await apply.evaluate((button) => {
+      const status = document.querySelector(".status-bar > span:first-child");
+      if (status?.textContent.trim() !== "Ready")
+        throw Error("The model must be ready before timing an edit.");
+      window.__qaApplySample = null;
+      let pressTime;
       let busy = false;
-      window.__qaReadyTime = new Promise((resolve) => {
-        const start = performance.now();
-        const o = new MutationObserver(() => {
-          const t = status.innerText;
-          if (!t.includes("Ready")) busy = true;
-          if (busy && t.includes("Ready")) {
-            o.disconnect();
-            resolve(performance.now() - start);
-          }
-        });
-        o.observe(status, {
-          childList: true,
-          subtree: true,
-          characterData: true,
-        });
+      const observer = new MutationObserver(() => {
+        if (pressTime === undefined) return;
+        const state = status.textContent.trim();
+        if (state === "Rebuilding") busy = true;
+        if (busy && state === "Ready") {
+          const readyTime = performance.now();
+          observer.disconnect();
+          window.__qaApplySample = {
+            preDispatchMs: pressTime - armedTime,
+            applyToReadyMs: readyTime - pressTime,
+            totalMs: readyTime - armedTime,
+          };
+        }
       });
+      observer.observe(status, { childList: true, subtree: true, characterData: true });
+      function start(event) {
+        if (!event.isTrusted || !event.isPrimary || event.button !== 0) return;
+        pressTime = event.timeStamp;
+        button.removeEventListener("pointerdown", start, true);
+      }
+      button.addEventListener("pointerdown", start, true);
+      const armedTime = performance.now();
     });
-    await page
-      .getByRole("button", { name: "Apply changes", exact: true })
-      .click();
-    const ms = await page.evaluate(() =>
-      Promise.race([
-        window.__qaReadyTime,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(Error("Ready signal missing")), 20000),
-        ),
-      ]),
+    await apply.click();
+    const sample = await page.waitForFunction(
+      () => window.__qaApplySample, null, { timeout: 20000 },
     );
+    const timing = await sample.jsonValue();
+    await sample.dispose();
+    samples.push({ depth, ...timing });
+    durations.push(timing.applyToReadyMs);
     const current = await measure(page);
     near(current.volume, 149 + 1.5 * depth, 0.15, "edited geometry");
-    durations.push(ms);
   }
   await captureViewport(page, resolve(evidence, "SYS-003/history.png"));
   const result = evaluateInteractiveBudget(finalHistoryEdit, durations);
@@ -80,12 +88,24 @@ try {
     result.budgetMs,
     "ms.",
   );
+} catch (error) {
+  await save("SYS-003/result.json", {
+    issue: "SYS-003",
+    workload: finalHistoryEdit,
+    outcome: "FAIL",
+    durations,
+    message: error.message,
+  });
+  throw error;
 } finally {
   await save("SYS-003/browser-timings.json", {
     durations,
+    samples,
     unit: "ms",
-    start: "Immediately before Playwright clicks Apply",
-    end: "First Ready transition after rebuilding",
+    start: "Trusted primary pointerdown event timestamp on Apply changes",
+    end: "First Ready transition after Rebuilding",
+    preDispatchMs: "Observer armed to pointerdown (driver and actionability wait)",
+    totalMs: "Observer armed to Ready",
   });
   await browser.close();
 }

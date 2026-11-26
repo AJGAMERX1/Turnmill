@@ -104,8 +104,10 @@ export function Viewport({
     const { ids, meshes } = installed.current;
     const index = scope === undefined ? -1 : ids.indexOf(scope);
     showing.current = scope === undefined ? ids : index < 0 ? [] : [scope];
-    studio.current?.updateMeshes(scope === undefined ? meshes : index < 0 ? [] : [meshes[index]]);
-    studio.current?.setColors(scope === undefined ? colors : index < 0 ? [] : [colors[index]]);
+    studio.current?.updateMeshes(
+      scope === undefined ? meshes : index < 0 ? [] : [meshes[index]],
+      scope === undefined ? colors : index < 0 ? [] : [colors[index]],
+    );
   }
   const signature = useMemo(
     () => inputSignature ?? JSON.stringify(features),

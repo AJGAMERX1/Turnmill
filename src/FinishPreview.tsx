@@ -26,8 +26,7 @@ export default function FinishPreview({
     };
   }, []);
   useEffect(() => {
-    studio.current?.updateMeshes([mesh]);
-    studio.current?.setColors([color]);
+    studio.current?.updateMeshes([mesh], [color]);
   }, [mesh, color]);
   const views: [string, View][] = [
     ["Isometric", "iso"],
