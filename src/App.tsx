@@ -149,6 +149,15 @@ export function downloadFile(name: string, blob: Blob) {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
+function turningProfiles(features: Feature[]) {
+  const profiles = new Map<string, Feature>();
+  function visit(f: Feature) {
+    if (f.kind === "revolve" && !profiles.has(f.sketchId)) profiles.set(f.sketchId, f);
+    for (const source of f.merge?.features ?? []) visit(source);
+  }
+  features.forEach(visit);
+  return profiles;
+}
 function ProfileCard({ points }: { points: [number, number][] }) {
   if (!points.length) return null;
   const xs = points.map((p) => p[0]),
@@ -357,15 +366,24 @@ export default function App() {
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, [menu]);
-  const selectedSketch = sketches.find((s) => s.id === selected);
+  const selectedSketch = sketches.find((s) => s.id === selected) ?? (!history.length ? sketches.at(-1) : undefined);
   const currentF = selectedSketch
-    ? history.find((f) => f.sketchId === selected)
+    ? history.find((f) => f.sketchId === selectedSketch.id)
     : history.find((f) => f.id === selected) || history.at(-1);
   const activeSketch =
     pendingSketch || project.sketches.find((s) => s.id === editingSketch);
-  const selectedS =
-    selectedSketch ||
-    sketches.find((s) => s.id === currentF?.sketchId) || (currentF?.kind === "merge" ? undefined : sketches.at(-1));
+  const selectedS = selectedSketch ?? (currentF?.kind === "extrude" || currentF?.kind === "revolve"
+    ? sketches.find(s => s.id === currentF.sketchId) : undefined);
+  const turns = useMemo(() => turningProfiles(history), [history]);
+  const turnedProfile = selectedSketch ? turns.has(selectedSketch.id) || !!selectedSketch.sizing?.y?.radial
+    : currentF?.kind === "revolve";
+  const otherTurns = useMemo(() => {
+    if (selectedSketch || !currentF) return [];
+    const features = currentF.operation === "new" ? partFeatures(project, currentF.id)
+      : currentF.kind === "merge" ? [currentF] : [];
+    return [...turningProfiles(features).values()].filter(f => f.sketchId !== currentF.sketchId &&
+      sketches.some(s => s.id === f.sketchId));
+  }, [currentF, selectedSketch, project.features, sketches]);
   const resultFor = model.features.find((f) => f.id === currentF?.id);
   const modelSignature = useMemo(
     () => JSON.stringify(model.features),
@@ -398,6 +416,9 @@ export default function App() {
       ? project.workspaces!.bodyMaterials[id]
       : defaultMaterial;
   const selectedBodyId = activePart?.id ?? bodyFor(currentF) ?? "";
+  const finishedDimensions = valid && !selectedS && !currentF?.suppressed &&
+    (currentF?.kind === "import" || currentF?.kind === "merge")
+    ? kernel.bodyProperties?.[solidFeatures.findIndex(f => f.id === selectedBodyId)]?.dimensions : undefined;
   const gripTarget = dialog === "finish" && currentF?.id === gripRequest?.featureId ? gripRequest : undefined;
   const gripBodyId = gripTarget ? bodyFor(currentF) : undefined;
   const material = materialOf(selectedBodyId);
@@ -514,7 +535,7 @@ export default function App() {
     );
     setEditingSketch(null);
     setPendingSketch(null);
-    setSelected(p.features.at(-1)?.id || "");
+    setSelected(p.features.at(-1)?.id ?? p.sketches.at(-1)?.id ?? "");
     setView("iso");
     setFit((v) => v + 1);
     close();
@@ -1866,32 +1887,19 @@ export default function App() {
                 >
                   Dimensions
                 </SectionHeading>
-                {project.parameters.slice(0, 5).map((p, i) => (
-                  <label className="dim-field" key={p.name}>
-                    <span>{p.label || p.name.replaceAll("_", " ")}</span>
-                    <div>
-                      <InputValue
-                        label={p.label || p.name}
-                        value={p.expression}
-                        onCommit={(v) => {
-                          const params = project.parameters.map((q, j) =>
-                            i === j ? { ...q, expression: v } : q,
-                          );
-                          try {
-                            resolveParameters(params);
-                            commit({ ...project, parameters: params });
-                          } catch (e) {
-                            setNotice((e as Error).message);
-                          }
-                        }}
-                      />
-                    </div>
-                  </label>
-                ))}
+                {finishedDimensions && <div className="finished-dimensions">
+                  <small>Finished body size</small>
+                  <dl aria-label="Finished body dimensions">{["X", "Y", "Z"].map((axis, i) => <div key={axis}>
+                    <dt>{axis} span</dt><dd>{number(finishedDimensions[i], 6)} mm</dd>
+                  </div>)}</dl>
+                </div>}
                 {!isScaleFeature(project, currentF?.id) && <SelectionDimensions
                   key={selectedSketch?.id || currentF?.id || selectedS?.id}
-                  project={project} sketch={currentF?.kind === "import" ? undefined : selectedS}
+                  project={project} sketch={selectedS} sketchSelected={!!selectedSketch} turnedProfile={turnedProfile}
                   feature={currentF} onChange={commit} />}
+                {otherTurns.map(f => <button key={f.sketchId} className="outline-btn" onClick={() => setSelected(f.sketchId)}>
+                  <SquarePen size={15}/> Inspect {f.name} profile
+                </button>)}
                 <button
                   className="all-params"
                   onClick={() => setDialog("parameters")}

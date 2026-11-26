@@ -85,7 +85,7 @@ try {
   assert.deepEqual(undone.project.features[0].finishes, fluted.project.features[0].finishes);
   assert(Math.abs(undone.bodies[0].volume - fluted.bodies[0].volume) < 1e-6);
   await button(page,"Redo").click(); await ready(page); await saved(page);
-  await page.reload(); await ready(page);
+  await page.reload({ waitUntil: "commit", timeout: 120000 }); await ready(page);
   assert.equal((await measure(page)).project.features[0].finishes[0].style,"rings");
 
   const custom = sleeve("taper", "Revolve 1", 0, 30);
@@ -114,7 +114,7 @@ try {
   assert.equal(await dialog.getByLabel("Groove count", {exact:true}).inputValue(), "5");
   assert.equal(await button(dialog,"Flutes").getAttribute("aria-pressed"), "true");
   await button(dialog,"Apply grip").click(); await dialog.waitFor({state:"hidden"});
-  await ready(page); await saved(page); await page.reload(); await ready(page);
+  await ready(page); await saved(page); await page.reload({ waitUntil: "commit", timeout: 120000 }); await ready(page);
   const recovered = await measure(page), grips = recovered.project.features[0].finishes;
   assert.equal(grips.length, 1, "repair updates existing finish");
   assert.equal(grips[0].id, tapered.project.features[0].finishes[0].id);

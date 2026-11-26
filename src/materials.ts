@@ -6,7 +6,11 @@ export const materials: Record<string, { density: number; color: number }> = {
   Titanium: { density: 4.51, color: 0x999e9e },
   Acetal: { density: 1.41, color: 0x50585a },
 };
-export type BodyProps = { volume: number; center: [number, number, number] };
+export type BodyProps = {
+  volume: number;
+  center: [number, number, number];
+  dimensions?: [number, number, number];
+};
 export function massProperties(
   bodies: BodyProps[],
   densities: number[],

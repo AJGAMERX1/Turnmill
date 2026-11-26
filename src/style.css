@@ -733,7 +733,7 @@ button.primary:hover:not(:disabled) {
 }
 .history-actions,
 .properties label,
-.properties dl > div {
+:is(.properties, .finished-dimensions) dl > div {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -749,13 +749,13 @@ button.primary:hover:not(:disabled) {
   padding: 4px 6px;
   width: 96px;
 }
-.properties dl {
+:is(.properties, .finished-dimensions) dl {
   margin: 8px 0 0;
 }
-.properties dl > div {
+:is(.properties, .finished-dimensions) dl > div {
   padding: 3px 0;
 }
-.properties dd {
+:is(.properties, .finished-dimensions) dd {
   font: 11.5px var(--mono);
   color: #d3d9d5;
 }
@@ -1696,4 +1696,17 @@ button.primary {
 .profile-coordinates select {
   width: 90px;
   padding: 4px 7px;
+}
+
+.additional-dimensions {
+  margin: 4px 0 10px;
+}
+.additional-dimensions summary {
+  width: fit-content;
+  padding: 3px 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+.selection-dimensions select {
+  max-width: 100%;
 }

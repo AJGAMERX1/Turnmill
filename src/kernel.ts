@@ -74,6 +74,7 @@ function gripStock(request: GripRequest): GripStock {
 
 type Request =
   | GripRequest
+  | { type: "validate"; revision: number; features: EvaluatedFeature[] }
   | {type:"inspect-qa";revision:number;port:MessagePort}
   | {
       type: "build";
@@ -120,6 +121,12 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
       return;
     }
     await ready;
+    if (data.type === "validate") {
+      const solids = buildBodies(data.features);
+      releaseBodies(solids);
+      worker.postMessage({ type: "validated", revision: data.revision });
+      return;
+    }
     if (data.type === "inspect-qa") {
       if (import.meta.env.VITE_CAD_QA === "1") {
         try {
