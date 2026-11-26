@@ -5,9 +5,20 @@ import { createStudio, type View } from "./studio";
 import type { FinishBodySnapshot, PreviewSolid, RenderBody } from "./geometry";
 import type { MeshChange } from "./modelBodies";
 import type { EvaluatedFeature } from "./types";
+import type { EvaluatedFinish } from "./finishingTypes";
+import type { GripStock } from "./gripBands";
+
+type GripMeasurement = GripStock & {
+  bodyId: string;
+  featureId: string;
+  beforeFinishId?: string;
+  priorKey?: string;
+  error?: string;
+};
 
 export type KernelStatus = {
   signature?: string;
+  gripStock?: GripMeasurement;
   threadFrames?: import("./threadMates").ThreadFrame[];
   fitSurfaces?: import("./fitSurfaces").FitSurface[][];
   busy: boolean;
@@ -34,6 +45,10 @@ type Props = {
   visibleBodyId?: string;
   photoMode?: boolean;
   measureRefillFit?: boolean;
+  gripBodyId?: string;
+  gripFeatureId?: string;
+  gripBeforeFinishId?: string;
+  gripPriorFinishes?: EvaluatedFinish[];
   photoMatrices?: number[][];
   ghostIds?: string[];
   savePhoto?: RefObject<(() => Promise<Blob>) | null>;
@@ -85,6 +100,7 @@ export function Viewport({
   takeFinishBody,
   appearances = [],
   visibleBodyId, photoMode = false, photoMatrices, ghostIds = [], savePhoto, measureRefillFit = false,
+  gripBodyId, gripFeatureId, gripBeforeFinishId, gripPriorFinishes,
   onBodyContextMenu,
   onBodyPick,
 }: Props) {
@@ -105,6 +121,19 @@ export function Viewport({
     lastExport = useRef<number | undefined>(undefined);
   const presentation = useRef({ appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, onBodyContextMenu, onBodyPick });
   presentation.current = { appearances, visibleBodyId, photoMode, photoMatrices, ghostIds, onBodyContextMenu, onBodyPick };
+  const gripFeature = gripFeatureId ?? gripBodyId;
+  const gripPriorKey = JSON.stringify(gripPriorFinishes);
+  const gripTarget = useRef({ gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey });
+  gripTarget.current = { gripBodyId, gripFeature, gripBeforeFinishId, gripPriorFinishes, gripPriorKey };
+  const builtRevision = useRef(-1);
+  function requestGrip() {
+    const target = gripTarget.current;
+    if (!target.gripBodyId || builtRevision.current !== revision.current) return;
+    engine.current?.postMessage({
+      type: "grip-stock", revision: revision.current, bodyId: target.gripBodyId,
+      featureId: target.gripFeature, beforeFinishId: target.gripBeforeFinishId, priorFinishes: target.gripPriorFinishes,
+    });
+  }
   const showing = useRef<string[]>([]);
   const building = useRef<string[]>([]);
   const installed = useRef<{ ids: string[]; meshes: RenderBody[] }>({ ids: [], meshes: [] });
@@ -181,7 +210,15 @@ export function Viewport({
     });
     engine.current = worker;
     if(import.meta.env.VITE_CAD_QA==="1") observeGeometry(worker,()=>revision.current);
-    worker.onmessage = ({ data }: MessageEvent<KernelReply>) => {
+    worker.onmessage = ({ data }: MessageEvent<KernelReply | { type: "grip-stock"; revision: number; stock: GripMeasurement }>) => {
+      if (data.type === "grip-stock") {
+        const target = gripTarget.current;
+        const stock = data.stock;
+        if (data.revision === revision.current && stock.bodyId === target.gripBodyId &&
+          stock.featureId === target.gripFeature && stock.beforeFinishId === target.gripBeforeFinishId &&
+          stock.priorKey === target.gripPriorKey) publish({ gripStock: stock });
+        return;
+      }
       const buildReply =
         data.type === "updated" ||
         data.type === "built" ||
@@ -192,6 +229,10 @@ export function Viewport({
         // advertises only meshes actually retained by this viewport.
         dispatchBuild();
         return;
+      }
+      if (buildReply) {
+        builtRevision.current = data.revision;
+        requestGrip();
       }
       if (data.type === "updated" || data.type === "built") {
         if (data.type === "updated") {
@@ -247,6 +288,7 @@ export function Viewport({
       displayInstalled();
       publish({
         busy: false,
+        gripStock: undefined,
         error:
           "The CAD engine stopped. Reload to reopen the autosaved project.",
         volume: 0,
@@ -269,7 +311,7 @@ export function Viewport({
   }, []);
   useEffect(() => {
     const current = ++revision.current;
-    publish({ signature, busy: true, error: "" });
+    publish({ signature, busy: true, error: "", gripStock: undefined });
     pendingBuild.current = {
       revision: current,
       features,
@@ -278,6 +320,10 @@ export function Viewport({
     };
     dispatchBuild();
   }, [signature, measureRefillFit]);
+  useEffect(() => {
+    if (status.current.gripStock) publish({ gripStock: undefined });
+    requestGrip();
+  }, [gripBodyId, gripFeature, gripBeforeFinishId, gripPriorKey]);
   useEffect(() => {
     displayInstalled(false);
   }, [visibleBodyId, appearances.join(",")]);

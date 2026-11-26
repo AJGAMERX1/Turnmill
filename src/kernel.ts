@@ -3,7 +3,9 @@ import initOC from "replicad-opencascadejs";
 import wasmUrl from "replicad-opencascadejs/wasm?url";
 import { setOC } from "replicad";
 import {
+  buildBodies,
   exportBodies,
+  releaseBodies,
   type FinishBodySnapshot,
   type PreviewSolid,
   type RenderBody,
@@ -13,6 +15,8 @@ import { ModelBodies } from "./modelBodies";
 import { collectFitSurfaces, type FitSurface } from "./fitSurfaces";
 import type { Shape3D } from "replicad";
 import type { EvaluatedFeature } from "./types";
+import type { EvaluatedFinish } from "./finishingTypes";
+import { measureGripStock, type GripStock } from "./gripBands";
 
 const worker = self as unknown as DedicatedWorkerGlobalScope;
 const ready = initOC({ locateFile: () => wasmUrl }).then(setOC);
@@ -21,7 +25,55 @@ const fitCache = new WeakMap<Shape3D, FitSurface[]>();
 const MIN_PREVIEW_SNAPSHOT_MS = 1000;
 let currentRevision = -1;
 
+type GripRequest = {
+  type: "grip-stock";
+  revision: number;
+  bodyId: string;
+  featureId: string;
+  beforeFinishId?: string;
+  priorFinishes?: EvaluatedFinish[];
+};
+
+let latestBuild: { revision: number; features: EvaluatedFeature[] } | undefined;
+let lastGrip: { key: string; stock: GripStock } | undefined;
+
+function gripStock(request: GripRequest): GripStock {
+  if (request.revision !== latestBuild?.revision) throw Error("The part changed. Reopen Grip milling.");
+  const { features } = latestBuild;
+  const root = features.findIndex(f => f.id === request.bodyId && f.operation === "new");
+  const end = features.findIndex(f => f.id === request.featureId);
+  if (root < 0 || end < root || features.slice(root + 1, end + 1).some(f => f.operation === "new"))
+    throw Error("Restore the selected feature to measure its grip surfaces.");
+
+  const target = features[end], finishes = target.finishes ?? [];
+  const before = request.beforeFinishId ? finishes.findIndex(f => f.id === request.beforeFinishId) : finishes.length;
+  if (before < 0 && !request.priorFinishes) throw Error("Reopen the grip to measure its stock.");
+  const prior = request.priorFinishes ?? finishes.slice(0, before);
+  const prefix = { ...target, finishes: prior, advanced: undefined, operations: undefined, reverseRefillLength: undefined };
+  const history = [...features.slice(root, end), prefix];
+  const key = JSON.stringify(history);
+  if (lastGrip?.key === key) return lastGrip.stock;
+
+  const isCurrentSolid = currentRevision === request.revision &&
+    (!features[end + 1] || features[end + 1].operation === "new") &&
+    !target.advanced && !target.operations?.length && target.reverseRefillLength === undefined &&
+    JSON.stringify(finishes) === JSON.stringify(prior);
+  let stock: GripStock;
+  if (isCurrentSolid) {
+    const bodyIndex = features.slice(0, root).filter(f => f.operation === "new").length;
+    stock = measureGripStock(model.bodies[bodyIndex].shape);
+  } else {
+    // Measure where this finish actually runs, before later cuts or transforms.
+    const bodies = buildBodies(history);
+    try { stock = measureGripStock(bodies[0].shape); }
+    finally { releaseBodies(bodies); }
+  }
+  lastGrip = { key, stock };
+  return stock;
+}
+
 type Request =
+  | GripRequest
   | {type:"inspect-qa";revision:number;port:MessagePort}
   | {
       type: "build";
@@ -53,6 +105,20 @@ const buffers = (m: RenderBody) =>
 
 worker.onmessage = async ({ data }: MessageEvent<Request>) => {
   try {
+    if (data.type === "grip-stock") {
+      const { revision, bodyId, featureId, beforeFinishId, priorFinishes } = data;
+      const source = { bodyId, featureId, beforeFinishId, priorKey: JSON.stringify(priorFinishes) };
+      try {
+        await ready;
+        worker.postMessage({ type: "grip-stock", revision, stock: { ...source, ...gripStock(data) } });
+      } catch (error) {
+        worker.postMessage({ type: "grip-stock", revision, stock: {
+          ...source, minX: 0, maxX: 0, bands: [],
+          error: error instanceof Error ? error.message : "The grip surfaces could not be measured.",
+        } });
+      }
+      return;
+    }
     await ready;
     if (data.type === "inspect-qa") {
       if (import.meta.env.VITE_CAD_QA === "1") {
@@ -65,6 +131,7 @@ worker.onmessage = async ({ data }: MessageEvent<Request>) => {
     }
 
     if (data.type === "build") {
+      latestBuild = { revision: data.revision, features: data.features };
       currentRevision = -1;
       const started = performance.now();
       const { changes, keys, ...properties } = model.build(

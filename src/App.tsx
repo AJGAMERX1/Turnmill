@@ -95,7 +95,7 @@ import { evaluateModel } from "./buildModel";
 import { useJournal } from "./journal";
 import Viewport, { type KernelStatus, type ExportRequest } from "./Viewport";
 import SketchEditor from "./SketchEditor";
-import FinishDialog from "./FinishDialog";
+import FinishDialog, { type GripRequest } from "./FinishDialog";
 import FinishPreview from "./FinishPreview";
 import { useFinishPreview } from "./useFinishPreview";
 import ExchangeDialog from "./exchangeDialog";
@@ -204,6 +204,7 @@ export default function App() {
   const [dialog, setDialog] = useState<DialogName>(null),
     [menu, setMenu] = useState<"file" | "export" | "views" | null>(null),
     [notice, setNotice] = useState("");
+  const [gripRequest, setGripRequest] = useState<GripRequest>();
   const [presetFinish, setPresetFinish] = useState<FinishKind>(),
     [presetAdvanced, setPresetAdvanced] = useState<Advanced["kind"]>();
   const [selected, setSelected] = useState<string>("barrel-revolve"),
@@ -387,6 +388,8 @@ export default function App() {
       ? project.workspaces!.bodyMaterials[id]
       : defaultMaterial;
   const selectedBodyId = activePart?.id ?? bodyFor(currentF) ?? "";
+  const gripTarget = dialog === "finish" && currentF?.id === gripRequest?.featureId ? gripRequest : undefined;
+  const gripBodyId = gripTarget ? bodyFor(currentF) : undefined;
   const material = materialOf(selectedBodyId);
   const densityOf = (id: string) =>
     project.workspaces?.bodyDensities?.[id] ??
@@ -1590,6 +1593,8 @@ export default function App() {
               features={model.features}
               view={view}
               measureRefillFit={cartridges.length > 0}
+              gripBodyId={gripBodyId} gripFeatureId={gripTarget?.featureId}
+              gripBeforeFinishId={gripTarget?.beforeFinishId} gripPriorFinishes={gripTarget?.priorFinishes}
               photoMode={showcasing} photoMatrices={studioPose.matrices} ghostIds={ghostIds} savePhoto={savePhoto}
               fitToken={fit}
               exportRequest={exportRequest}
@@ -2266,7 +2271,10 @@ export default function App() {
           initialKind={presetFinish}
           initialFinishId={entryId}
           feature={currentF}
-          gripProfile={model.features.find((f) => f.id === selectedBodyId)}
+          values={model.values} onGripRequest={setGripRequest}
+          gripStock={gripTarget && kernel.signature === modelSignature && kernel.gripStock?.bodyId === gripBodyId &&
+            kernel.gripStock?.featureId === currentF.id ? kernel.gripStock : undefined}
+          measurementError={error || (!bodyFor(currentF) ? "Restore the barrel in feature history." : undefined)}
           project={project}
           onPreview={(rows) =>
             finishing.preview(

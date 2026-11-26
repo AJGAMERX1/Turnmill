@@ -101,3 +101,11 @@
 .grip-patterns p {margin:6px 0;color:var(--muted);font-size:12px;line-height:1.4}
 .grip-history {border-top:1px solid var(--line);padding-top:9px;margin:7px 0 12px}
 .grip-history summary {font-size:12px;color:var(--muted);cursor:pointer}
+
+.grip-placement {margin: 5px 0 12px; padding: 9px 12px; background: #191f21; border: 1px solid var(--line); border-radius: 6px}
+.grip-placement-heading {display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px}
+.grip-placement-heading button {font-size: 12px; padding: 4px 8px}
+.grip-band-diagram {display: block; width: 100%; height: 36px; margin: 4px 0; color: var(--gold)}
+.grip-placement p,.grip-stock-note {margin: 6px 0 2px; font-size: 12px; color: var(--muted); line-height: 1.4}
+.grip-placement p.grip-placement-warning {color: #ffb886}
+.grip-placement label {margin-top: 8px}

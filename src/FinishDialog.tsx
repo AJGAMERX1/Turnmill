@@ -1,6 +1,7 @@
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type SetStateAction,
@@ -18,13 +19,24 @@ import {
   threadPresets,
   type Finish,
   type FinishKind,
+  type EvaluatedFinish,
 } from "./finishingTypes";
-import type { Project, Feature, EvaluatedFeature } from "./types";
+import type { Project, Feature } from "./types";
 import { GripSettings, initialGripBand } from "./GripSettings";
 
+import type { GripStock } from "./gripBands";
+
+export type GripRequest = {
+  featureId: string;
+  beforeFinishId?: string;
+  priorFinishes?: EvaluatedFinish[];
+};
 type Props = {
   initialKind?: FinishKind;
-  gripProfile?: EvaluatedFeature;
+  gripStock?: GripStock & { beforeFinishId?: string; priorKey?: string; error?: string };
+  onGripRequest: (request?: GripRequest) => void;
+  values: Record<string, number>;
+  measurementError?: string;
   initialFinishId?: string;
   onPreview?: (finishes: Finish[]) => Promise<{ ok: boolean; message: string }>;
   onClearPreview?: () => void;
@@ -41,7 +53,7 @@ export default function FinishDialog({
   onClose,
   initialKind,
   initialFinishId,
-  gripProfile,
+  gripStock, onGripRequest, values, measurementError,
   onPreview,
   onClearPreview,
   previewPanel,
@@ -61,7 +73,7 @@ export default function FinishDialog({
         termination: "blind",
       };
     if (kind === "grip")
-      return { ...base, kind, end: "start", style: "rings", count: "6", ...initialGripBand(gripProfile) };
+      return { ...base, kind, end: "start", style: "rings", count: "6", offset: "2 mm", length: "10 mm", width: "0.6 mm", depth: "0.18 mm" };
     if (kind === "knurl")
       return {
         ...base,
@@ -177,7 +189,7 @@ export default function FinishDialog({
       close();
   }, [project, feature.id, onClose]);
   async function checkDraft(apply: boolean) {
-    if (preview === "pending" || readingGraphic) return;
+    if (preview === "pending" || readingGraphic || (waitingForStock && !active.suppressed)) return;
     if (apply && verified.current === rows) {
       onSave(rows);
       return;
@@ -229,13 +241,46 @@ export default function FinishDialog({
   }
   const active = rows[index];
   const editingGrip = active?.kind === "grip";
+  const autoPlace = useRef(new Set(initialKind === "grip" && rows.length ? [rows[rows.length - 1].id] : []));
+  const beforeFinishId = feature.finishes?.find(f => f.id === active?.id)?.id;
+  const inspection = useMemo(() => {
+    if (!editingGrip) return {};
+    const source = feature.finishes ?? [];
+    const before = beforeFinishId ? source.findIndex(f => f.id === beforeFinishId) : source.length;
+    const prior = rows.slice(0, index).filter(f => !f.suppressed);
+    const saved = source.slice(0, before).filter(f => !f.suppressed);
+    try {
+      const priorFinishes = !source[before]?.suppressed && JSON.stringify(prior) === JSON.stringify(saved)
+        ? undefined : prior.map(f => evaluateFinish(f, values));
+      return { request: { featureId: feature.id, beforeFinishId, priorFinishes } };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Check the dimensions of the preceding finish." };
+    }
+  }, [editingGrip, rows, index, feature, beforeFinishId, values]);
+  const requestKey = JSON.stringify(inspection.request);
+  useLayoutEffect(() => {
+    onGripRequest(inspection.request);
+    return () => onGripRequest(undefined);
+  }, [onGripRequest, requestKey]);
+  const measured = inspection.request && gripStock?.beforeFinishId === beforeFinishId &&
+    gripStock?.priorKey === JSON.stringify(inspection.request.priorFinishes) ? gripStock : undefined;
+  const stockIssue = inspection.error || measured?.error || (!measured && measurementError);
+  const waitingForStock = editingGrip && !stockIssue && !measured;
+  useLayoutEffect(() => {
+    if (active?.kind !== "grip" || !measured?.bands.length || !autoPlace.current.delete(active.id)) return;
+    const patch = initialGripBand(active, measured, values);
+    if (patch) setRows(all => all.map(row => row.id === active.id ? { ...row, ...patch } as Finish : row));
+  }, [active, measured, values]);
   const gripShortcut = (initialKind === "grip" ||
     feature.finishes?.some(f => f.id === initialFinishId && f.kind === "grip")) && editingGrip;
 
-  const update = (patch: Record<string, unknown>) =>
+  const update = (patch: Record<string, unknown>) => {
+    if (active?.kind === "grip" && ["offset","length","width","depth","end"].some(key => key in patch))
+      autoPlace.current.delete(active.id);
     setRows((old) =>
       old.map((r, i) => (i === index ? ({ ...r, ...patch } as Finish) : r)),
     );
+  };
   const field = (label: string, key: string, value: string) => (
     <label>
       {label}
@@ -391,6 +436,8 @@ export default function FinishDialog({
                     value={active.kind}
                     onChange={(e) => {
                       const next = fresh(e.target.value as FinishKind);
+                      if (next.kind === "grip") autoPlace.current.add(active.id);
+                      else autoPlace.current.delete(active.id);
                       setRows((old) =>
                         old.map((r, i) =>
                           i === index ? { ...next, id: r.id } : r,
@@ -421,7 +468,9 @@ export default function FinishDialog({
                   </select>
                 </label>}
               </div>}
-              {active.kind === "grip" && <GripSettings grip={active} update={update} field={field}/>}
+              {active.kind === "grip" && <GripSettings grip={active} update={update} field={field}
+                stock={measured} values={values} stockMessage={stockIssue ? "Surface placement unavailable. " + stockIssue
+                  : waitingForStock ? "Measuring barrel surfaces…" : undefined}/>}
               {(active.kind === "fillet" || active.kind === "chamfer") && (
                 <div className="two-cols">
                   {field(
@@ -765,7 +814,7 @@ export default function FinishDialog({
                 <button
                   type="button"
                   className="finish-preview-button"
-                  disabled={preview === "pending" || readingGraphic}
+                  disabled={preview === "pending" || readingGraphic || (waitingForStock && !active?.suppressed)}
                   onClick={() => void checkDraft(false)}
                 >
                   <Eye size={15} />
@@ -777,7 +826,7 @@ export default function FinishDialog({
               </button>
               <button
                 className="primary"
-                disabled={preview === "pending" || readingGraphic}
+                disabled={preview === "pending" || readingGraphic || (waitingForStock && !active?.suppressed)}
               >
                 {editingGrip ? "Apply grip" : "Apply finishes"}
               </button>
