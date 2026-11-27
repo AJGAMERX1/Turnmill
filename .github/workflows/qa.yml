@@ -19,9 +19,8 @@ concurrency:
 permissions:
   contents: read
 jobs:
-  verify:
+  build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 200
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,49 +28,39 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Reuse the compiled AP214 and AP242 checkers
-        id: stepcode
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ${{ runner.temp }}/turnmill-cad-tools/step-build/bin
-            ${{ runner.temp }}/turnmill-cad-tools/step-build/lib
-          key: stepcode-ubuntu-24.04-x64-5cf8fc1a-ap214e3-ap242-v1
-      - name: Install CAD readers and independent STEP checker
-        run: bash tests/qa/linux-tools.sh
-      - name: Measure a solid in FreeCAD and check its STEP and STL
-        run: |
-          printf 'import Part; v=Part.makeBox(2,3,4).Volume; assert abs(v-24.0)<0.000001; print("FREECAD_ANALYTIC_OK", v)\nexit()\n' | xvfb-run -a "$FREECAD_CMD" --console | tee /tmp/freecad-tool.log
-          grep -F 'FREECAD_ANALYTIC_OK' /tmp/freecad-tool.log
-          "$STEPCODE_AP242" -s test-evidence/interop/block.step /tmp/qa-block.stp
-          xvfb-run -a "$PRUSASLICER" --info test-evidence/interop/block.stl
-          "$QA_PYTHON" -c 'import ezdxf; print(ezdxf.__version__)'
-      - name: Cache the verified STEP checkers
-        if: steps.stepcode.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ${{ runner.temp }}/turnmill-cad-tools/step-build/bin
-            ${{ runner.temp }}/turnmill-cad-tools/step-build/lib
-          key: ${{ steps.stepcode.outputs.cache-primary-key }}
-      - name: Install production browser
-        run: npx playwright-core install --with-deps chromium
-      - name: Test the production build and all external readers
+      - name: Build the instrumented application once for all checks
         env:
-          TURNMILL_X11_EVIDENCE: '1'
-          TURNMILL_X11_PYTHON: /usr/bin/python3
-          QA_FUZZ_MS: ${{ github.event_name == 'schedule' && '3660000' || '540000' }}
-          QA_SEED: ${{ github.event_name == 'schedule' && github.run_id || '539365669' }}
-        run: xvfb-run -a -s "-screen 0 1920x1200x24" npm run qa
-      - name: Package the tested public release
-        if: inputs.package_pages
-        uses: actions/upload-pages-artifact@v4
+          VITE_CAD_QA: '1'
+        run: npm run build
+      - uses: actions/upload-artifact@v4
         with:
-          path: dist
-      - name: Preserve measured results and failing cases
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cad-qa-${{ github.run_id }}-${{ github.run_attempt }}
-          path: test-evidence/
+          name: turnmill-qa-build
+          path: dist/
+          if-no-files-found: error
           retention-days: 7
+          overwrite: true
+  independent:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [baseline, features]
+    uses: ./.github/workflows/qa-stage.yml
+    with:
+      group: ${{ matrix.group }}
+  fixtures:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [projects, systems]
+    uses: ./.github/workflows/qa-stage.yml
+    with:
+      group: ${{ matrix.group }}
+  readers:
+    needs: [build, fixtures]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    uses: ./.github/workflows/qa-stage.yml
+    with:
+      group: readers
+      package_pages: ${{ inputs.package_pages || false }}

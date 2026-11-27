@@ -343,7 +343,8 @@ export function createStudio(
       return instance;
     });
     const retained = new Set(next);
-    for (const old of instances) if (!retained.has(old)) releaseInstance(old);
+    const retired = instances.filter((instance) => !retained.has(instance));
+    for (const old of retired) old.root.removeFromParent();
     instances = next;
     meshes.length = 0;
     for (const instance of next) meshes.push(instance.mesh);
@@ -388,6 +389,9 @@ export function createStudio(
       orient(view);
       hasFramed = !box.isEmpty();
     } else render();
+    // Three.js releases a shader program with its last material. Draw the new
+    // geometry first so an unchanged finish can reuse the compiled program.
+    for (const old of retired) releaseInstance(old);
   }
   const ray = new THREE.Raycaster();
   function hit(event: { clientX: number; clientY: number }): FaceHit | null {

@@ -160,6 +160,7 @@ export async function pen(s, { keepM10 = false, checkpoint = sample } = {}) {
   await stepExport(s, "twist-pen");
   await button(p, "Assembly").click();
   await field(p, "Component").selectOption("pen-cap");
+  await field(p, "Drive value").and(p.locator(":enabled")).waitFor({ timeout: 240000 });
   await input(p, "Drive value", "360 deg");
   await p.getByText("Axial travel 0.750 mm", { exact: true }).waitFor();
   await button(p, "Save current pose").click({ timeout: 240000 });
