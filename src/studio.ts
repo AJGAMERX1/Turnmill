@@ -62,18 +62,32 @@ function setDonorGroups(geometry: THREE.BufferGeometry, body: RenderBody, finish
   }
 }
 
+// Keep one renderer per concurrently open view. Forcing context loss on close can
+// stall Chromium's software renderer, while creating a new context on every
+// switch eventually makes the browser evict the still-visible part viewport.
+const idleRenderers: THREE.WebGLRenderer[] = [];
+
+function acquireRenderer() {
+  let renderer;
+  while ((renderer = idleRenderers.pop())) {
+    if (!renderer.getContext().isContextLost()) return renderer;
+    renderer.dispose();
+  }
+  return new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+    powerPreference: "high-performance",
+  });
+}
+
 export function createStudio(
   element: HTMLDivElement,
   onPick: (label: string, bodyIndex: number | null) => void,
   onContextMenu?: (anchor: MenuAnchor, bodyIndex: number | null) => void,
 ) {
-  const renderer = new THREE.WebGLRenderer({
-    alpha: true,
-    antialias: true,
-    powerPreference: "high-performance",
-  });
+  const renderer = acquireRenderer();
+  let disposed = false;
   renderer.setClearColor(0, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
   const canvas = renderer.domElement;
@@ -81,11 +95,14 @@ export function createStudio(
     "width:100%;height:100%;display:block;touch-action:none;outline:0";
   canvas.tabIndex = 0;
   if (onContextMenu) canvas.setAttribute("aria-haspopup", "menu");
+  else canvas.removeAttribute("aria-haspopup");
   canvas.setAttribute(
     "aria-label",
     "3D part. Drag to orbit, scroll to zoom, or shift-drag to pan. Click a face to select it.",
   );
   element.appendChild(canvas);
+  const pixelRatio = Math.min(window.devicePixelRatio, 2);
+  if (renderer.getPixelRatio() !== pixelRatio) renderer.setPixelRatio(pixelRatio);
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-80, 80, 55, -55, 0.01, 5000);
   camera.up.set(0, 0, 1);
@@ -162,7 +179,9 @@ export function createStudio(
   function updateProjection() {
     const w = Math.max(element.clientWidth, 1),
       h = Math.max(element.clientHeight, 1);
-    renderer.setSize(w, h, false);
+    const ratio = renderer.getPixelRatio();
+    if (canvas.width !== Math.floor(w * ratio) || canvas.height !== Math.floor(h * ratio))
+      renderer.setSize(w, h, false);
     // Retain the user's zoom and pivot when the inspector or viewport changes aspect.
     const halfHeight = Math.max(
       fittedHeight,
@@ -585,6 +604,8 @@ export function createStudio(
     setView: (next: View) => orient(next),
     fit: () => orient(view, true),
     dispose() {
+      if (disposed) return;
+      disposed = true;
       resize.disconnect();
       controls.removeEventListener("change", render);
       controls.dispose();
@@ -609,9 +630,12 @@ export function createStudio(
         material.dispose();
       grain?.dispose();
       environment.dispose();
-      renderer.dispose();
-      renderer.forceContextLoss();
+      renderer.setRenderTarget(null);
+      renderer.renderLists.dispose();
+      renderer.resetState();
       canvas.remove();
+      // The next view resizes the canvas after attaching it to the DOM.
+      idleRenderers.push(renderer);
     },
   };
 }

@@ -9,6 +9,12 @@ export async function openBrowser({ displayEvidence = false } = {}) {
     args: [
       "--use-angle=swiftshader",
       "--enable-unsafe-swiftshader",
+      // Keep WebGL 2 on SwiftShader. A second software GPU compositor on Linux
+      // can hang Chromium when a test switches between WebGL canvases.
+      ...(!headed && process.platform === "linux"
+        ? ["--use-gl=angle", "--ignore-gpu-blocklist", "--enable-webgl",
+           "--disable-vulkan", "--disable-features=Vulkan", "--disable-gpu-compositing"]
+        : []),
       ...(headed
         ? ["--ozone-platform=x11", "--force-device-scale-factor=1", "--window-position=20,20"]
         : []),

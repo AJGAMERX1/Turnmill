@@ -117,6 +117,12 @@ try {
   near(restored.bodies[1].volume, socket.bodies[1].volume);
 
   await button(page, "Assembly").click();
+  const assemblyCanvas = page.locator(".joint-stage canvas");
+  await assemblyCanvas.waitFor();
+  assert(await assemblyCanvas.evaluate(canvas => {
+    const gl = canvas.getContext("webgl2");
+    return gl && !gl.isContextLost() && gl.drawingBufferWidth > 0 && gl.drawingBufferHeight > 0;
+  }), "The assembly has a working WebGL 2 viewport");
   await field(page, "Component").selectOption("cap");
   await button(page, "Mate threads").click();
   const mate = page.getByRole("dialog", { name: "Mate threads" });

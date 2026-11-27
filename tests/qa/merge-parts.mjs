@@ -60,6 +60,16 @@ try {
   await button(page,"Assembly").click();
   const assemblyCanvas = page.locator(".joint-stage canvas");
   await assemblyCanvas.waitFor();
+  // Closing and reopening the assembly must reuse its rendering context. Allocating a
+  // context on every switch eventually evicts the persistent Part viewport in Chromium.
+  const firstCanvas = await assemblyCanvas.elementHandle();
+  await button(page,"Part").click();
+  await button(page,"Assembly").click();
+  await assemblyCanvas.waitFor();
+  assert(await assemblyCanvas.evaluate((canvas, previous) =>
+    canvas.getContext("webgl2") === previous.getContext("webgl2") &&
+    !canvas.getContext("webgl2").isContextLost(), firstCanvas));
+  await firstCanvas.dispose();
   const original = await measure(page);
   assert.equal(original.bodies.length, 2);
   // Only the displayed assembly poses put the two parts into full face contact.
