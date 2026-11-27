@@ -301,6 +301,7 @@ export default function App() {
   const treeVisible = compact ? compactTree : showTree;
   const toggleTree = compact ? setCompactTree : setShowTree;
   const liveAssembly = useRef<LiveAssembly | null>(null);
+  const [assemblyPoseLoading, setAssemblyPoseLoading] = useState(false);
   const readSolids = useRef<SnapshotReader | null>(null);
   const pendingExport = useRef<{ id: number; finish: (error?: string) => void } | null>(null);
   const exportSerial = useRef(0);
@@ -525,6 +526,7 @@ export default function App() {
     setEntryId(undefined);
   };
   const switchMode = (m: Mode) => {
+    if (m === "Assembly" && mode !== m && solidFeatures.length > 0) setAssemblyPoseLoading(true);
     setMode(m);
     setMenu(null);
     setPendingSketch(null);
@@ -717,10 +719,11 @@ export default function App() {
       { label: "Delete", icon: Trash2, danger: true, run: () => removeSketch(sketch) },
     ]);
   }
-  const canMerge = valid && solidFeatures.length >= 2;
+  const awaitingAssemblyPose = mode === "Assembly" && assemblyPoseLoading;
+  const canMerge = valid && solidFeatures.length >= 2 && !awaitingAssemblyPose;
   function openMerge(preferred?: string) {
     if (!canMerge) {
-      setNotice(busy ? "Wait for the solids to finish rebuilding." : "Create or restore two solid parts before merging.");
+      setNotice(busy || awaitingAssemblyPose ? "Wait for the solids to finish rebuilding." : "Create or restore two solid parts before merging.");
       return;
     }
     const ids = solidFeatures.map(f => f.id);
@@ -789,7 +792,7 @@ export default function App() {
     setDialog("threads");
   }
   const currentThreadsBody = () => (mode === "Assembly" && liveAssembly.current?.selected) || selectedBodyId;
-  const threadsEnabled = mode !== "Drawing" && solidFeatures.some(f =>
+  const threadsEnabled = mode !== "Drawing" && !awaitingAssemblyPose && solidFeatures.some(f =>
     (mode === "Assembly" || f.id === selectedBodyId) && !isScaleFeature(project, f.id));
   function selectThreadFeature(hostId: string, featureId?: string) {
     if (activePart && activePart.id !== hostId) setPartSelection({ projectId: project.id, id: hostId });
@@ -1305,11 +1308,13 @@ export default function App() {
         (c.group === "Model" && c.title !== "Named parameters") ||
         c.group === "Finishing" ||
         c.group === "Advanced modeling";
+      const usesWorkspaceSelection = (c.key === "add-thread" || c.key === "add-grip") &&
+        (showcasing || mode === "Assembly");
       return {
         ...c,
         reason,
         run: () => {
-          if (mode !== "Part" && partTool && !(c.key === "add-grip" && (showcasing || mode === "Assembly"))) {
+          if (mode !== "Part" && partTool && !usesWorkspaceSelection) {
             setPartSelection(undefined);
             switchMode("Part");
           }
@@ -2171,6 +2176,7 @@ export default function App() {
               {...props}
               rebuilding={!modelCurrent}
               liveAssembly={liveAssembly}
+              onPoseLoading={setAssemblyPoseLoading}
               initialComponent={project.workspaces?.capMounts?.[selected] || cartridges.some(r => r.bodyId === selected) ? selected : undefined}
               onApplyPose={transferToAllParts}
               onMillGrip={millGrip} onThreads={openThreads} onMergeParts={openMerge}

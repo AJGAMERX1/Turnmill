@@ -24,8 +24,13 @@ try {
   await page.goto(appUrl, { waitUntil: "domcontentloaded" });
   await saved(page);
   async function openProject(document) {
-    await field(page, "Open Turnmill project file").setInputFiles({
-      name: "thread-test.turnmill", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(document)),
+    await page.locator(".project-trigger").click();
+    const [chooser] = await Promise.all([
+      page.waitForEvent("filechooser"),
+      page.getByRole("button", { name: /Open project…/ }).click(),
+    ]);
+    await chooser.setFiles({
+      name: document.id + ".turnmill", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(document)),
     });
     await page.locator(".project-trigger").filter({ hasText: document.name }).waitFor();
     await ready(page);

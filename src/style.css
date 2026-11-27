@@ -1272,6 +1272,9 @@ button.primary {
 .joint-panel h2 {
   font-size: 16px;
 }
+.joint-controls {
+  display: contents;
+}
 .joint-panel h3 {
   font-size: 14px;
   margin: 10px 0;

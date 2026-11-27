@@ -76,11 +76,13 @@ try {
   await tab("Assembly").click();
   const component = field(page, "Component");
   await component.selectOption(donor.id);
-  await measure(page);
+  await page.locator(".joint-stage canvas").waitFor();
+  await page.locator(".joint-stage .joint-message").waitFor({ state: "hidden" });
   await component.blur();
   await page.keyboard.press("t");
   const picker = field(dialog, "Barrel");
   assert.equal(await picker.inputValue(), "", "A loose refill with two possible barrels requires an explicit selection");
+  assert.equal(await page.locator(".tm-app").getAttribute("data-workspace"), "Assembly", "The shortcut keeps the active assembly open");
   assert.deepEqual(await picker.locator('option:not([value=""])').allTextContents(), ["Pen barrel", "Spare barrel"]);
   assert(!(await picker.locator("option").allTextContents()).includes(donor.name));
   await picker.selectOption(spare.feature.id);

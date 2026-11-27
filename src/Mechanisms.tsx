@@ -98,7 +98,7 @@ export type LiveAssembly = {
   drivers: Record<string, number[]>;
   problem: string;
 };
-type PartNavigation = { rebuilding: boolean; initialComponent?: string; onApplyPose: () => void; onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
+type PartNavigation = { rebuilding: boolean; onPoseLoading: (loading: boolean) => void; initialComponent?: string; onApplyPose: () => void; onThreads?: (bodyId: string) => void; onOpenPart?: (bodyId: string) => void; onMillGrip?: (bodyId: string) => void; onMergeParts?: (bodyId: string) => void };
 
 type FreeDrag = {
   id: string;
@@ -231,7 +231,7 @@ function JointStudio({
   onFrames,
   guideAssist,
   liveAssembly,
-  initialComponent, rebuilding,
+  initialComponent, rebuilding, onPoseLoading,
   onOpenPart,
   onMillGrip, onThreads, onMergeParts,
 }: WorkspaceProps & PartNavigation & { onFrames: (f: ThreadFrame[]) => void; liveAssembly: RefObject<LiveAssembly | null>; guideAssist?:number }) {
@@ -372,6 +372,10 @@ function JointStudio({
       problem ||= (e as Error).message;
     }
   }
+  useLayoutEffect(() => {
+    onPoseLoading(!poseReady);
+    return () => onPoseLoading(false);
+  }, [onPoseLoading, poseReady]);
   useLayoutEffect(() => {
     liveAssembly.current = {
       project, selected, drivers: poses, problem,
@@ -831,8 +835,8 @@ function JointStudio({
       menuItems.push({ label: raw[targetId]?.refillSnap ? "Release to free move" : "Snap to fit", icon: Magnet,
         disabled: !snapButton.current || snapButton.current.disabled, run: () => snapButton.current?.click() });
     if (onMergeParts && bodies.length > 1)
-      menuItems.push({ label: "Merge parts…", icon: Combine, shortcut: "U", run: () => onMergeParts(targetId) });
-    if (onThreads) menuItems.push({ label: "Threads", icon: Nut, shortcut: "T", run: () => onThreads(targetId) });
+      menuItems.push({ label: "Merge parts…", icon: Combine, shortcut: "U", disabled: !poseReady, run: () => onMergeParts(targetId) });
+    if (onThreads) menuItems.push({ label: "Threads", icon: Nut, shortcut: "T", disabled: !poseReady, run: () => onThreads(targetId) });
     if (onMillGrip)
       menuItems.push({ label: "Mill grip…", icon: Grip, shortcut: "M", run: () => onMillGrip(targetId) });
     if (onOpenPart)
@@ -1081,6 +1085,7 @@ function JointStudio({
             ))}
           </select>
         </label>
+        <fieldset className="joint-controls" aria-label="Component movement" disabled={!poseReady}>
         {selectedRefill && <RefillSnapPanel key={"refill-seat-" + selected} project={project} refill={selectedRefill}
           bodies={bodies} surfaces={fitSurfaces} bounds={bodyBounds} config={raw} values={values}
           ready={checkerReady && displayedGeometry.current === signature && !problem} action={snapButton}
@@ -1373,6 +1378,7 @@ function JointStudio({
             ))}
           </details>
         )}
+        </fieldset>
         {ids.length > 1 && <div className="joint-check">
           <h3>Clearance</h3>
           <ExprField

@@ -10,13 +10,13 @@ async function walk(dir) {
   }
   return out;
 }
-const files = await walk("dist"),
+const files = (await walk("dist")).sort(),
   h = createHash("sha256");
 for (const f of files) h.update(await readFile(f));
 const worker = await readFile("scripts/offline-worker.js", "utf8");
 h.update(worker);
 const cache = "turnmill-" + h.digest("hex").slice(0, 14);
-const paths = files.sort().map((file) => "./" + file.slice(5));
+const paths = files.map((file) => "./" + file.slice(5));
 await writeFile(
   "dist/sw.js",
   "const cache=" +
